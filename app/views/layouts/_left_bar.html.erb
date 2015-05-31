@@ -6,6 +6,7 @@
 	<a href="#" class="menu-bar  pull-right"><i class="ti-menu"></i></a>
 </div>
 <!-- admin-logo -->
+<% if user_signed_in? %>
 <ul class="list-unstyled menu-parent" id="mainMenu">
 	<li class='current'>
 		<a href="index.html" class="current waves-effect waves-light">
@@ -238,3 +239,4 @@
 		</ul>
 	</li>
 </ul>
+<% end %>
