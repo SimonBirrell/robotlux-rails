@@ -6,8 +6,8 @@
     <%= f.input :remember_me, as: :boolean if devise_mapping.rememberable? %>
 	-->
 
-	<%= link_to "Sign in", "#", class: "btn btn-primary btn-block sign", onclick: "$(this).parents('form').submit();" %>
-
+	<%= link_to "Sign in", "#", class: "btn btn-primary btn-block sign", onclick: "$(this).parents('form').submit();", html: {id: "follow-me"} %>
+	
 <% end %>
 
 <div class="bottom_info">

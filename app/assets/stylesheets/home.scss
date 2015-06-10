@@ -1,3 +1,42 @@
 // Place all the styles related to the home controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.node-label {
+  stroke: #888;
+  font-family: "Helvetica";
+  stroke-width: 1px;
+}
+
+.link-base {
+
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+  stroke-dasharray: 10,10;
+  stroke-dashoffset: 0;
+  -webkit-animation: webkitdash 5s infinite linear;
+  animation: dash 5s infinite linear;
+}
+
+@-webkit-keyframes 'webkitdash' {
+  100% { stroke-dashoffset: -200px; }
+}
+
+@keyframes dash {
+  100% { stroke-dashoffset: -200px; }
+}
+
+marker#basic {
+  fill: #999;
+  stroke: #999;
+  stroke-opacity: .6;
+}
+

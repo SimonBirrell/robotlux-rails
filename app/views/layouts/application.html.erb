@@ -9,28 +9,6 @@
   <link rel="icon" href="images/favicon.ico" type="image/x-icon"> -->
   <!-- Bootstrap CSS -->
 
-  <!-- Hammer reload -->
-    <script>
-      setInterval(function(){
-        try {
-          if(typeof ws != 'undefined' && ws.readyState == 1){return true;}
-          ws = new WebSocket('ws://'+(location.host || 'localhost').split(':')[0]+':35353')
-          ws.onopen = function(){ws.onclose = function(){document.location.reload()}}
-          ws.onmessage = function(){
-            var links = document.getElementsByTagName('link'); 
-              for (var i = 0; i < links.length;i++) { 
-              var link = links[i]; 
-              if (link.rel === 'stylesheet' && !link.href.match(/typekit/)) { 
-                href = link.href.replace(/((&|\?)hammer=)[^&]+/,''); 
-                link.href = href + (href.indexOf('?')>=0?'&':'?') + 'hammer='+(new Date().valueOf());
-              }
-            }
-          }
-        }catch(e){}
-      }, 1000)
-    </script>
-  <!-- /Hammer reload -->
-
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <%= stylesheet_link_tag 'application', media: 'all' %>
@@ -47,6 +25,11 @@
 	      $('.piluku-preloader').addClass('hidden');
 	    });
 	  </script>
+	<script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+	<!--
+	<script src="http://marvl.infotech.monash.edu/webcola/cola.min.js"></script>
+	<script src="http://marvl.infotech.monash.edu/webcola/src/d3adaptor.js"></script>
+	-->
   </head>
   <body>
 	
@@ -527,7 +510,6 @@
 	<script src='assets/piluku/materialize.js'></script>
 	<script src='assets/piluku/chartist.min.js'></script>
 	<script src='assets/piluku/CustomChart.js'></script>
-	<script src='assets/piluku/build/d3.min.js'></script>
 	<script src='assets/piluku/nvd3/nv.d3.js'></script>
 	<script src='assets/piluku/sparkline.js'></script>
 	<script src='assets/piluku/bic_calendar.js'></script>
