@@ -12,3 +12,5 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require d3/d3
+//= require cola/cola.js
