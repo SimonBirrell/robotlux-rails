@@ -93,6 +93,10 @@
 					    {"source" : "/rostopic_14925_1432654283762", "target" : "/cmd_vel"},
 					    {"source" : "/robot_state_publisher", "target" : "/rosout"},
 					    {"source" : "/robot_state_publisher", "target" : "/tf"}
+					],
+					"groups":[
+						{"leaves": [0, 1, 2, 3]},
+						{"leaves": [4, 5, 6]}
 					]
 				}
 				
@@ -125,29 +129,37 @@
 						return "";	
 					}
 				
-					// Group nodes
+					// Basic parameters
+					var width = 1500,
+					    height = 1000;					
+					var circleRadius = 32;
+					var groupPadding = circleRadius / 2;
+					var colorText = "#042029";
+					var color = d3.scale.category20();
+					var useCola = true;
+					
+					// Set up nodes
 					for (i=0; i<myData.nodes.length; i++) {
 						myData.nodes[i]['group'] = 1;
+						myData.nodes[i]['width'] = circleRadius*2;
+						myData.nodes[i]['height'] = circleRadius*2;
 					}
-
+					
+					// Set up groups
+					myData.groups.forEach(function (g) { g.padding = circleRadius; });
+					
 					// Add value to links
 					for (i=0; i<myData.links.length; i++) {
 						myData.links[i]['source'] = findNode(myData.links[i]['source']);
 						myData.links[i]['target'] = findNode(myData.links[i]['target']);
 						myData.links[i]['value'] = 15;
 					}
-
-					// Basic parameters
-					var width = 1500,
-					    height = 1000;					
-					var circleRadius = 32;
-					var colorText = "#042029";
-					var color = d3.scale.category20();
-					var useCola = true;
 					
 					if (useCola) {
 						var force = cola.d3adaptor()
 						    .linkDistance(circleRadius * 5)
+						    .avoidOverlaps(true)
+						    .handleDisconnected(false)
 						    .size([width, height]);
 					}
 					else {
@@ -158,20 +170,7 @@
 						    .size([width, height]);						
 					}
 					
-	   				var drag = d3.behavior.drag()
-	   				    .origin(function(d) { return d; })
-	   				    .on("dragstart", dragstarted)
-	   				    .on("drag", dragged)
-	   				    .on("dragend", dragended);
-
-	   				var dragCola = d3.behavior.drag()
-	   	//			    .origin(function(d) { return d; })
-	   	//			    .on("dragstart", dragstarted)
-	   	//			    .on("drag", draggedCola)
-	   //				    .on("dragend", dragended)
-						;
-
-					var dragCola2 = force.drag()
+					var dragColaSetup = force.drag()
 						.origin(function(d) { return d; })
 					    .on("dragstart", dragstarted)
 					    .on("drag", draggedCola)
@@ -202,7 +201,6 @@
 					
 
 					var zoomed = function () {
- 					  //console.log(d3.event.translate);
 					  svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 					}
 					
@@ -223,11 +221,10 @@
 					if (useCola) {
 						force.nodes(myData.nodes)
 						      .links(myData.links)
-						      .avoidOverlaps(true)
+							  .groups(myData.groups)
 						      .symmetricDiffLinkLengths(circleRadius * 7)
 						      .start(10,15,20);	
-						//dragFunction = force.drag;	
-						dragFunction = dragCola2;											
+						dragFunction = dragColaSetup;											
 					}
 					else {
 						force.nodes(myData.nodes)
@@ -235,6 +232,13 @@
 						      .start();			
 						dragFunction = drag;			
 					}					
+
+					var group = svg.selectAll(".group")
+			            .data(myData.groups)
+			          .enter().append("rect")
+			            .attr("rx", 8).attr("ry", 8)
+			            .attr("class", "group")
+						;
 
 				    var link = svg.selectAll(".link")
 				        .data(myData.links)
@@ -251,21 +255,14 @@
 				        .data(myData.nodes)
 				      .enter().append("g")
 				        .attr("class", "node")
+				        .attr("width", function(d) {return circleRadius * 2;})
+				        .attr("height", function(d) {return circleRadius * 2;})
 						.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"})
 				        .call(dragFunction);
 				
-					if (useCola) {
-						node
-						//.origin(function(d) { return d; })
-					    .on("dragstart", dragstarted)
-					    .on("drag", draggedCola)
-					    .on("dragend", dragended)
-						;
-					}
-
 					node.append("circle")
 				        .attr("r", circleRadius)
-				        .style("fill", function(d) { return color(colourNode(d)) });
+				        .attr("class", function(d) { return "node-" + d.rtype; });
 					
 					node.append("title")
 					  .text(function(d) { return d.name; });
@@ -286,7 +283,6 @@
 				      	.attr("font-size", function(d, i) {  return  "1em"; })
 				      	.attr("text-anchor", function(d, i) { if (i>0) { return  "beginning"; } else { return "end" } });
 
-					var pos = 0;	
 
 					force.on("tick", function() {
 						link.attr("x1", function(d) { return d.source.x; })
@@ -294,27 +290,25 @@
 						    .attr("x2", function(d) { return d.target.x; })
 						    .attr("y2", function(d) { return d.target.y; });
 
-						node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"});
-						pos = (pos - 2) % 100;
+						node
+							.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"});
+						
+						group.attr("x", function (d) { return d.bounds.x; })
+			                 .attr("y", function (d) { return d.bounds.y; })
+			                 .attr("width", function (d) { return d.bounds.width(); })
+			                 .attr("height", function (d) { return d.bounds.height(); });
 						
 					});	
 					
 					function zoomAndPan() {
-					  console.log("zoom and pan");	
 					  svg.attr("transform", "translate(" + (d3.event.translate[0] + margin.left) + "," + (d3.event.translate[1] + margin.top) + ")");
 					}	
 					
 					function dragstarted(d) {
-					  console.log("drag started");
 					  if (useCola) {
 						d3.event.sourceEvent.stopPropagation();
-					//	d3.select(this).classed("dragging", true);
-						//force.start(0,0,1);		
-						//force.resume();
-						
 						d.fixed |= 2; // set bit 2
-			            d.px = d.x, d.py = d.y; // set velocity to zero
-			            
+			            d.px = d.x, d.py = d.y; // set velocity to zero			            
 					  }
 					  else {
 						d3.event.sourceEvent.stopPropagation();
@@ -322,26 +316,13 @@
 					  }
 					}
 
-					function dragged(d) {
-				      console.log("dragged");
-				      console.log(this);
-				      console.log(d3.event.x + "      " + d3.event.y);
-					  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
-					  force.resume();
-					}
-
 					function draggedCola(d) {
-				      console.log("draggedCola");
-				      console.log(this);
-				      console.log(d3.event.x + "      " + d3.event.y);
 				      d.px = d3.event.x, d.py = d3.event.y;               
-					  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
 					  d3.select(this).attr("transform", function(d) { return "translate(" + d3.event.x + "," + d3.event.y + ")"});
 					  force.resume();
 					}
 
 					function dragended(d) {
-					  console.log("dragended");
 					  d3.select(this).classed("dragging", false);
 					}
 					

@@ -40,3 +40,19 @@ marker#basic {
   stroke-opacity: .6;
 }
 
+.group {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: move;
+  opacity: 0.7;
+  fill: rgb(248, 203, 142);
+}
+
+.node-node {
+	fill: rgb(82, 140, 195);
+}
+
+.node-topic {
+	fill: rgb(188, 200, 218);
+}
+
