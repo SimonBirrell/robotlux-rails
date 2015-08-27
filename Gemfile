@@ -19,6 +19,7 @@ gem 'simple_form'
 gem "therubyracer"
 gem "less-rails" 
 gem "twitter-bootstrap-rails"
+gem 'jquery-ui-rails'
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
@@ -31,6 +32,7 @@ group :development do
   gem 'rb-fsevent', :require=>false
   gem 'rb-inotify', :require=>false
   gem 'spring-commands-rspec'
+  gem 'jasmine'
 end
 group :development, :test do
   gem 'factory_girl_rails'

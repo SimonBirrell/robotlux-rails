@@ -13,4 +13,6 @@ Rails.application.routes.draw do
   
   resources :users
   
+  get '/demo', to: 'home#demo'
+  
 end

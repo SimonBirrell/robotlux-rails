@@ -12,5 +12,13 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require jquery-ui/draggable
+//= require jquery-ui/droppable
 //= require d3/d3
 //= require cola/cola.js
+//= require luxclient/protocol_websockets.js
+//= require luxclient/ui.js
+//= require luxclient/ui_to_protocol.js
+//= require luxclient/machine_tree_menu.js
+//= require luxclient/topic_viewer.js
+//= require three/three.min.js

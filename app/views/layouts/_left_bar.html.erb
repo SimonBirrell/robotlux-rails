@@ -1,15 +1,15 @@
 <div class="admin-logo">
 	<div class="logo-holder pull-left">
-		<img class="logo" src="assets/piluku/example.png" alt="logo">	
+		<img class="logo" src="assets/robot-lux-logo.png" alt="logo">	
 	</div>
 	<!-- logo-holder -->			
 	<a href="#" class="menu-bar  pull-right"><i class="ti-menu"></i></a>
 </div>
 <!-- admin-logo -->
 <% if user_signed_in? %>
-<ul class="list-unstyled menu-parent" id="mainMenu">
+<ul class="list-unstyled menu-parent menu-machines" id="mainMenu">
 	<li class='current'>
-		<a href="index.html" class="current waves-effect waves-light">
+		<a href="/demo" class="current waves-effect waves-light">
 			<i class="icon ti-home"></i>
 			<span class="text ">Dashboard</span>
 		</a>
@@ -29,95 +29,6 @@
 			<li><a href="static-sidebar.html">Static Sidebar</a></li>
 		</ul>
 	</li>
-	
-	<li class="submenu">
-		<a class="waves-effect waves-light" href="#menu_levels">
-			<i class="icon ti-layout-list-thumb"></i>
-			<span class="text">Launch Scripts</span>
-			<i class="chevron ti-angle-right"></i>
-		</a>
-		<ul class="list-unstyled" id="menu_levels">
-			<li class="submenu">
-				<a class="waves-effect waves-light" href="#menu_level_one">rbx1_bringup
-					<span class="pull-right drop-arrow">
-						<i class="drop-indicator ti-angle-right chevron"></i>
-					</span>
-				</a>
-				<ul class="list-unstyled" id="menu_level_one">
-					<li><a href="#">calibrate</a></li>
-					<li><a href="#">odom_ekf</a></li>
-					<li><a href="#">depthimage_to_laserscan</a></li>
-					<li><a href="#">openni_driver</a></li>
-					<li><a href="#">fake_my_robot</a></li>
-					<li><a href="#">fake_pi_robot</a></li>
-					<li><a href="#">turtlebot_dashboard_create</a></li>
-					<li><a href="#">fake_turtlebot</a></li>
-					<li><a href="#">turtlebot_fake_laser_freenect</a></li>
-					<li><a href="#">fake_turtlebot_with_head</a></li>
-					<li><a href="#">turtlebot_fake_laser_openni2</a></li>
-					<li><a href="#">hokuyo</a></li>
-					<li><a href="#">turtlebot_kinect</a></li>
-					<li><a href="#">turtlebot_minimal_create</a></li>
-				</ul>
-			</li>
-			<li><a href="#">pibot</a></li>
-			<li><a href="#">ros_tutorial</a></li>
-		</ul>
-	</li>
-	
-	<li class="submenu">
-		<a class="waves-effect waves-light" href="#menu_levels">
-			<i class="icon ti-layout-list-thumb"></i>
-			<span class="text">Nodes</span>
-			<i class="chevron ti-angle-right"></i>
-		</a>
-		<ul class="list-unstyled" id="menu_levels">
-			<li class="submenu">
-				<a class="waves-effect waves-light" href="#menu_level_one">rbx1_bringup
-					<span class="pull-right drop-arrow">
-						<i class="drop-indicator ti-angle-right chevron"></i>
-					</span>
-				</a>
-				<ul class="list-unstyled" id="menu_level_one">
-					<li><a href="#">move_fake_pi_arm_start</a></li>
-					<li><a href="#">odom_ekf</a></li>
-					<li><a href="#">dynamixel_joint_state_publisher</a></li>
-					<li><a href="#">head_tracker</a></li>
-					<li><a href="#">fake_wheels_pub</a></li>
-					<li><a href="#">relax_all_servos</a></li>
-					<li><a href="#">talkback</a></li>
-					<li><a href="#">arbotix</a></li>
-					<li><a href="#">voice_nav</a></li>
-					<li><a href="#">camshift</a></li>
-				</ul>
-			</li>
-			<li><a href="#">pibot</a></li>
-			<li><a href="#">ros_tutorial</a></li>
-		</ul>
-	</li>
-	
-	<li class="submenu">
-		<a class="waves-effect waves-light" href="#menu_levels">
-			<i class="icon ti-layout-list-thumb"></i>
-			<span class="text">Publishers</span>
-			<i class="chevron ti-angle-right"></i>
-		</a>
-		<ul class="list-unstyled" id="menu_levels">
-			<li class="submenu">
-				<a class="waves-effect waves-light" href="#menu_level_one">turtlebot
-					<span class="pull-right drop-arrow">
-						<i class="drop-indicator ti-angle-right chevron"></i>
-					</span>
-				</a>
-				<ul class="list-unstyled" id="menu_level_one">
-					<li><a href="#">circle_round</a></li>
-					<li><a href="#">search</a></li>
-					<li><a href="#">explore</a></li>
-				</ul>
-			</li>
-			<li><a href="#">pibot</a></li>
-			<li><a href="#">ros_tutorial</a></li>
-		</ul>
-	</li>	
+		
 </ul>
 <% end %>

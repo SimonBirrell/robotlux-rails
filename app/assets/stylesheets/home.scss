@@ -2,6 +2,76 @@
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
+/*
+body {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+          pointer-events: none;
+
+}
+
+.wrapper, .main-content, #luxrow, #luxcol {
+     pointer-events: none;
+
+}
+
+#content {
+    background-color: rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+}
+
+#luxpanel {
+    background-color: rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+
+    //opacity: 0.99;
+} 
+
+#luxframe {
+  //z-index: 1000;
+  //position: relative;
+  background-color: transparent;
+  background-image: url('/assets/1x1-transparent.png');
+  pointer-events: none;
+
+  //background-color: rgba(255, 255, 255, 0.5);
+  //opacity: 0.5;
+}
+
+#robotlux {
+  position: relative;
+  z-index: -1;
+        pointer-events: none;
+
+}
+
+*/
+
+#canvas-layer {
+  position: relative;
+  z-index: 6;
+}
+
+#luxwindow-2d {
+  position: relative;
+  z-index: 5;
+}
+
+.panel-body {
+  //position: relative;
+  //z-index: -1000;
+}
+
+svg {
+  //z-index: -20;
+}
+
+
+.topic-canvas {
+  background-color: transparent;
+  position: absolute;
+  z-index: -1;
+}
+
 .node {
   stroke: #fff;
   stroke-width: 1.5px;
@@ -13,11 +83,39 @@
   stroke-width: 1px;
 }
 
+.nodetopic-label {
+  stroke: #888;
+  font-family: "Helvetica";
+  stroke-width: 1px;
+  text-anchor: middle;
+  alignment-baseline: middle;
+}
+
+.nodetopic-label-active:hover {
+  stroke: rgb(82, 140, 195);
+}
+
+.topic-display {
+  stroke: rgb(82, 140, 195);
+  font-family: "Helvetica";
+  stroke-width: 1px;
+}
+
 .link-base {
 
 }
 
 .link {
+  stroke: #999;
+  stroke-opacity: .6;
+  stroke-dasharray: 10,10;
+  stroke-dashoffset: 0;
+  -webkit-animation: webkitdash 5s infinite linear;
+  animation: dash 5s infinite linear;
+}
+
+.linkPath {
+  fill: none;
   stroke: #999;
   stroke-opacity: .6;
   stroke-dasharray: 10,10;
@@ -52,7 +150,27 @@ marker#basic {
 	fill: rgb(82, 140, 195);
 }
 
+.node-pileOfNodes {
+  fill: rgb(82, 140, 195);
+}
+
 .node-topic {
 	fill: rgb(188, 200, 218);
 }
+
+.node-pileOfTopics {
+  fill: rgb(188, 200, 218);
+}
+
+.kill-icon:hover {
+  cursor: pointer;
+  stroke: red;
+}
+
+.node-dummy {
+  display: none;
+}
+
+
+
 
