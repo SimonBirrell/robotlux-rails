@@ -208,7 +208,6 @@ var LuxUi = (function() {
                 							break;
               							}
             						}
-            						console.log(found);
             						if (!found) {
             							deleteNode(nodeName);
             						}
@@ -358,16 +357,8 @@ var LuxUi = (function() {
 						connectLinks();
 
 						// TODO Restore and remove from Protocol layer
-						console.log("1");
-						console.log(uiGraph.nodes);
-						console.log(uiGraph.links);
-
-						removeOrphanedTopics();
-						console.log("2");
-						console.log(uiGraph.nodes);
-						console.log(uiGraph.links);
-						
 						hideQuietNodes();
+						removeOrphanedTopics();
 						
 						// Collapse nodes into piles where necessary
 						collapsePiles();
@@ -911,20 +902,11 @@ var LuxUi = (function() {
 					}
  
 					function createGroupsOnGraph(graph) {
-						console.log("**************** createGroupsOnGraph");
-						console.log(graph);
-						console.log("FUll Graph");
-						console.log(module.getUiFullGraph());
 						// Add groups from hostname definitions in the nodes
 						graph.groups = []
 						for (var i=0; i<graph.nodes.length; i++) {
 							var node = graph.nodes[i];
- 								console.log("Checking node");
-								console.log(node);
 							if ((node.data)&&('hostname' in node['data'])) {
-
- 								console.log("Data & hostname");
-								console.log(node);
 								var hostname = node['data']['hostname'],
 									targetGroup = -1;
 								if ((node.rtype==='node')||(node.rtype==='pileOfNodes')) {
@@ -943,7 +925,6 @@ var LuxUi = (function() {
 								}	
 							}	
 						}	
-						console.log("passed for loop");
 
 						// Add groups that currently have no nodes
 						for (var i=0; i<graph.machines.length; i++) {
@@ -1033,10 +1014,7 @@ var LuxUi = (function() {
 							node['size'] = 0;
 							setNodeAttributes(node);
 							if (node.rtype==='topic') {
-								console.log("uiGraphAdduiGraphAdduiGraphAdduiGraphAdduiGraphAdd");
-								console.log(node.name);
 								node.viewer = new TopicViewer.TopicViewer(node);
-								console.log(node);
 							}
 
 							uiFullGraph.nodes.push(node);
@@ -1259,7 +1237,6 @@ var LuxUi = (function() {
 					};
  
 					function collapsePiles() {
-						console.log("collapsePiles()");
 						for (var p=0; p<PilePoints.length; p++) {
 							var pileLevel = PilePoints[p][0],
 								targetNodeName = PilePoints[p][1],
