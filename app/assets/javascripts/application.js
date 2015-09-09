@@ -23,3 +23,5 @@
 //= require luxclient/topic_viewer.js
 //= require three/three.min.js
 //= require keydrown/keydrown.js
+//= require piluku/lockscreen.js
+
