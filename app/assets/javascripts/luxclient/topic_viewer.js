@@ -5,14 +5,16 @@ var TopicViewer = (function() {
     	var D3 = null,
     		Svg = null,
     		Margin = null,
-    		CircleRadius = null;
+    		CircleRadius = null,
+            Renderer = null;
 
         //var VIEWS = ['Generic', 'Two3DGraphs', 'Test3DView'];
-        var VIEWS = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView'];
+        var VIEWS = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
         var ViewsAvailable = {
-            "tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView']
+            "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
+            "tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
             //"tf2_msgs/TFMessage" : ['Two3DGraphs', 'Test3DView']
         };
 
@@ -60,48 +62,70 @@ var TopicViewer = (function() {
 
     	module.TopicViewer = function(topicNode) {
     		this.topicNode = topicNode;
-    		this.messageType = topicNode['message_type'];
+    		this.messageType = (topicNode.data) ? topicNode.data.type : "";
     		this.numberOfViews = NUMBER_GENERIC_VIEWS;
             this.currentView = null;
             this.nextView = null;
+            this.viewsSetUp = false;
 
+            console.log(topicNode.name + " -> " + this.messageType);
 			setUpViews(this);
     	};
 
-    	function setUpViews(self) {
-    		self.views = [];
-    		//var genericView = new TopicViewer['Generic']();
-            var genericView = TopicViewer['genericTopicView']();
-    		self.views.push(genericView);
+    	function setUpViews(that) {
+            var viewSpec;
+            if ((!that.viewsSetUp)&&(that.messageType)) {
+                that.views = [];
+                viewSpec = {node: that.topicNode};
+                var genericView = TopicViewer['genericTopicView'](viewSpec);
+                that.views.push(genericView);
 
-            var availableViews = [];
-    		if (self.messageType in ViewsAvailable) {
-    			availableViews = ViewsAvailable[self.messageType];
-    			for (var i=0; i<availableViews.length; i++) {
-    				//var view = new TopicViewer[availableViews[i]]();
-                    // Call constructor
-                    var view = TopicViewer[availableViews[i]]();
-    				self.views.push(view);
-    			}
-    		} else {
-    			console.log("UNKNOWN TOPIC TYPE: " + self.messageType);
-    		}
-            self.numberOfViews = NUMBER_GENERIC_VIEWS + availableViews.length;
-            self.currentViewIndex = self.views.length -1;
-            self.nextViewIndex = 0;
-            setViewsFromIndexes(self);
+                var availableViews = [];
+                if (that.messageType in ViewsAvailable) {
+                    availableViews = ViewsAvailable[that.messageType];
+                    for (var i=0; i<availableViews.length; i++) {
+                        // Call constructor (no 'new')
+                        var view = TopicViewer[availableViews[i]](viewSpec);
+                        that.views.push(view);
+                    }
+                } else {
+                    console.log("UNKNOWN TOPIC TYPE: " + that.messageType);
+                }
+                that.numberOfViews = NUMBER_GENERIC_VIEWS + availableViews.length;
+                that.currentViewIndex = that.views.length -1;
+                that.nextViewIndex = 0;
+                setViewsFromIndexes(that);
+                that.viewsSetUp = true;
+            }
     	}
 
         module.TopicViewer.prototype.rotateViewLeft = function() {
-            return rotateView(this, -1);
+            if (this.currentView) {
+                return rotateView(this, -1);
+            }
+            console.log("WARNING: Can't rotate left a view that isn't set up");
+            console.log(this);
         };
 
         module.TopicViewer.prototype.rotateViewRight = function() {
-            return rotateView(this, +1);
+            if (this.currentView) {
+                return rotateView(this, +1);
+            }    
+            console.log("WARNING: Can't rotate right a view that isn't set up");
         };
 
         module.TopicViewer.prototype.update = function(node) {
-            node.currentView.update(node);
+            if (this.currentView) {
+                this.currentView.update(node);
+            } else {
+                setUpViews(this);  
+            }
+        };
+
+        module.TopicViewer.prototype.animateAndRender = function() {
+            if (this.currentView) {
+                this.currentView.animateAndRender();
+            }
         }
 
         function rotateView(self, offset) {
@@ -158,11 +182,10 @@ var TopicViewer = (function() {
         }
 
         function nodeTopicsWithCurrentViewType(uiGraph, viewType) {
-            console.log("CURRENT VIEW");
-            console.log(uiGraph.nodes);
             return uiGraph.nodes.filter(function(node){
-                                            return  ((node.rtype==='topic')
-                                                     &&
+                                            return  ((node.rtype==='topic') &&
+                                                     (node.viewer) &&
+                                                     (node.viewer.currentView) &&
                                                      (node.viewer.currentView.viewType===viewType)
                                                     );
                                             });
@@ -171,6 +194,58 @@ var TopicViewer = (function() {
         function topicName(d) {
             return d.name;
         }
+
+        function getVelocitiesFromMessage(message) {
+            var linear, angular,
+                linearX = 0.0, linearY = 0.0, linearZ = 0.0,
+                angularX = 0.0, angularY = 0.0, angularZ = 0.0;
+
+            if (message) {
+                angular = message.angular;
+                linear = message.linear;
+                if (linear) {
+                    linearX = linear.x || 0.0;
+                    linearY = linear.y || 0.0;
+                    linearZ = linear.z || 0.0;
+                }
+                if (angular) {
+                    angularX = angular.x || 0.0;
+                    angularY = angular.y || 0.0;
+                    angularZ = angular.z || 0.0;
+                }
+            }    
+
+            return {
+                linear: {x: linearX, y: linearY, z: linearZ},
+                angular: {x: angularX, y: angularY, z: angularZ}
+            };
+        }
+
+        function twoDecimalPlaces(number) {
+            return Number(number).toFixed(2);
+        }
+
+        function keyPressedForNodeUp(node) {
+            return kd.K.isDown();
+        }
+
+        function keyPressedForNodeDown(node) {
+            return kd.M.isDown();
+        }
+
+        function keyPressedForNodeLeft(node) {
+            return kd.Z.isDown();
+        }
+
+        function keyPressedForNodeRight(node) {
+            return kd.X.isDown();
+        }
+
+        // TODO: Make this a full copy
+        function copyUpdateToNode(updateNode, targetNode) {
+            targetNode.data = updateNode.data;
+        }
+
 
         // ===================================================== 
         //
@@ -184,7 +259,7 @@ var TopicViewer = (function() {
         //  where spec is a hash of options for the creation of the topicView
         //
         //  2. Each topicView has an "instance method" called update(), called
-        // whenever an update is received from the server.
+        //  whenever an update is received from the server.
         //
         //  3. Each topicView type has a render() method that renders all the topicViews
         //  of that type in the uiGraph. This is sort of like a class method.
@@ -229,6 +304,16 @@ var TopicViewer = (function() {
             };
             that.update = update;
 
+            var animateAndRender = function() {
+            };
+            that.animateAndRender = animateAndRender;
+
+            var textLine = function(d, index) {
+                var messageType = d.data.type || "Generic View";
+                return ((index===0)) ? messageType : " ";
+            };
+            that.textLine = textLine;
+
             return that;            
         };
 
@@ -244,24 +329,22 @@ var TopicViewer = (function() {
                     
                     if ((d.nodeFormat==='large')&&
                             (d.rtype==='topic')&&
-                            (d.viewer.currentView.viewType==="genericTopicView")) {
+                            ((d.viewer.currentView.viewType==="genericTopicView") || (d.viewer.currentView.viewType==="diffRobotControlTopicView"))
+                            ) {
                         var list = [];
                         for (var i=0; i<NUMBER_TOPIC_DISPLAY_TEXT_LINES; i++) {
-                            list.push({name: d.name, index: i, message_type: d.message_type});
+                            list.push({name: d.name, index: i, message_type: d.message_type, node: d});
                         }
                         return list; 
                     }
 
                     return [];
-                });
+                })
+                ;
 
             topicDisplay.enter()
                 .append("text")
                     .attr("opacity", 0.0)
-                    .text(function(d) {
-                        var messageType = d['message_type'] || "Generic View";
-                        return ((d.index===0)) ? messageType : " ";
-                    })
                     .attr("class", "topic-display")
                     .attr("id", function(d) {
                         return topicNameToId(d.name, d.index);
@@ -276,11 +359,23 @@ var TopicViewer = (function() {
                         return TOPIC_DISPLAY_TOP + d.index * TOPIC_DISPLAY_TEXT_HEIGHT;
                     });
 
+            topicDisplay
+                    .text(function(d) {
+                        var textLine = d.node.viewer.currentView.textLine(d.node, d.index);
+                        return textLine;
+                    })
+    
+
             topicDisplay.exit().remove();   
         };
 
         module.genericTopicView.tick = function() {
         };
+
+        module.genericTopicView.animateAndRender = function() {
+            console.log("NEW genericTopicView.animateAndRender");
+        };
+
 
         // ==================== ThreeDTopicView ================ 
 
@@ -303,40 +398,48 @@ var TopicViewer = (function() {
         module.threeDTopicView = function(spec, my) {
             var my = my || {};
             var that = topicView(spec, my);
-            var scene, camera, renderer;
 
             var setScene = function(canvas, renderWidth, renderHeight) {
 
                 function init() {
+                    console.log("3D init()");
+                    that.scene = new THREE.Scene();
 
-                    if(!scene) {
-                        scene = new THREE.Scene();
+                    that.camera = new THREE.PerspectiveCamera( 30, renderWidth / renderHeight, 1, 10000 );
+                    that.camera.position.z = 1000;
 
-                        camera = new THREE.PerspectiveCamera( 30, renderWidth / renderHeight, 1, 10000 );
-                        camera.position.z = 1000;
+                    that.buildScene(that.scene, that.camera);
 
-                        that.buildScene(scene, camera);
-
-                        renderer = new THREE.WebGLRenderer({canvas: canvas});
-                    }
-                    renderer.setSize( renderWidth, renderHeight );
+                    that.renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
+                    that.renderer.setSize( renderWidth, renderHeight );
+                    that.renderer.setClearColor( 0xbcc8da, 0 );
                 }
 
                 function animate() {
                     requestAnimationFrame( animate );
                     that.animate();
-                    renderer.render( scene, camera );
+                    that.renderer.render( that.scene, that.camera );
                 }
 
                 init();
-                animate();
 
             }
             that.setScene = setScene;
 
-            var update = function() {
-            }
+            var update = function(node) {
+                copyUpdateToNode(node, spec.node)
+            };
             that.update = update;
+
+            var render3D = function() {
+                that.renderer.render( that.scene, that.camera );
+            };
+            that.render3D = render3D;
+
+            var setTopicWindowSize = function(canvas, renderWidth, renderHeight) {
+                that.renderer.setSize( renderWidth, renderHeight );
+            };
+            that.setTopicWindowSize = setTopicWindowSize;
 
             return that;            
         };
@@ -353,43 +456,69 @@ var TopicViewer = (function() {
                 .attr("id", function(d) {console.log("Adding canvas " + viewType);return "canvas-id";})
                 .classed("topic-canvas-" + viewType + " topic-canvas", true)
                 .attr("opacity", 0.0)
-               ;
-
-            topicCanvas
-                .transition()
-                .duration(SHRINK_DURATION)
                 .attr("targetSize", function(d) {
                     var targetSize = canvasWidth(d);
                     d.targetSize = targetSize;
                     d.viewer.currentView.setScene(this, targetSize, targetSize);
                     return targetSize;
                 })    
+               ;
+
+            topicCanvas
+                .attr("dummy", function(d) {
+                    if (typeof d.targetSize === 'undefined') {
+                        d.targetSize = canvasWidth(d);
+                    }
+                    d.viewer.currentView.setTopicWindowSize(this, d.targetSize, d.targetSize);
+                    return d.targetSize;
+                })    
+                .transition()
+                .attr("targetSize", function(d) {
+                    var targetSize = canvasWidth(d);
+                    d.viewer.currentView.setTopicWindowSize(this, targetSize, targetSize);
+                    return targetSize;
+                })    
+                .duration(SHRINK_DURATION)
                 .attr("width", function(d) {return d.targetSize;})
                 .attr("height", function(d) {return d.targetSize;})
+                .tween("scaleCanvas", function(d, i) {
+                    console.log(d);
+                    var targetSize = d.targetSize,
+                        startSize = 0;                        
+                    console.log("START VALUES: " + startSize + " " + d.targetSize);    
+                    return function(t) {
+                        var currentSize = startSize + (targetSize - startSize) * t;
+                        console.log(currentSize);
+                        d.viewer.currentView.setTopicWindowSize(this, currentSize, currentSize);
+                    };
+                })
                 ;
 
             topicCanvas.exit().remove(); 
 
             module.threeDTopicView.topicCanvas = topicCanvas;
+            module.threeDTopicView.uiGraph = uiGraph;
+            module.threeDTopicView.canvasLayer = D3.select("#canvas-layer");
         };
 
-        module.threeDTopicView.tick = function() {
-            module.threeDTopicView.topicCanvas
-                .attr("style", function(d) {
-                    var position = getCanvasPosition(d),
-                    x = position[0],
-                    y = position[1];
-                    
-                    return "top:" + y.toString() + "px; left:" + x.toString() + "px;";
-                })
-                .attr("width", function(d) {
-                    var currentSize = D3.select(this).attr("targetSize");
-                    return currentSize;
-                })
-                .attr("height", function(d) {
-                    var currentSize = D3.select(this).attr("targetSize");
-                    return currentSize;
-                })
+        module.threeDTopicView.tick = function(viewType) {
+            module.threeDTopicView.canvasLayer
+                .selectAll(".topic-canvas-" + viewType)
+                .data(nodeTopicsWithCurrentViewType(module.threeDTopicView.uiGraph, viewType), topicName)
+                    .attr("style", function(d) {
+                        var position = getCanvasPosition(d),
+                        x = position[0],
+                        y = position[1];
+                        return "top:" + y.toString() + "px; left:" + x.toString() + "px;";
+                    })
+                    .attr("width", function(d) {
+                        var currentSize = D3.select(this).attr("targetSize");
+                        return currentSize;
+                    })
+                    .attr("height", function(d) {
+                        var currentSize = D3.select(this).attr("targetSize");
+                        return currentSize;
+                    })
                 ;
         };
 
@@ -403,14 +532,27 @@ var TopicViewer = (function() {
 
             var geometry = null,
                 material = null,
-                mesh = null;
+                mesh = null,
+                light = null;
 
             var buildScene = function(scene, camera) {
                 geometry = new THREE.BoxGeometry( 200, 200, 200 );
-                material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
-
+                //material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+                material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
                 mesh = new THREE.Mesh( geometry, material );
                 scene.add(mesh);
+
+                light = new THREE.PointLight( 0xffffff, 5, 600 );
+                light.position.x = 300;
+                light.position.y = 300;
+                light.position.z = -100;
+                scene.add(light);
+                var light2 = new THREE.PointLight( 0xffffff, 10, 600 );
+                light2.position.x = -300;
+                light2.position.y = -300;
+                light2.position.z = 300;
+                scene.add(light2);
+
             };
             that.buildScene = buildScene;
 
@@ -420,15 +562,23 @@ var TopicViewer = (function() {
             };
             that.animate = animate;
 
+            var animateAndRender = function() {
+                //console.log("NEW test3DTopicView.animateAndRender");
+                animate();
+                that.render3D();
+            };
+            that.animateAndRender = animateAndRender;
+
             return that;            
         };
 
         module.test3DTopicView.render = function(selection, uiGraph) {
+            console.log("test3DTopicView.render");
             module.threeDTopicView.render(selection, uiGraph, "test3DTopicView");
         };
 
         module.test3DTopicView.tick = function() {
-            module.threeDTopicView.tick();
+            module.threeDTopicView.tick("test3DTopicView");
         };
 
        // ==================== Two3DGraphsTopicView ================ 
@@ -481,12 +631,20 @@ var TopicViewer = (function() {
             that.buildScene = buildScene;
 
             var animate = function() {
+
                 //mesh.rotation.x += 0.01;
                 //mesh.rotation.y += 0.02;
 
                 //  controls.update();                
             }
             that.animate = animate;
+
+            var animateAndRender = function() {
+                //console.log("NEW two3DGraphsTopicView.animateAndRender");
+                console.log(spec.node.data);
+                that.render3D();
+            };
+            that.animateAndRender = animateAndRender;
 
             return that;            
         }
@@ -496,10 +654,274 @@ var TopicViewer = (function() {
         };
 
         module.two3DGraphsTopicView.tick = function() {
-            module.threeDTopicView.tick();
+            module.threeDTopicView.tick("two3DGraphsTopicView");
         };
 
+        // ==================== DiffRobotControlTopicView ================ 
 
+        var ARROW_CONTROL_COLOR_HIGHLIGHT = 0x00ff00;
+        var ARROW_CONTROL_COLOR_NORMAL = 0xffff00;
+            var START_LINEAR_VELOCITY = 0.5,
+                MAX_LINEAR_VELOCITY = 2.0,
+                LINEAR_ACCELERATION = 0.75,
+                START_ANGULAR_VELOCITY = 0.1,
+                MAX_ANGULAR_VELOCITY = 0.6,
+                ANGULAR_ACCELERATION = 0.25,
+                CMD_VEL_MESSAGE_FREQUENCY = 10;
+
+        function interactiveArrow(circle, x, y) {
+            console.log("Create arrow");
+            var dir = new THREE.Vector3(x, y, 0.0),
+                origin = new THREE.Vector3( 0.0, 0.0, 0.0 ),
+                length = 0.5,
+                color = ARROW_CONTROL_COLOR_NORMAL,
+                headLength = 0.1,
+                headWidth = 0.1,
+                arrow = new THREE.ArrowHelper(dir, origin, length, color, headLength, headWidth);
+
+            arrow.position.z = 0.02;
+            circle.add(arrow);
+
+            return arrow;
+        }
+
+        module.diffRobotControlTopicView = function(spec, my) {
+            var viewType = "diffRobotControlTopicView";
+            var my = my || {};
+            my.viewType = my.viewType || viewType;
+            var that = module.threeDTopicView(spec, my);
+            var lastTimestamp = null;
+            var linearVelocity = 0.0,
+                angularVelocity = 0.0,
+                lastVelocities = {linear: {x:0, y:0, z:0}, angular: {x:0, y:0, z:0}};
+
+            var buildScene = function(scene, camera) {
+                console.log("diffRobotControlTopicView.buildScene()")
+                var grid, light;
+
+                that.base = new THREE.Object3D();
+                that.base.add(camera);
+                that.base.rosPosition = {x: 0.0, y: 0.0, z: 0.1};
+                that.base.rosRotation = {x: 0.0, y: 0.0, z: 0.0};
+
+                // Camera
+                that.camera = camera;
+                that.camera.rotation.x = - Math.PI / 15;
+                that.camera.position.set(0.0, 0.6, 2.0);
+
+                var grid = new THREE.GridHelper (20, 1);
+                scene.add (grid);
+
+                var material = new THREE.MeshLambertMaterial({
+                    color: 0x2222ff
+                });
+
+                var radius = 0.5;
+                var segments = 32;
+
+                // Create a floating circle
+                var circleGeometry = new THREE.CircleGeometry( radius, segments );              
+                var circle = new THREE.Mesh( circleGeometry, material );
+                circle.rotation.x = - Math.PI / 2;
+
+                // Add four interactive arrows
+                that.forwardArrow = interactiveArrow(circle, 0.0, 1.0);
+                that.backwardArrow = interactiveArrow(circle, 0.0, -1.0);
+                that.leftArrow = interactiveArrow(circle, -1.0, 0.0);
+                that.rightArrow = interactiveArrow(circle, 1.0, 0.0);   
+
+                that.base.add(circle);
+
+                // Add a light to the base
+                light = new THREE.PointLight( 0xffffff, 1, 10 );
+                light.position.x = 0.5;
+                light.position.y = 0.5;
+                that.base.add(light);
+
+                scene.add(that.base);
+            }
+            that.buildScene = buildScene;
+
+            var animate = function() {
+            }
+            that.animate = animate;
+
+            function rosPositionToThreePosition(position) {
+                return {x: -position.y, y: position.z, z: -position.x};
+            }
+
+            function setPositionFromRosPosition(object3D) {
+                var pos = rosPositionToThreePosition(object3D.rosPosition),
+                    rot = rosPositionToThreePosition(object3D.rosRotation);
+                object3D.position.x = pos.x;
+                object3D.position.y = pos.y;
+                object3D.position.z = pos.z;
+                object3D.rotation.x = rot.x;
+                object3D.rotation.y = rot.y;
+                object3D.rotation.z = rot.z;
+            }
+
+            var animateAndRender = function() {
+                var node = spec.node,
+                    messageFromServer = spec.node.data.message, deltaTime, now, pos,
+                    messageForServer;
+
+                function adjustVelocityIfKeyPressed(keyPressed, arrow, velocity, direction, start_velocity, acceleration, max_velocity) {
+                    if (keyPressed(node)) {
+                        arrow.setColor(ARROW_CONTROL_COLOR_HIGHLIGHT);
+                        velocity = (velocity === 0.0) ? direction * start_velocity : velocity + (direction * acceleration * deltaTime);
+                        if ((direction > 0)&&(velocity > max_velocity)) {
+                            velocity = max_velocity;
+                        }
+                        if ((direction < 0)&&(velocity < -max_velocity)) {
+                            velocity = -max_velocity;
+                        }
+                    } else {
+                        arrow.setColor(ARROW_CONTROL_COLOR_NORMAL);                    
+                        if (((velocity > 0.0)&&(direction>0)) || ((velocity < 0.0)&&(direction<0))) {
+                            velocity = 0.0;
+                        }
+                    }   
+
+                    return velocity;
+                }
+
+                function adjustLinearVelocityIfKeyPressed(keyPressed, arrow, direction) {
+                    linearVelocity = adjustVelocityIfKeyPressed( keyPressed, arrow, 
+                                                            linearVelocity, direction, START_LINEAR_VELOCITY, 
+                                                            LINEAR_ACCELERATION, MAX_LINEAR_VELOCITY);
+                }
+
+                function adjustAngularVelocityIfKeyPressed(keyPressed, arrow, direction) {
+                    angularVelocity = adjustVelocityIfKeyPressed( keyPressed, arrow, 
+                                                            angularVelocity, direction, START_ANGULAR_VELOCITY, 
+                                                            ANGULAR_ACCELERATION, MAX_ANGULAR_VELOCITY);
+                }
+
+                // Time since last iteration
+                now = Date.now();
+                if (!lastTimestamp) {
+                    lastTimestamp = now - 10;
+                }
+                deltaTime = (now - lastTimestamp) /1000;
+
+                // Check for key presses and send message to topic if necessary
+                adjustLinearVelocityIfKeyPressed(keyPressedForNodeUp, that.forwardArrow, 1);                                            
+                adjustLinearVelocityIfKeyPressed(keyPressedForNodeDown, that.backwardArrow, -1);                                            
+                adjustAngularVelocityIfKeyPressed(keyPressedForNodeLeft, that.leftArrow, 1);                                            
+                adjustAngularVelocityIfKeyPressed(keyPressedForNodeRight, that.rightArrow, -1); 
+                messageForServer = createCmdVelMessageFromVelocities(linearVelocity, angularVelocity);
+                if ((messageForServer !== that.lastMessageSent)) { 
+                    sendRosMessageToTopicAtFrequency(node, messageForServer, CMD_VEL_MESSAGE_FREQUENCY);
+                    that.lastMessageSent = messageForServer;
+                }
+
+                // Now update the position of the puck based on velocities received from 
+                // server.
+                if (messageFromServer) {
+                    updateBasePosition(that.base, messageFromServer, deltaTime);
+                    lastTimestamp = now;
+                } 
+
+                that.render3D();
+            };
+            that.animateAndRender = animateAndRender;
+
+            function createCmdVelMessageFromVelocities(linearVelocity, angularVelocity) {
+                return {
+                    "linear": {
+                        "x": linearVelocity,
+                        "y": 0.0,
+                        "z": 0.0
+                    },
+                    "angular": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": angularVelocity
+                    }
+                }; 
+            }
+
+            function updateBasePosition(base, message, deltaTime) {
+                var distanceRosX, distanceRosY, distanceRosZ,
+                    rotationRosX, rotationRosY, rotationRosZ,
+                    linearX, linearY, linearZ, angularX, angularY, angularZ,
+                    velocities = getVelocitiesFromMessage(message);
+                linearX = velocities.linear.x;
+                linearY = velocities.linear.y;
+                linearZ = velocities.linear.z;
+                angularX = velocities.angular.x;
+                angularY = velocities.angular.y;
+                angularZ = velocities.angular.z;
+
+                distanceRosX = linearX * deltaTime;
+                distanceRosY = linearY * deltaTime;
+                distanceRosZ = linearZ * deltaTime;
+                rotationRosX = angularX * deltaTime;
+                rotationRosY = angularY * deltaTime;
+                rotationRosZ = angularZ * deltaTime;
+
+                // 3.x = -rosY  3.y = rosZ   3.z = -rosX
+                // rotate base
+                base.rotation.x += -rotationRosY;
+                base.rotation.y += rotationRosZ;
+                base.rotation.z += -rotationRosX;
+                // move in base's frame of reference
+                base.translateX(-distanceRosY);
+                base.translateY(distanceRosZ);
+                base.translateZ(-distanceRosX);
+                // stay on floor grid
+                base.position.x = (base.position.x % 5.0);
+                base.position.z = (base.position.z % 5.0);
+            }
+
+            var textLine = function(d, index) {
+                console.log("t");
+                if (index===0) {
+                    var message = d.data.message;
+                    if (message) {
+                        console.log(message);
+                        var velocities = getVelocitiesFromMessage(message);
+
+                        return "Forward Vel. " + twoDecimalPlaces(velocities.linear.x) + "    " + "Angular Vel. " + twoDecimalPlaces(velocities.angular.z);
+                    }
+                } else if (index === 1) {
+                    return "Key controls: Z X K M";
+                }
+                return "";
+            };
+            that.textLine = textLine;
+
+            return that;            
+        }
+
+        module.diffRobotControlTopicView.render = function(selection, uiGraph) {
+            module.threeDTopicView.render(selection, uiGraph, "diffRobotControlTopicView");
+        };
+
+        module.diffRobotControlTopicView.tick = function() {
+            module.threeDTopicView.tick("diffRobotControlTopicView");
+        };
+
+        function sendRosMessageToTopicAtFrequency(node, messageForServer, frequency) {
+            var now = Date.now(),
+                deltaTime;
+
+            if (node.lastMessageSent) {
+                // Subsequent messages to topic should be sent no more than specified
+                // by frequency
+                deltaTime = now - node.lastMessageSent;
+                if (deltaTime >= 1000 / frequency) {
+                    LuxUiToProtocol.sendRosTopicMessage(node.rosInstanceId, node.name, messageForServer);
+                    node.lastMessageSent = now;
+                }
+            } else {
+                // First message sent to this topic
+                LuxUiToProtocol.sendRosTopicMessage(node.rosInstanceId, node.name, messageForServer);
+                node.lastMessageSent = now;
+            }
+        }
+ 
     return module;
 
 })();

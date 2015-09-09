@@ -1,5 +1,9 @@
 describe("Topic Viewer", function() {
 
+	it("should create the correct views for a given node", function() {
+		
+	});
+
 	it("should create topic views with correct name", function() {
 		var topicView = TopicViewer.genericTopicView();
 		expect(topicView.viewType).toEqual("genericTopicView");
@@ -25,13 +29,13 @@ describe("Topic Viewer", function() {
 	describe("tf2_msgs/TFMessage", function() {
 
 		beforeEach(function() {
-			var topicNode = {message_type: 'tf2_msgs/TFMessage'};
+			var topicNode = {name: 'foo', data: {type: 'tf2_msgs/TFMessage'}};
 			topicViewer = new TopicViewer.TopicViewer(topicNode);
 		});
 
 		it("should be created with 2 views", function() {
 			expect(topicViewer.numberOfViews).toEqual(3);
-			expect(topicViewer.views.length).toEqual(3);
+			expect(topicViewer.views.length).toEqual(3); 
 			expect(topicViewer.views[0].viewType).toEqual('genericTopicView');
 			expect(topicViewer.views[1].viewType).toEqual('two3DGraphsTopicView');
 		});

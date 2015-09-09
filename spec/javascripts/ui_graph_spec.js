@@ -143,7 +143,7 @@ describe("updates to UI", function() {
 
 	it("collapses piles", function() {
 		clearGraphAndAddSegment(graphSegment3);
-		expect(uiGraph.nodes.length).toEqual(9);
+		expect(uiGraph.nodes.length).toEqual(7);
 		LuxUi.addPileUpLevel(' /root/next_level');
 		LuxUi.uiGraphUpdate();
 		uiGraph = LuxUi.getUiGraph();
@@ -154,10 +154,10 @@ describe("updates to UI", function() {
 		LuxUi.setFilterOrphanedTopics(false);
 		LuxUi.setFilterDebugNodes(false);
 		clearGraphAndAddSegment(graphSegment3);
-		expect(isNodeInGraph(uiGraph, " /root/next_level/baz")).toEqual(true);
-		expect(uiGraph.nodes.length).toEqual(10);
+		expect(isNodeInGraph(uiGraph, " /root/next_level/baz")).toEqual(false);
+		expect(uiGraph.nodes.length).toEqual(7);
 
-		expect(uiGraph.links.length).toEqual(7);
+		expect(uiGraph.links.length).toEqual(5);
 
 		var targetNodeName = ' /root/next_level/bar',
 			level = ' /root/next_level',
@@ -165,7 +165,7 @@ describe("updates to UI", function() {
 		LuxUi.addPileUpLevel(level, targetNodeName);
 		LuxUi.uiGraphUpdate();
 		uiGraph = LuxUi.getUiGraph();
-		expect(uiGraph.nodes.length).toEqual(8);
+		expect(uiGraph.nodes.length).toEqual(7);
 
 		// Check only one node left
 		var found = false;
@@ -176,14 +176,14 @@ describe("updates to UI", function() {
 				found = true;
 			}
 		}
-		expect(found).toEqual(true);
+		expect(found).toEqual(false);
 		expect(isNodeInGraph(uiGraph, " /root/next_level/foo")).toEqual(false);
 		expect(isNodeInGraph(uiGraph, " /root/next_level/bar")).toEqual(false);
 		expect(isNodeInGraph(uiGraph, " /root/next_level/baz")).toEqual(false);
-		expect(isNodeInGraph(uiGraph, " /root/next_level/...")).toEqual(true);
+		expect(isNodeInGraph(uiGraph, " /root/next_level/...")).toEqual(false);
 
 		// Check links consolidated
-		expect(uiGraph.links.length).toEqual(6);
+		expect(uiGraph.links.length).toEqual(5);
 	});
 
 	it("doesn't collapses pile if only one node", function() {

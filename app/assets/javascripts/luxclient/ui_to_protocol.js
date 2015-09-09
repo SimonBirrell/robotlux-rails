@@ -62,20 +62,22 @@ var LuxUiToProtocol = (function() {
         //console.log("message post-parse:");
         //console.log(message);    
         var mtype = message.mtype,
-            mbody = message.mbody;
+            mbody = message.mbody,
+            rosInstanceId;
         //console.log("mbody:");
         //console.log(mbody);    
         if (mtype==='rosInstanceGraph') {
             console.log("============= rosInstanceGraph ============");
             serverGraph = mbody.graph;
+            rosInstanceId = mbody.rosInstance;
             uiGraphClear();
-            uiGraphAdd(module.mbodyToUiGraph(serverGraph));
+            uiGraphAdd(module.mbodyToUiGraph(serverGraph), rosInstanceId);
         } else if (mtype==='rosInstanceGraphAdd') {
             console.log("============= rosInstanceGraphAdd ============");
             console.log(mbody);
             var update = mbody.graph;
             mergeServerGraph(update);
-            uiGraphAdd(module.mbodyToUiGraph(update));
+            uiGraphAdd(module.mbodyToUiGraph(update), rosInstanceId);
         } else if (mtype==='rosInstanceGraphUpd') {
             //console.log("============= rosInstanceGraphUpd ============");
             var update = mbody.graph;
@@ -253,6 +255,16 @@ var LuxUiToProtocol = (function() {
       var fullMachineId = hostnameToFullMachineId(hostname);
       console.log("Calling kill with " + fullMachineId + " " + pid);
       serverComm.sendMessage({mtype: 'kill', mbody: {rosmachine: fullMachineId, args: [pid]}});      
+    }
+
+    module.sendRosTopicMessage = function(rosInstanceId, rosTopic, rosMessage) {
+      serverComm.sendMessage({mtype: 'message', 
+                              mbody: {
+                                rosInstance: rosInstanceId, 
+                                topic: rosTopic, 
+                                message: rosMessage
+                              }
+                            });      
     }
 
     function hostnameToFullMachineId(hostname) {

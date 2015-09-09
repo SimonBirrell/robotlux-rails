@@ -143,6 +143,21 @@ var LuxUi = (function() {
 					// First update
 					uiGraphUpdate();
 
+					// Start animations & renderings
+					animateAndRender();
+
+					function animateAndRender() {
+                    	requestAnimationFrame(animateAndRender);
+                    	for (var i=0; i<uiGraph.nodes.length; i++) {
+                    		var node = uiGraph.nodes[i];
+                    		if (node.viewer) {
+                    			node.viewer.animateAndRender();
+                    		}
+                    	}
+                    	// Call Keydrown.js which handles keyboard state
+                    	kd.tick();
+					}
+
 					function deleteLeavesThatPointToNode(graph, indexNodeToDelete) {
 						for (var g=0; g<graph.groups.length; g++) {	
 							if (graph.groups[g].leaves) {
@@ -230,12 +245,16 @@ var LuxUi = (function() {
 						}
 					}
 
+					// TODO Clean up
 					function updateNodeOnUiGraph(uiFullGraphNode) {
 						for (var i=0; i<uiGraph.nodes.length; i++) {
+							var node = uiGraph.nodes[i];
 							if (uiGraph.nodes[i].rtype==='topic') {
-								if (uiGraph.nodes[i].name === ' ' + uiFullGraphNode.name) {
+								if (uiGraph.nodes[i].name === uiFullGraphNode.name) {
 									uiGraph.nodes[i].data = uiFullGraphNode.data;
-									uiGraph.nodes[i].viewer.currentView.update(uiGraph.nodes[i]);
+									if (uiGraph.nodes[i].viewer) {
+										uiGraph.nodes[i].viewer.update(uiGraph.nodes[i]);
+									}
 								}
 							}
 						}
@@ -254,6 +273,7 @@ var LuxUi = (function() {
 								viewer = (savedNode) ? savedNode.viewer : original.viewer,
 								data = (savedNode) ? savedNode.data : original.data,
 								dying = (savedNode) ? savedNode.dying : original.dying,
+								focus = (savedNode) ? savedNode.focus : false,
 								scaling = (savedNode) ? savedNode.scaling : original.scaling,
 								newNode = {
 									//name: (original.rtype==='topic') ? ' ' + original.name : original.name,
@@ -269,6 +289,7 @@ var LuxUi = (function() {
 									scaling: scaling,
 									dying: dying,
 									data: data,
+									focus: focus,
 								};
 
 							//copyFieldIfPresent('data', original, newNode);
@@ -356,7 +377,6 @@ var LuxUi = (function() {
 						// Connect any links on uiGraph
 						connectLinks();
 
-						// TODO Restore and remove from Protocol layer
 						hideQuietNodes();
 						removeOrphanedTopics();
 						
@@ -373,7 +393,7 @@ var LuxUi = (function() {
 					      .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
 						var node = svg.selectAll(".node")
 						  .data(uiGraph.nodes, function(d) {return d.name;});
-				
+
 						// Groups
 						var groupEnter = setUpEnteringGroups(group);
 						group.exit().remove();
@@ -436,9 +456,9 @@ var LuxUi = (function() {
 								scaling: node.scaling,
 								viewer: node.viewer,
 								data: node.data,
+								focus: node.focus,
 							};
 							SavedNodes.push(savedNode);
-							console.log(savedNode);
 						}
 					}
 
@@ -539,28 +559,9 @@ var LuxUi = (function() {
 						// New nodes - add contents of group
 						nodeEnter.append("circle")
 					        .attr("class", function(d) { return "node-" + d.rtype; })
-					        .on("dblclick", nextNodeSize );
+					        .on("dblclick", nextNodeSize)
+					        ;
 
-/*
-						nodeEnter.append("title")
-						  .text(function(d) { return d.name; });
-
-						nodeEnter.append("text")
-						  .text(function(d) { return (d.rtype!=='dummy') ? topLabel(d.name) : ""; })
-					    	.attr("alignment-baseline", "middle")
-					   		.attr("text-anchor", "middle")
-							.attr("class", function(d) {return "node-label label-top" })
-					      	.attr("x", 0)
-					      	.attr("font-size", function(d, i) {  return  "1em"; })
-					      	.attr("text-anchor", function(d, i) { if (i>0) { return  "beginning"; } else { return "end" } });
-
-						nodeEnter.append("text")
-						  .text(function(d) { return (d.rtype!=='dummy') ? bottomLabel(d.name) : ""; })
-							.attr("class", function(d) {return "node-label label-bottom" })
-					      	.attr("x", 0)
-					      	.attr("font-size", function(d, i) {  return  "1em"; })
-					      	.attr("text-anchor", function(d, i) { if (i>0) { return  "beginning"; } else { return "end" } });
-*/
 					    appendNodeLabels(nodeEnter);
 
 					    return nodeEnter;  	
@@ -703,25 +704,16 @@ var LuxUi = (function() {
 					        });
 
 						node.selectAll("circle")
+							.classed("focus", function(d) {
+								console.log("Checking focus on " +d.name);
+								console.log(d.focus);
+								return (this.parentElement.__data__.focus === true);
+
+								//return (d.focus===true);
+							})
 					   		.transition()
 					   		.duration(SHRINK_DURATION)
 					        .attr("r", function(d) {return nodeRadius(d);});
-
-/*
-					    node.selectAll(".label-top")
-					    	.attr("alignment-baseline", "middle")
-					   		.attr("text-anchor", "middle")
-					   		.transition()
-					   		.duration(SHRINK_DURATION)
-					    	.attr("y", function(d) {return nodeRadius(d) + 20});
-
-					    node.selectAll(".label-bottom")
-					    	.attr("alignment-baseline", "middle")
-					   		.attr("text-anchor", "middle")
-					   		.transition()
-					   		.duration(SHRINK_DURATION)
-					    	.attr("y", function(d) {return nodeRadius(d) + 40});
-*/
 
 					    animateSwitchIcon(node, "switch-left-icon", -1);
 					    animateSwitchIcon(node, "switch-right-icon", 1);
@@ -884,6 +876,7 @@ var LuxUi = (function() {
 						var parentDatum = this.parentElement.__data__;
 						parentDatum.size = d.size;
 						parentDatum.scaling = d.scaling;
+						captureFocus(parentDatum);
 						setNodeAttributes(d);
 						setNodeAttributes(parentDatum);
 						d3.event.stopPropagation();
@@ -896,7 +889,7 @@ var LuxUi = (function() {
 						// TODO This is a test
 						if (d.rtype==='topic') {
 							if ((d.name.length % 2)===1) {
-								d['message_type'] = 'tf2_msgs/TFMessage';
+								//d['message_type'] = 'tf2_msgs/TFMessage';
 							} 
 						}
 					}
@@ -1006,7 +999,7 @@ var LuxUi = (function() {
 					// API for protocol to call
 					////////////////////////////////////////////////////
 					
-					function uiGraphAdd(update) {
+					function uiGraphAdd(update, rosInstanceId) {
 
 						// Add nodes first
 						for (var i=0; i<update.nodes.length; i++) {
@@ -1015,6 +1008,7 @@ var LuxUi = (function() {
 							setNodeAttributes(node);
 							if (node.rtype==='topic') {
 								node.viewer = new TopicViewer.TopicViewer(node);
+								node.rosInstanceId = rosInstanceId;
 							}
 
 							uiFullGraph.nodes.push(node);
@@ -1341,6 +1335,7 @@ var LuxUi = (function() {
 							rtype: nodeToTransformIntoPile.rtype,
 							x: nodeToTransformIntoPile.x,
 							y: nodeToTransformIntoPile.y,
+							focus: nodeToTransformIntoPile.focus,
 						};
 						if (nodeToTransformIntoPile.data) {
 							summaryNode.data = nodeToTransformIntoPile.data;
@@ -1430,6 +1425,21 @@ var LuxUi = (function() {
 
 						return levelList;
 					}
+		}
+
+		// Handle focus on Nodes and Topics
+		// Double click on a node/topic captures focus
+		// TODO: Single click should capture focus too
+
+		function captureFocus(node) {
+			clearFocusOnAllNodes()
+			node.focus = true;
+		}
+
+		function clearFocusOnAllNodes() {
+			for (var i=0; i<uiGraph.nodes.length; i++) {
+				uiGraph.nodes[i].focus = false;
+			}
 		}
 
     return module;

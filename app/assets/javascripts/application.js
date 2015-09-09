@@ -22,3 +22,4 @@
 //= require luxclient/machine_tree_menu.js
 //= require luxclient/topic_viewer.js
 //= require three/three.min.js
+//= require keydrown/keydrown.js

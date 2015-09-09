@@ -90,8 +90,6 @@ describe("UI to protocol layer", function() {
 
 	});
 
-
-
 	describe("with no filter", function() {
 
 		it("adds new nodes to an existing graph", function() {

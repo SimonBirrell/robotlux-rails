@@ -70,6 +70,7 @@ svg {
   background-color: transparent;
   position: absolute;
   z-index: -1;
+  pointer-events: none;
 }
 
 .node {
@@ -101,8 +102,11 @@ svg {
   stroke-width: 1px;
 }
 
-.link-base {
+.focus {
+  stroke: rgb(0, 0, 200);  
+}
 
+.link-base {
 }
 
 .link {
