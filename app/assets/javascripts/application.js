@@ -24,4 +24,8 @@
 //= require three/three.min.js
 //= require keydrown/keydrown.js
 //= require piluku/lockscreen.js
+//= require piluku/core.js
+//= require piluku/materialize.js
+//= require piluku/widgets.js
+//= require piluku/jquery.countTo.js
 
