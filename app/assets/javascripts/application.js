@@ -24,6 +24,10 @@
 //= require three/three.min.js
 //= require keydrown/keydrown.js
 //= require piluku/lockscreen.js
+//= require piluku/jquery.nicescroll.min.js
+//= require piluku/jquery.accordion.js
+//= require piluku/wow.min.js
+//= require piluku/bic_calendar.js
 //= require piluku/core.js
 //= require piluku/materialize.js
 //= require piluku/widgets.js
