@@ -207,12 +207,12 @@ input[type="checkbox"] + label span {
   height: 19px;
   margin: -1px 4px 0 0;
   vertical-align: middle;
-  background: url(../piluku/cbr.png) left top no-repeat;
+  background: url(/assets/piluku/cbr.png) left top no-repeat;
   cursor: pointer;
   margin: 0px;
 }
 input[type="checkbox"]:checked + label span {
-  background: url(../piluku/cbr.png) -19px top no-repeat;
+  background: url(/assets/piluku/cbr.png) -19px top no-repeat;
 }
 input[type="radio"] {
   display: none;
@@ -223,12 +223,12 @@ input[type="radio"] + label span {
   height: 19px;
   margin: -1px 4px 0 0;
   vertical-align: middle;
-  background: url(../piluku/cbr.png) -38px top no-repeat;
+  background: url(/assets/piluku/cbr.png) -38px top no-repeat;
   cursor: pointer;
   margin: 0px;
 }
 input[type="radio"]:checked + label span {
-  background: url(../piluku/cbr.png) -57px top no-repeat;
+  background: url(/assets/piluku/cbr.png) -57px top no-repeat;
 }
 /**************************************************
                     File upload button
