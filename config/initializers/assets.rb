@@ -9,3 +9,15 @@ Rails.application.config.assets.version = '1.0'
 # Precompile additional assets.
 # application.js, application.css, and all non-JS/CSS in app/assets folder are already added.
 # Rails.application.config.assets.precompile += %w( search.js )
+
+Rails.application.config.assets.precompile += %w( piluku/avatar.jpg )
+Rails.application.config.assets.precompile += %w( piluku/avatar/one.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/two.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/three.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/four.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/five.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/six.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/seven.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/eight.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/nine.png )
+Rails.application.config.assets.precompile += %w( piluku/avatar/ten.png )
