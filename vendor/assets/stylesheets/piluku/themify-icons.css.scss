@@ -1,10 +1,10 @@
 @font-face {
 	font-family: 'themify';
-	src:url(/assets/piluku/themify.eot?-fvbane);
-	src:url(/assets/piluku/themify.eot?#iefix-fvbane) format('embedded-opentype'),
-		url(/assets/piluku/themify.woff?-fvbane) format('woff'),
-		url(/assets/piluku/themify.ttf?-fvbane) format('truetype'),
-		url(/assets/piluku/themify.svg?-fvbane#themify) format('svg');
+	src: url(font-path('themify.eot?-fvbane'));
+	src: url(font-path('themify.eot?#iefix-fvbane')) format('embedded-opentype'),
+		url(font-path('themify.woff?-fvbane')) format('woff'),
+		url(font-path('themify.ttf?-fvbane')) format('truetype'),
+		url(font-path('themify.svg?-fvbane#themify')) format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
