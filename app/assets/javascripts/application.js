@@ -16,6 +16,7 @@
 //= require jquery-ui/droppable
 //= require d3/d3
 //= require cola/cola.js
+//= require luxclient/lux_config.js
 //= require luxclient/protocol_websockets.js
 //= require luxclient/ui.js
 //= require luxclient/ui_to_protocol.js

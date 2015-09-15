@@ -6,7 +6,13 @@ var LuxProtocolWebsockets = (function() {
     
     module.open = function(interpretMessage) {
         if ("WebSocket" in window)  {
-            ws = new WebSocket("ws://localhost:8001/");
+            // Remote server
+            //ws = new WebSocket("ws://luxserver.herokuapp.com/");
+
+            // Local server for testing
+            //ws = new WebSocket("ws://localhost:8080/");
+
+            ws = new WebSocket(LuxConfig.socketsServer);
 
             ws.onopen = function() {
                 // Web Socket is connected, send data using send()
