@@ -381,6 +381,7 @@ var LuxUi = (function() {
 						removeOrphanedTopics();
 						
 						// Collapse nodes into piles where necessary
+						// TODO Make viewers regenerate on expand
 						collapsePiles();
 
 						// Set up groups

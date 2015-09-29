@@ -8,14 +8,13 @@ var TopicViewer = (function() {
     		CircleRadius = null,
             Renderer = null;
 
-        //var VIEWS = ['Generic', 'Two3DGraphs', 'Test3DView'];
         var VIEWS = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
         var ViewsAvailable = {
             "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
             "tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
-            //"tf2_msgs/TFMessage" : ['Two3DGraphs', 'Test3DView']
+            "sensor_msgs/Imu" : ['imuSimpleTopicView'],
         };
 
     	// "Class methods" called from UI.
@@ -488,7 +487,6 @@ var TopicViewer = (function() {
                     console.log("START VALUES: " + startSize + " " + d.targetSize);    
                     return function(t) {
                         var currentSize = startSize + (targetSize - startSize) * t;
-                        console.log(currentSize);
                         d.viewer.currentView.setTopicWindowSize(this, currentSize, currentSize);
                     };
                 })
@@ -921,7 +919,80 @@ var TopicViewer = (function() {
                 node.lastMessageSent = now;
             }
         }
- 
+
+        // ==================== ImuSimpleTopicView ================ 
+
+        module.imuSimpleTopicView = function(spec, my) {
+            var viewType = "imuSimpleTopicView";
+            var my = my || {};
+            my.viewType = my.viewType || viewType;
+            var that = module.threeDTopicView(spec, my);
+
+            var geometry = null,
+                material = null,
+                mesh = null,
+                light = null;
+
+            var buildScene = function(scene, camera) {
+                geometry = new THREE.BoxGeometry( 200, 200, 200 );
+                //material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+                material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+                mesh = new THREE.Mesh( geometry, material );
+                scene.add(mesh);
+
+                light = new THREE.PointLight( 0xffffff, 5, 600 );
+                light.position.x = 300;
+                light.position.y = 300;
+                light.position.z = -100;
+                scene.add(light);
+                var light2 = new THREE.PointLight( 0xffffff, 10, 600 );
+                light2.position.x = -300;
+                light2.position.y = -300;
+                light2.position.z = 300;
+                scene.add(light2);
+
+            };
+            that.buildScene = buildScene;
+
+            var animate = function() {
+            };
+            that.animate = animate;
+
+            var animateAndRender = function() {
+                var node = spec.node,
+                    messageFromServer = spec.node.data.message,
+                    o, orientation, rosRotateX, rosRotateY, rosRotateZ;
+
+                if (messageFromServer) {
+                    o = messageFromServer.orientation;
+                    orientation = new THREE.Quaternion(o.x, o.y, o.z, o.w);
+                    mesh.setRotationFromQuaternion(orientation);
+                    rosRotateX = mesh.rotation.x;
+                    rosRotateY = mesh.rotation.y;
+                    rosRotateZ = mesh.rotation.z;
+                    // Convert from ROS rotations to three.js rotations
+                    mesh.rotation.x = - rosRotateZ;
+                    mesh.rotation.y = - rosRotateX;
+                    mesh.rotation.z = - rosRotateY;
+                }   
+
+                //animate();
+                that.render3D();
+            };
+            that.animateAndRender = animateAndRender;
+
+            return that;            
+        };
+
+        module.test3DTopicView.render = function(selection, uiGraph) {
+            console.log("imuSimpleTopicView.render");
+            module.threeDTopicView.render(selection, uiGraph, "imuSimpleTopicView");
+        };
+
+        module.test3DTopicView.tick = function() {
+            module.threeDTopicView.tick("imuSimpleTopicView");
+        };
+
     return module;
 
 })();
