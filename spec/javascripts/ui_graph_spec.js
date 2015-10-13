@@ -1,22 +1,5 @@
 describe("updates to UI", function() {
 
-	var uiToProtocolInterpretMessage = null;
-	var dummyProtocol = {
- 		open: function(interpretMessage) {
- 			uiToProtocolInterpretMessage = interpretMessage;
-		}
-	};	
-
-	var uiGraphAddFn=null, uiGraphDelFn=null, uiGraphUpdFn=null, uiGraphClearFn=null;
-	var dummyProtocolToUiLayer = {
- 		open: function(uiGraphAdd, uiGraphDel, uiGraphUpd, uiGraphClear) {
- 			uiGraphAddFn = uiGraphAdd;
- 			uiGraphDelFn = uiGraphDel;
- 			uiGraphUpdFn = uiGraphUpd;
- 			uiGraphClearFn = uiGraphClear;
- 		}	
-	};
-
 	var graphSegment = {
 			nodes: [
 				{name: '/rosout', rtype: 'node'},
@@ -76,11 +59,6 @@ describe("updates to UI", function() {
 		};
 	}
 
-	var uiGraph=null,
-		uiFullGraph=null;
-
-	LuxUi.open(dummyProtocolToUiLayer);
-
 	beforeEach(function() {
 		LuxUi.uncollapseAllPiles();
 		resetGraph3();
@@ -89,61 +67,51 @@ describe("updates to UI", function() {
 	afterEach(function() {
 		//LuxUi.close();
 	});
-
-	function clearGraphAndAddSegment(segment) {
-		uiGraphClearFn();
-		uiFullGraph = LuxUi.getUiFullGraph();
-		expect(uiFullGraph.nodes.length).toEqual(0);
-
-		uiGraphAddFn(segment);
-		uiFullGraph = LuxUi.getUiFullGraph();
-		uiGraph = LuxUi.getUiGraph();
-	}
-
+	
 	it("should add and clear a graph with no filter", function() {
 		LuxUi.setFilterOrphanedTopics(false);
-		clearGraphAndAddSegment(graphSegment2);
-		expect(uiFullGraph.nodes.length).toEqual(4);
-		expect(uiFullGraph.links.length).toEqual(2);
+		uiTest.clearGraphAndAddSegment(graphSegment2);
+		expect(uiTest.uiFullGraph.nodes.length).toEqual(4);
+		expect(uiTest.uiFullGraph.links.length).toEqual(2);
 	});
 
 	it("filter orphans and /rosout with an orphan filter set", function() {
 		LuxUi.setFilterOrphanedTopics(true);
 		//LuxUi.setFilterDebugNodes(false);
-		clearGraphAndAddSegment(graphSegment2);
-		expect(uiFullGraph.nodes.length).toEqual(4);
-		expect(uiFullGraph.links.length).toEqual(2);
+		uiTest.clearGraphAndAddSegment(graphSegment2);
+		expect(uiTest.uiFullGraph.nodes.length).toEqual(4);
+		expect(uiTest.uiFullGraph.links.length).toEqual(2);
 		console.log(LuxUi.getFilterDebugNodes());
 		console.log("===== result");
-		console.log(uiGraph);
-		expect(uiGraph.nodes.length).toEqual(2);
-		expect(uiGraph.links.length).toEqual(1);
+		console.log(uiTest.uiGraph);
+		expect(uiTest.uiGraph.nodes.length).toEqual(2);
+		expect(uiTest.uiGraph.links.length).toEqual(1);
 	});
 
 	it("remove quiet nodes and /rosout with a quiet node filter set", function() {
 		LuxUi.setFilterOrphanedTopics(false);
 		LuxUi.setFilterDebugNodes(true);
-		clearGraphAndAddSegment(graphSegment2);
-		expect(uiFullGraph.nodes.length).toEqual(4);
-		expect(uiFullGraph.links.length).toEqual(2);
-		expect(uiGraph.nodes.length).toEqual(2);
-		expect(uiGraph.links.length).toEqual(0);
+		uiTest.clearGraphAndAddSegment(graphSegment2);
+		expect(uiTest.uiFullGraph.nodes.length).toEqual(4);
+		expect(uiTest.uiFullGraph.links.length).toEqual(2);
+		expect(uiTest.uiGraph.nodes.length).toEqual(2);
+		expect(uiTest.uiGraph.links.length).toEqual(0);
 	});
 
 	it("should delete nodes", function() {
 		LuxUi.setFilterOrphanedTopics(false);
 		LuxUi.setFilterDebugNodes(true);
-		clearGraphAndAddSegment(graphSegment2);
-		expect(uiGraph.nodes.length).toEqual(2);
-		uiGraphDelFn({nodes: ['/baz']});
+		uiTest.clearGraphAndAddSegment(graphSegment2);
+		expect(uiTest.uiGraph.nodes.length).toEqual(2);
+		uiTest.uiGraphDelFn({nodes: ['/baz']});
 		uiGraph = LuxUi.getUiGraph();
 		expect(uiGraph.nodes[1].name).toEqual("/baz");
 		expect(uiGraph.nodes[1].dying).toEqual(true);
 	});
 
 	it("collapses piles", function() {
-		clearGraphAndAddSegment(graphSegment3);
-		expect(uiGraph.nodes.length).toEqual(7);
+		uiTest.clearGraphAndAddSegment(graphSegment3);
+		expect(uiTest.uiGraph.nodes.length).toEqual(7);
 		LuxUi.addPileUpLevel(' /root/next_level');
 		LuxUi.uiGraphUpdate();
 		uiGraph = LuxUi.getUiGraph();
@@ -153,11 +121,11 @@ describe("updates to UI", function() {
 	it("collapses piles to a particular node", function() {
 		LuxUi.setFilterOrphanedTopics(false);
 		LuxUi.setFilterDebugNodes(false);
-		clearGraphAndAddSegment(graphSegment3);
-		expect(isNodeInGraph(uiGraph, " /root/next_level/baz")).toEqual(false);
-		expect(uiGraph.nodes.length).toEqual(7);
+		uiTest.clearGraphAndAddSegment(graphSegment3);
+		expect(isNodeInGraph(uiTest.uiGraph, " /root/next_level/baz")).toEqual(false);
+		expect(uiTest.uiGraph.nodes.length).toEqual(7);
 
-		expect(uiGraph.links.length).toEqual(5);
+		expect(uiTest.uiGraph.links.length).toEqual(5);
 
 		var targetNodeName = ' /root/next_level/bar',
 			level = ' /root/next_level',
@@ -191,7 +159,7 @@ describe("updates to UI", function() {
 
 		LuxUi.setFilterOrphanedTopics(false);
 		LuxUi.setFilterDebugNodes(false);
-		clearGraphAndAddSegment(graphSegment3);
+		uiTest.clearGraphAndAddSegment(graphSegment3);
 		var targetNodeName = ' /root/next_level/bar',
 			level = ' /root/next_level',
 			pileName = level + '/...';

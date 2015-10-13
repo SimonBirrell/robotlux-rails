@@ -67,14 +67,14 @@ var LuxUiToProtocol = (function() {
         //console.log("mbody:");
         //console.log(mbody);    
         if (mtype==='rosInstanceGraph') {
-            console.log("============= rosInstanceGraph ============");
+            //console.log("============= rosInstanceGraph ============");
             serverGraph = mbody.graph;
             rosInstanceId = mbody.rosInstance;
             uiGraphClear();
             uiGraphAdd(module.mbodyToUiGraph(serverGraph), rosInstanceId);
         } else if (mtype==='rosInstanceGraphAdd') {
-            console.log("============= rosInstanceGraphAdd ============");
-            console.log(mbody);
+            //console.log("============= rosInstanceGraphAdd ============");
+            //console.log(mbody);
             var update = mbody.graph;
             mergeServerGraph(update);
             uiGraphAdd(module.mbodyToUiGraph(update), rosInstanceId);
@@ -84,11 +84,11 @@ var LuxUiToProtocol = (function() {
             var nodesToUpdate = updateServerGraph(update);
             uiGraphUpd(module.mbodyToUiGraph(nodesToUpdate));
         } else if (mtype==='rosInstanceGraphDel') {
-            console.log("============= rosInstanceGraphDel ============");
+            //console.log("============= rosInstanceGraphDel ============");
             var listNodesToDelete = mbody.graph;
-            console.log(listNodesToDelete);
+            //console.log(listNodesToDelete);
             var graphSegmentToDelete = deleteFromServerGraph(listNodesToDelete);
-            console.log(graphSegmentToDelete);
+            //console.log(graphSegmentToDelete);
             uiGraphDel(graphSegmentToDelete);
         }   
     } 
@@ -131,7 +131,7 @@ var LuxUiToProtocol = (function() {
     }
     
     var serverKeyToEmptyTopic = function(serverKey) {
-        return {'name': serverKey.substring(2), 'rtype': 'topic', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0};
+        return {'name': serverKey.substring(2), 'rtype': 'topic', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0}; 
     }
 
     var serverEdgeToUiLink = function(serverEdge, edgeData) {
@@ -241,19 +241,19 @@ var LuxUiToProtocol = (function() {
 
     module.rosrun = function(hostname, packageName, runTarget) {
       var fullMachineId = hostnameToFullMachineId(hostname);
-      console.log("Calling rosrun with " + fullMachineId + " " + packageName + " " + runTarget);
+      //console.log("Calling rosrun with " + fullMachineId + " " + packageName + " " + runTarget);
       serverComm.sendMessage({mtype: 'rosrun', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
     };
 
     module.roslaunch = function(hostname, packageName, runTarget) {
       var fullMachineId = hostnameToFullMachineId(hostname);
-      console.log("Calling roslaunch with " + fullMachineId + " " + packageName + " " + runTarget);
+      //console.log("Calling roslaunch with " + fullMachineId + " " + packageName + " " + runTarget);
       serverComm.sendMessage({mtype: 'roslaunch', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
     };
 
     module.kill = function(hostname, pid) {
       var fullMachineId = hostnameToFullMachineId(hostname);
-      console.log("Calling kill with " + fullMachineId + " " + pid);
+      //console.log("Calling kill with " + fullMachineId + " " + pid);
       serverComm.sendMessage({mtype: 'kill', mbody: {rosmachine: fullMachineId, args: [pid]}});      
     }
 

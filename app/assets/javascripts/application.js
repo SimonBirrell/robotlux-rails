@@ -18,13 +18,13 @@
 //= require cola/cola.js
 //= require luxclient/lux_config.js
 //= require luxclient/protocol_websockets.js
+//= require luxclient/hash_topic_manager.js
 //= require luxclient/ui.js
 //= require luxclient/ui_to_protocol.js
 //= require luxclient/machine_tree_menu.js
 //= require luxclient/topic_viewer.js
 //= require three/three.min.js
 //= require keydrown/keydrown.js
-//= require piluku/lockscreen.js
 //= require piluku/jquery.nicescroll.min.js
 //= require piluku/jquery.accordion.js
 //= require piluku/wow.min.js

@@ -211,6 +211,9 @@ var LuxUi = (function() {
 
 					function removeOrphanedTopics() {
 						if (FilterOrphanedTopics) {
+							console.log("removeOrphanedTopics");
+							console.log(uiGraph.nodes.length);
+							console.log(uiGraph.links);
 							var i = uiGraph.nodes.length;
         					while (i--) {
           						if (uiGraph.nodes[i]['rtype']==='topic') {
@@ -224,6 +227,9 @@ var LuxUi = (function() {
               							}
             						}
             						if (!found) {
+            							console.log("DELETING " + nodeName);
+            							console.log("Links: ");
+            							console.log(uiGraph.links.length);
             							deleteNode(nodeName);
             						}
           						}
@@ -249,21 +255,32 @@ var LuxUi = (function() {
 					function updateNodeOnUiGraph(uiFullGraphNode) {
 						for (var i=0; i<uiGraph.nodes.length; i++) {
 							var node = uiGraph.nodes[i];
-							if (uiGraph.nodes[i].rtype==='topic') {
-								if (uiGraph.nodes[i].name === uiFullGraphNode.name) {
-									uiGraph.nodes[i].data = uiFullGraphNode.data;
-									if (uiGraph.nodes[i].viewer) {
-										uiGraph.nodes[i].viewer.update(uiGraph.nodes[i]);
+							if (node.rtype==='topic') {
+								if (node.name === uiFullGraphNode.name) {
+									node.data = uiFullGraphNode.data;
+									if (HashTopicManager.isAHashableTopic(node)) {
+										// The node in this case is the 'original' topic
+										// which contains pointers to the subtopics
+										//HashTopicManager.update(uiGraph, node, uiFullGraphNode.data);
+										HashTopicManager.update(uiGraph, node, node.data);
+									}
+									if (node.viewer) {
+										node.viewer.update(node);
 									}
 								}
 							}
 						}
 					}
 
+					function copyNodeFromFullGraph() {
+
+					}
+
 					function copyFromFullGraph() {
 						uiGraph = emptyGraph();
 						// Copy nodes
-						for (var i=0; i<uiFullGraph.nodes.length; i++) {
+						var i = uiFullGraph.nodes.length;
+						while (i--) {
 							var original = uiFullGraph.nodes[i],
 								savedNode = getSavedNode(original.name),
 								size = (savedNode) ? savedNode.size : original.size,
@@ -275,6 +292,10 @@ var LuxUi = (function() {
 								dying = (savedNode) ? savedNode.dying : original.dying,
 								focus = (savedNode) ? savedNode.focus : false,
 								scaling = (savedNode) ? savedNode.scaling : original.scaling,
+								hashTopicOrigin = (savedNode) ? savedNode.hashTopicOrigin : original.hashTopicOrigin,
+								hashSubTopics = (savedNode) ? savedNode.hashSubTopics : original.hashSubTopics,
+								subTopicKey = (savedNode) ? savedNode.subTopicKey : original.subTopicKey,
+								subTopicIndex = (savedNode) ? savedNode.subTopicIndex : original.subTopicIndex,
 								newNode = {
 									//name: (original.rtype==='topic') ? ' ' + original.name : original.name,
 									name: original.name,
@@ -290,6 +311,11 @@ var LuxUi = (function() {
 									dying: dying,
 									data: data,
 									focus: focus,
+									hashTopicOrigin: hashTopicOrigin,
+									hashSubTopics: hashSubTopics,
+									subTopicKey: subTopicKey,
+									subTopicIndex: subTopicIndex,
+
 								};
 
 							//copyFieldIfPresent('data', original, newNode);
@@ -298,6 +324,16 @@ var LuxUi = (function() {
 							copyFieldIfPresent('group', original, newNode);
 
 							uiGraph.nodes[i] = newNode;
+
+							if (HashTopicManager.isAHashableTopic(newNode)) {
+								console.log("Rescuing subtopics of " + newNode.name);
+								for (var h=1; h<newNode.hashSubTopics.length; h++) {
+									console.log("Rescued " + newNode.hashSubTopics[h].name);
+									uiGraph.nodes.push(newNode.hashSubTopics[h]);
+									console.log(uiGraph.nodes.length);
+								}
+								//HashTopicManager.setLinksOnSubTopics(uiGraph, newNode.hashSubTopics);
+							}
 						}
 						// Copy links
 						for (var i=0; i<uiFullGraph.links.length; i++) {
@@ -319,6 +355,9 @@ var LuxUi = (function() {
 						for (var i=0; i<uiFullGraph.machines.length; i++) {
 							uiGraph.machines[i] = uiFullGraph.machines[i];
 						}
+						console.log("********* uiGraph.nodes **********");
+						console.log(uiGraph.nodes);
+
 					}
 
 					function copyFieldIfPresent(fieldName, originalNode, newNode) {
@@ -387,6 +426,11 @@ var LuxUi = (function() {
 						// Set up groups
 						createGroupsOnGraph(uiGraph);
 
+						// Hash-style topics and groups
+						createHashTopics();
+						HashTopicManager.addStrutsToHashTopics(uiGraph);
+
+
 						// Data joins			
 						var group = svg.selectAll(".group")
 				          .data(uiGraph.groups);
@@ -442,7 +486,6 @@ var LuxUi = (function() {
 					module.uiGraphUpdate = uiGraphUpdate;
 
 					function saveCurrentNodePositions() {
-						console.log("saveCurrentNodePositions");
 						var node, savedNode;
 						SavedNodes = [];
 						for (var i=0; i<uiGraph.nodes.length; i++) {
@@ -458,6 +501,10 @@ var LuxUi = (function() {
 								viewer: node.viewer,
 								data: node.data,
 								focus: node.focus,
+								hashTopicOrigin: node.hashTopicOrigin,
+								hashSubTopics: node.hashSubTopics,
+								subTopicKey: node.subTopicKey,
+								subTopicIndex: node.subTopicIndex,
 							};
 							SavedNodes.push(savedNode);
 						}
@@ -706,8 +753,8 @@ var LuxUi = (function() {
 
 						node.selectAll("circle")
 							.classed("focus", function(d) {
-								console.log("Checking focus on " +d.name);
-								console.log(d.focus);
+								//console.log("Checking focus on " +d.name);
+								//console.log(d.focus);
 								return (this.parentElement.__data__.focus === true);
 
 								//return (d.focus===true);
@@ -995,6 +1042,18 @@ var LuxUi = (function() {
 					function dragended(d) {
 					  d3.select(this).classed("dragging", false);
 					}
+
+					var setUpNewNode = function(node, rosInstanceId) {
+						node['size'] = 0;
+						setNodeAttributes(node);
+						if (node.rtype==='topic') {
+							node.viewer = new TopicViewer.TopicViewer(node);
+							if (rosInstanceId) {
+								node.rosInstanceId = rosInstanceId;
+							}
+						}
+					}
+					module.setUpNewNode = setUpNewNode;
 					
 					////////////////////////////////////////////////////
 					// API for protocol to call
@@ -1005,13 +1064,7 @@ var LuxUi = (function() {
 						// Add nodes first
 						for (var i=0; i<update.nodes.length; i++) {
 							var node = update.nodes[i];
-							node['size'] = 0;
-							setNodeAttributes(node);
-							if (node.rtype==='topic') {
-								node.viewer = new TopicViewer.TopicViewer(node);
-								node.rosInstanceId = rosInstanceId;
-							}
-
+							setUpNewNode(node, rosInstanceId);
 							uiFullGraph.nodes.push(node);
 							addToNameSpaceTree(node);
 						}
@@ -1074,6 +1127,7 @@ var LuxUi = (function() {
 							var node = update.nodes[i];
 							setNodeAttributes(node);
 							for (var j=0; j<uiFullGraph.nodes.length; j++) {
+								var uiFullGraphNode = uiFullGraph.nodes[j];
 								if (uiFullGraph.nodes[j].name === node.name) {
 									uiFullGraph.nodes[j] = node;
 									updateNodeOnUiGraph(uiFullGraph.nodes[j]);
@@ -1442,6 +1496,37 @@ var LuxUi = (function() {
 				uiGraph.nodes[i].focus = false;
 			}
 		}
+
+
+		// Hash Topics
+		function createHashTopics() {
+			var node, additionalNodes, hashTopicGroup;
+			
+			for (var i=0; i<uiGraph.nodes.length; i++) {
+				node = uiGraph.nodes[i];
+				if (HashTopicManager.isAHashableTopic(node)) {
+					
+					for (var s=0; s<node.hashSubTopics.length; s++) {
+						var name = node.hashSubTopics[s].name;
+						console.log("Searching for subtopic " + s.toString() + " " + name);
+						for (var t=0; t<uiGraph.nodes.length; t++) {
+							var targetNode = uiGraph.nodes[t];
+							console.log(">> " + targetNode.name);
+							if ((targetNode.name) && (targetNode.name === name)) {
+								console.log("LINKED " + s.toString() + " " + name);
+								node.hashSubTopics[s] = targetNode;
+								break;
+							}
+						}
+					}
+					
+					hashTopicGroup = HashTopicManager.createGroup(node, additionalNodes, uiGraph);
+					uiGraph.groups.push(hashTopicGroup);
+				}
+			}
+			//HashTopicManager.addStrutsToHashTopics(uiGraph);
+		}
+		
 
     return module;
 })();

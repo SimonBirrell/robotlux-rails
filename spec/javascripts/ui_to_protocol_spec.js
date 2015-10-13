@@ -201,7 +201,6 @@ describe("UI to protocol layer", function() {
 
 			// Check nodes passed to UI
 			nodesToDelete = dummyUiGraphDel.calls.argsFor(0)[0];
-			console.log(nodesToDelete.links);
 			expect(nodesToDelete).toEqual({nodes: ['/map_server',' /map'], 
 												links: [
 													{sourceName: '/fake_localization', targetName: ' /tf'}

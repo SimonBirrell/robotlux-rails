@@ -14,7 +14,7 @@ describe("Topic Viewer", function() {
 		var topicView = TopicViewer.two3DGraphsTopicView();
 		expect(topicView.viewType).toEqual("two3DGraphsTopicView");
 
-	});
+	}); 
 
 	it("generic topic should be created with default view", function() {
 		var topicNode = {size: 3};
@@ -26,14 +26,14 @@ describe("Topic Viewer", function() {
 		expect(topicViewer.size()).toEqual(3);
 	});
 
-	describe("tf2_msgs/TFMessage", function() {
+	describe("sensor_msgs/foo", function() {
 
-		beforeEach(function() {
-			var topicNode = {name: 'foo', data: {type: 'tf2_msgs/TFMessage'}};
+		beforeEach(function() { 
+			var topicNode = {name: 'foo', data: {type: 'sensor_msgs/foo'}};
 			topicViewer = new TopicViewer.TopicViewer(topicNode);
 		});
 
-		it("should be created with 2 views", function() {
+		it("should be created with 2 views and the text view", function() {
 			expect(topicViewer.numberOfViews).toEqual(3);
 			expect(topicViewer.views.length).toEqual(3); 
 			expect(topicViewer.views[0].viewType).toEqual('genericTopicView');

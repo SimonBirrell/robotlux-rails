@@ -1,5 +1,5 @@
 var TopicViewer = (function() { 
-    	"use strict";
+    	"use strict"; 
 
     	var module = {}; 
     	var D3 = null,
@@ -13,7 +13,10 @@ var TopicViewer = (function() {
             SHRINK_DURATION = null;
         var ViewsAvailable = {
             "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
-            "tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
+            //"tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
+            //"sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
+            "sensor_msgs/foo" : ['test3DTopicView'],
+            "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],
         };
 
@@ -74,6 +77,8 @@ var TopicViewer = (function() {
     	function setUpViews(that) {
             var viewSpec;
             if ((!that.viewsSetUp)&&(that.messageType)) {
+                console.log("setting up views for");
+                console.log(that.messageType);
                 that.views = [];
                 viewSpec = {node: that.topicNode};
                 var genericView = TopicViewer['genericTopicView'](viewSpec);
@@ -95,6 +100,9 @@ var TopicViewer = (function() {
                 that.nextViewIndex = 0;
                 setViewsFromIndexes(that);
                 that.viewsSetUp = true;
+            } else {
+                console.log("NOT setting up views for");
+                console.log(that);
             }
     	}
 
@@ -111,6 +119,7 @@ var TopicViewer = (function() {
                 return rotateView(this, +1);
             }    
             console.log("WARNING: Can't rotate right a view that isn't set up");
+            console.log(this);
         };
 
         module.TopicViewer.prototype.update = function(node) {
@@ -372,7 +381,7 @@ var TopicViewer = (function() {
         };
 
         module.genericTopicView.animateAndRender = function() {
-            console.log("NEW genericTopicView.animateAndRender");
+            //console.log("NEW genericTopicView.animateAndRender");
         };
 
 
@@ -398,6 +407,9 @@ var TopicViewer = (function() {
             var my = my || {};
             var that = topicView(spec, my);
 
+            //console.log("*************");
+            //console.log(that);
+
             var setScene = function(canvas, renderWidth, renderHeight) {
 
                 function init() {
@@ -407,6 +419,7 @@ var TopicViewer = (function() {
                     that.camera = new THREE.PerspectiveCamera( 30, renderWidth / renderHeight, 1, 10000 );
                     that.camera.position.z = 1000;
 
+                    //alert("Calling buildScene from setScene");
                     that.buildScene(that.scene, that.camera);
 
                     that.renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
@@ -444,11 +457,15 @@ var TopicViewer = (function() {
         };
 
         module.threeDTopicView.render = function(selection, uiGraph, viewType) {
-            console.log("threeDTopicView.render");
+            console.log("threeDTopicView.render for");
+            console.log(viewType);
             var topicWidth = CircleRadius * 1.41421356237;
             var topicCanvas = D3.select("#canvas-layer")
                                 .selectAll(".topic-canvas-" + viewType)
                                     .data(nodeTopicsWithCurrentViewType(uiGraph, viewType), topicName);
+
+            console.log(nodeTopicsWithCurrentViewType(uiGraph, viewType));
+            //console.log(D3.select("#canvas-layer")[0].parentNode);
 
             topicCanvas.enter() 
                 .append("canvas")
@@ -456,6 +473,7 @@ var TopicViewer = (function() {
                 .classed("topic-canvas-" + viewType + " topic-canvas", true)
                 .attr("opacity", 0.0)
                 .attr("targetSize", function(d) {
+                    console.log("topic.enter()");
                     var targetSize = canvasWidth(d);
                     d.targetSize = targetSize;
                     d.viewer.currentView.setScene(this, targetSize, targetSize);
@@ -465,6 +483,7 @@ var TopicViewer = (function() {
 
             topicCanvas
                 .attr("dummy", function(d) {
+                    console.log("topic update");
                     if (typeof d.targetSize === 'undefined') {
                         d.targetSize = canvasWidth(d);
                     }
@@ -534,11 +553,14 @@ var TopicViewer = (function() {
                 light = null;
 
             var buildScene = function(scene, camera) {
+                //alert('buildScene in test3DTopicView');
                 geometry = new THREE.BoxGeometry( 200, 200, 200 );
                 //material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
                 material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
                 mesh = new THREE.Mesh( geometry, material );
                 scene.add(mesh);
+
+                console.log(mesh);
 
                 light = new THREE.PointLight( 0xffffff, 5, 600 );
                 light.position.x = 300;
@@ -571,7 +593,7 @@ var TopicViewer = (function() {
         };
 
         module.test3DTopicView.render = function(selection, uiGraph) {
-            console.log("test3DTopicView.render");
+            //console.log("test3DTopicView.render");
             module.threeDTopicView.render(selection, uiGraph, "test3DTopicView");
         };
 
@@ -619,6 +641,8 @@ var TopicViewer = (function() {
             }
 
             var buildScene = function(scene, camera) {
+                 //               alert('buildScene in two3DGraphsTopicView');
+
                 camera.position.x = 100;
                 camera.position.y = 100;
                 camera.position.z = 1000;
@@ -639,7 +663,8 @@ var TopicViewer = (function() {
 
             var animateAndRender = function() {
                 //console.log("NEW two3DGraphsTopicView.animateAndRender");
-                console.log(spec.node.data);
+                //console.log(spec.node.data);
+                //console.log(that);
                 that.render3D();
             };
             that.animateAndRender = animateAndRender;
@@ -694,7 +719,7 @@ var TopicViewer = (function() {
                 lastVelocities = {linear: {x:0, y:0, z:0}, angular: {x:0, y:0, z:0}};
 
             var buildScene = function(scene, camera) {
-                console.log("diffRobotControlTopicView.buildScene()")
+                //   alert("diffRobotControlTopicView.buildScene()")
                 var grid, light;
 
                 that.base = new THREE.Object3D();
@@ -922,6 +947,10 @@ var TopicViewer = (function() {
 
         // ==================== ImuSimpleTopicView ================ 
 
+
+        // Remove for demo
+        /*
+
         module.imuSimpleTopicView = function(spec, my) {
             var viewType = "imuSimpleTopicView";
             var my = my || {};
@@ -934,6 +963,7 @@ var TopicViewer = (function() {
                 light = null;
 
             var buildScene = function(scene, camera) {
+                //   alert("buildScene in imuSimpleTopicView");
                 geometry = new THREE.BoxGeometry( 200, 200, 200 );
                 //material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
                 material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
@@ -992,6 +1022,8 @@ var TopicViewer = (function() {
         module.test3DTopicView.tick = function() {
             module.threeDTopicView.tick("imuSimpleTopicView");
         };
+
+       */ 
 
     return module;
 

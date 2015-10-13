@@ -1,50 +1,71 @@
 Robotlux
-================
+========
+Rails Server and client-side JavaScript UI for Robot Lux.
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+The Rails Server will handle 
+- part of authentication (probably) in collaboration with the node.js server
+- user and organization account settings and preferences
+- persistent storage for meta-information on ROS packages and messages
 
-This application was generated with the [rails_apps_composer](https://github.com/RailsApps/rails_apps_composer) gem
-provided by the [RailsApps Project](http://railsapps.github.io/).
+Right now it contains a fairly crappy temporary admin theme called Piluku with a lot of cruft. Beyond that, the Rails part currently does little.
 
-Rails Composer is open source and supported by subscribers. Please join RailsApps to support development of Rails Composer.
+The client-side JavaScript app uses the following frameworks:
+- d3 for data visualization
+- SVG for general rendering
+- three.js for 3D graphics
+- cola.js for the force-directed graph with constraints and grouping
+- jQuery for this and that
 
-Problems? Issues?
------------
+The client-side app talks mainly to the node.js websockets server. In the future it will talk more to the Rails side.
 
-Need help? Ask on Stack Overflow with the tag 'railsapps.'
+Testing
+-------
 
-Your application contains diagnostics in the README file. Please provide a copy of the README file when reporting any issues.
+rake jasmine
 
-If the application doesn't work as expected, please [report an issue](https://github.com/RailsApps/rails_apps_composer/issues)
-and include the diagnostics.
+then access the tests at
 
-Ruby on Rails
--------------
+http://localhost:8888/
 
-This application requires:
-
-- Ruby 2.1.6
-- Rails 4.2.1
-
-Learn more about [Installing Rails](http://railsapps.github.io/installing-rails.html).
-
-Getting Started
----------------
-
-Documentation and Support
--------------------------
-
-Issues
--------------
-
-Similar Projects
-----------------
-
-Contributing
-------------
 
 Credits
 -------
 
+Developed by Simon Birrell.
+
+TODO
+----
+An awful lot. The bulk of the app is here.
+
+- Proper coordinated authentication with node.js server. 
+- Scaling to multiple node.js servers?
+- Get focus working properly on nodes & topics
+- Many Topics need to be rendered with specific viewers. For example:
+-- Odometry viewer
+-- Robot Joint State viewer (with hash topic system)
+-- A tf viewer that renders the robot itself from URDF file
+-- Specific topics for Erle Spider
+-- Specific topics for Turtlebot
+-- Specific topics for Baxter
+-- Image topics
+-- Streaming image topics
+-- ...
+- Node UI controls
+-- Set and view rqt_reconfigure parameters
+-- Set and view general ROS parameters
+-- Pause and restart nodes
+- Machine controls
+-- View CPU and Memory
+-- Reboot all nodes
+- Implement bags
+- Optimize performance.
+- Improve robustness to server failure.
+- Tests for UI layer. How?
+- Replace crappy Piluku theme with decent HTML and working zIndex framework
+- Generally tart-up / redesign the UI
+
 License
 -------
+
+(c) 2015 Robot Lux. All Rights Reserved.
+
