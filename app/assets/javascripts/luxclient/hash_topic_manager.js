@@ -215,9 +215,15 @@ var HashTopicManager = (function() {
 			link;
 		while (i--) {
 			link = links[i];
-			// Remove any purely internal links (struts)
-			if ((link.source.subTopicGroup) && (link.source.subTopicGroup === link.target.subTopicGroup)) {
-				links.splice(i, 1);
+			// Remove any purely internal links (struts) 
+			if ((link.source) && (link.target)) {
+				if ((link.source.subTopicGroup) && (link.source.subTopicGroup === link.target.subTopicGroup)) {
+					links.splice(i, 1);
+				}
+			} else {
+				console.log("WARNING: Link with no source or target");
+				console.log(link);
+				console.log("--------------------------------------");
 			}
 		}
 	}

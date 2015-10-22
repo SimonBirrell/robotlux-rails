@@ -1,5 +1,7 @@
 var LuxUi = (function() {
     	"use strict";
+
+    	var INCREMENTAL_SYSTEM = true;
     
     	var module = {};
 
@@ -272,59 +274,63 @@ var LuxUi = (function() {
 						}
 					}
 
-					function copyNodeFromFullGraph() {
+					function mergeFullNodeWithSaved(original, savedNode) {
+						var size = (savedNode) ? savedNode.size : original.size,
+						nodeFormat = (savedNode) ? savedNode.nodeFormat : original.nodeFormat,
+						x = (savedNode) ? savedNode.x : original.x,
+						y = (savedNode) ? savedNode.y : original.y,
+						viewer = (savedNode) ? savedNode.viewer : original.viewer,
+						data = (savedNode) ? savedNode.data : original.data,
+						dying = (savedNode) ? savedNode.dying : original.dying,
+						focus = (savedNode) ? savedNode.focus : false,
+						scaling = (savedNode) ? savedNode.scaling : original.scaling,
+						hashTopicOrigin = (savedNode) ? savedNode.hashTopicOrigin : original.hashTopicOrigin,
+						hashSubTopics = (savedNode) ? savedNode.hashSubTopics : original.hashSubTopics,
+						subTopicKey = (savedNode) ? savedNode.subTopicKey : original.subTopicKey,
+						subTopicIndex = (savedNode) ? savedNode.subTopicIndex : original.subTopicIndex,
+						newNode = {
+							//name: (original.rtype==='topic') ? ' ' + original.name : original.name,
+							name: original.name,
+							rtype: original.rtype,
+							size: size,
+							nodeFormat: nodeFormat,
+							viewer: viewer,
+							x: x,
+							y: y,
+							px: x,
+							py: y,
+							scaling: scaling,
+							dying: dying,
+							data: data,
+							focus: focus,
+							hashTopicOrigin: hashTopicOrigin,
+							hashSubTopics: hashSubTopics,
+							subTopicKey: subTopicKey,
+							subTopicIndex: subTopicIndex,
 
+						};
+
+						copyFieldIfPresent('width', original, newNode);
+						copyFieldIfPresent('height', original, newNode);
+						copyFieldIfPresent('group', original, newNode);
+
+						return newNode;
 					}
 
-					function copyFromFullGraph() {
-						uiGraph = emptyGraph();
-						// Copy nodes
-						var i = uiFullGraph.nodes.length;
-						while (i--) {
-							var original = uiFullGraph.nodes[i],
-								savedNode = getSavedNode(original.name),
-								size = (savedNode) ? savedNode.size : original.size,
-								nodeFormat = (savedNode) ? savedNode.nodeFormat : original.nodeFormat,
-								x = (savedNode) ? savedNode.x : original.x,
-								y = (savedNode) ? savedNode.y : original.y,
-								viewer = (savedNode) ? savedNode.viewer : original.viewer,
-								data = (savedNode) ? savedNode.data : original.data,
-								dying = (savedNode) ? savedNode.dying : original.dying,
-								focus = (savedNode) ? savedNode.focus : false,
-								scaling = (savedNode) ? savedNode.scaling : original.scaling,
-								hashTopicOrigin = (savedNode) ? savedNode.hashTopicOrigin : original.hashTopicOrigin,
-								hashSubTopics = (savedNode) ? savedNode.hashSubTopics : original.hashSubTopics,
-								subTopicKey = (savedNode) ? savedNode.subTopicKey : original.subTopicKey,
-								subTopicIndex = (savedNode) ? savedNode.subTopicIndex : original.subTopicIndex,
-								newNode = {
-									//name: (original.rtype==='topic') ? ' ' + original.name : original.name,
-									name: original.name,
-									rtype: original.rtype,
-									size: size,
-									nodeFormat: nodeFormat,
-									viewer: viewer,
-									x: x,
-									y: y,
-									px: x,
-									py: y,
-									scaling: scaling,
-									dying: dying,
-									data: data,
-									focus: focus,
-									hashTopicOrigin: hashTopicOrigin,
-									hashSubTopics: hashSubTopics,
-									subTopicKey: subTopicKey,
-									subTopicIndex: subTopicIndex,
+					function copyNodeFromFullGraph(original) {
+						var savedNode = getSavedNode(original.name),
+							newNode = mergeFullNodeWithSaved(original, savedNode);
 
-								};
+						uiGraph.nodes.push(newNode);
+					}
 
-							//copyFieldIfPresent('data', original, newNode);
-							copyFieldIfPresent('width', original, newNode);
-							copyFieldIfPresent('height', original, newNode);
-							copyFieldIfPresent('group', original, newNode);
-
-							uiGraph.nodes[i] = newNode;
-
+					function copyNodesFromFullGraph() {
+						//var i = uiFullGraph.nodes.length;
+						//while (i--) {
+						for (var i=0; i<uiFullGraph.nodes.length; i++) {
+							var original = uiFullGraph.nodes[i];
+							copyNodeFromFullGraph(original);
+/*
 							if (HashTopicManager.isAHashableTopic(newNode)) {
 								console.log("Rescuing subtopics of " + newNode.name);
 								for (var h=1; h<newNode.hashSubTopics.length; h++) {
@@ -334,36 +340,75 @@ var LuxUi = (function() {
 								}
 								//HashTopicManager.setLinksOnSubTopics(uiGraph, newNode.hashSubTopics);
 							}
+*/							
 						}
-						// Copy links
+
+					}
+
+					function copyLinksFromFullGraph() {
 						for (var i=0; i<uiFullGraph.links.length; i++) {
-							//uiGraph.links[i] = uiFullGraph.links[i];
 							var original = uiFullGraph.links[i];
+							//copyLinkFromFullGraph(original);
 							uiGraph.links[i] = {
 								sourceName: original.sourceName,
 								targetName: original.targetName
 							};
 						}
-						// Copy groups
+					}
+
+					function copyLinkFromFullGraph(original) {
+						uiGraph.links.push({
+								sourceName: original.sourceName,
+								targetName: original.targetName
+							});
+					}
+
+					function copyGroupsFromFullGraph() {
 						for (var i=0; i<uiFullGraph.groups.length; i++) {
 							uiGraph.groups[i] = {leaves: []};
 							for (var l=0; l<uiFullGraph.groups[i].leaves.length; l++) {
 								uiGraph.groups[i].leaves.push(uiFullGraph.groups[i].leaves[l]);
 							}
 						}
-						// Copy machines
+					}
+
+					function copyMachinesFromFullGraph() {
 						for (var i=0; i<uiFullGraph.machines.length; i++) {
 							uiGraph.machines[i] = uiFullGraph.machines[i];
-						}
-						console.log("********* uiGraph.nodes **********");
-						console.log(uiGraph.nodes);
+						}						
+					}
 
+					function copyFromFullGraph() {
+						uiGraph = emptyGraph();
+						copyNodesFromFullGraph();
+						copyLinksFromFullGraph();
+						copyGroupsFromFullGraph();
+						copyMachinesFromFullGraph();
 					}
 
 					function copyFieldIfPresent(fieldName, originalNode, newNode) {
 						if (originalNode[fieldName]) {
 							newNode = originalNode[fieldName];
 						}
+					}
+
+					function shouldNodeBeDisplayed(node) {
+						return shouldNodeWithNameBeDisplayed(node.name);
+					}
+
+					function shouldNodeWithNameBeDisplayed(nodeName) {
+						if (nodeName === '/rosout') {
+							return false;
+						}
+
+						if (FilterDebugNodes) {
+							if ((QUIET_NAMES.indexOf(nodeName) > -1) ||
+              					(QUIET_NAMES.indexOf(nodeName.substring(1)) > -1)){
+								return false;
+							}
+
+						}
+						return true;
 					}
 
 					function hideQuietNodes() {
@@ -405,7 +450,7 @@ var LuxUi = (function() {
 					
 					function uiGraphUpdate() {
 
-						console.log("uiGraphUpdate");
+						console.log("uiGraphUpdate ********************************************");
 
 						// Nodes that are already on the graph shouldn't "jump" on an update
 						saveCurrentNodePositions();
@@ -429,7 +474,6 @@ var LuxUi = (function() {
 						// Hash-style topics and groups
 						createHashTopics();
 						HashTopicManager.addStrutsToHashTopics(uiGraph);
-
 
 						// Data joins			
 						var group = svg.selectAll(".group")
@@ -473,7 +517,7 @@ var LuxUi = (function() {
 							  .groups(uiGraph.groups)
 						      .symmetricDiffLinkLengths(circleRadius * 2)
 						      .start(10,15,20);	
-						
+
 						// Apply force to entering and updating elements
 						// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
 						force.on("tick", function() {
@@ -522,11 +566,17 @@ var LuxUi = (function() {
 					function graphTick(link, node, group) {
 							link
 							    .attr("d", function(d) {
-							    	var dx = d.target.x - d.source.x,
-        								dy = d.target.y - d.source.y,
-        								dr = 300/1,
-        								rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
-    								return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
+							    	if ((!d.target)||(!d.source)) {
+							    		connectLink(d);
+							    	}
+							    	if ((d.target)&&(d.source)) {
+								    	var dx = d.target.x - d.source.x,
+	        								dy = d.target.y - d.source.y,
+	        								dr = 300/1,
+	        								rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
+	    								return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
+	    							}
+	    							return "";
 							    });
 
 							node
@@ -623,6 +673,124 @@ var LuxUi = (function() {
 					    	.attr("cy", -offset)
 					    	;						
 					}
+
+
+					// NEW INCREMENTAL VERSION =============================================
+
+					function insertNodeIntoGraph(node) {
+						if (shouldNodeWithNameBeDisplayed(node.name)) {
+							copyNodeFromFullGraph(node);
+						}
+					}
+
+					function insertLinkIntoGraph(link) {
+						var sourceName = link.sourceName,
+							targetName = link.targetName;
+
+						if (shouldNodeWithNameBeDisplayed(sourceName) &&
+							shouldNodeWithNameBeDisplayed(sourceName)) {
+							var newLink = createLink(link);
+							uiGraph.links.push(newLink);							
+						}
+					}
+
+					function createLink(link) {
+						var sourceName = link.sourceName,
+							targetName = link.targetName, 
+							source = findNode2(sourceName),
+							target = findNode2(targetName);
+						
+						return {
+							sourceName: sourceName,
+							targetName: targetName,
+							source: link.source,
+							target: link.target,
+							value: 15
+						};						
+					}
+
+					function uiGraphUpdate2() {
+
+						console.log("uiGraphUpdate2");
+
+						// Nodes that are already on the graph shouldn't "jump" on an update
+						saveCurrentNodePositions();
+
+						uiGraph.groups = [];
+						uiGraph.machines = [];
+
+						copyGroupsFromFullGraph();
+						copyMachinesFromFullGraph();
+
+						//removeOrphanedTopics();
+						
+						// Collapse nodes into piles where necessary
+						// TODO Make viewers regenerate on expand
+						collapsePiles();
+
+						// Set up groups
+						createGroupsOnGraph(uiGraph);
+
+						// Hash-style topics and groups
+						createHashTopics();
+						HashTopicManager.addStrutsToHashTopics(uiGraph);
+
+						// Data joins			
+						var group = svg.selectAll(".group")
+				          .data(uiGraph.groups);
+					    var link = svg.selectAll(".linkPath")
+					      .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
+						var node = svg.selectAll(".node")
+						  .data(uiGraph.nodes, function(d) {return d.name;});
+
+						// Groups
+						var groupEnter = setUpEnteringGroups(group);
+						group.exit().remove();
+					
+						// Links
+						var linkEnter = setUpEnteringLinks(link);
+						link.exit().remove();	
+
+						// Nodes
+						var nodeEnter = setUpEnteringNodes(node);
+
+					    // view switch icons - only visible on medium and large topics
+					    switchIcons(node);
+
+						updateNodes(node);
+
+					    // Handle dying nodes
+					    var dying = setUpDyingNodes(node);
+
+					    // handle Kill Icons - only visible on large format ROS node
+					    killIcons(node);
+					    					
+					    // Prototype topic display
+					    TopicViewer.topicDisplay(node, uiGraph);
+
+					    // Gracefully remove any exiting nodes
+						var exitingNodes = setupExitingNodes(node);								
+						
+						// Start force layout
+						
+						forced = force.nodes(uiGraph.nodes)
+						      .links(uiGraph.links)
+							  .groups(uiGraph.groups)
+						      .symmetricDiffLinkLengths(circleRadius * 2)
+						      .start(10,15,20);	
+						
+						// Apply force to entering and updating elements
+						// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
+						force.on("tick", function() {
+							graphTick(link, node, group);
+						});	
+
+						// Package tree added to menu
+						MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
+						console.log("Finished update2");
+					}
+					module.uiGraphUpdate2 = uiGraphUpdate2;
+
 
 					//////////////////////////////////////////////////////////////////
 					// Node and Topic labels
@@ -1001,19 +1169,25 @@ var LuxUi = (function() {
 						// Add value to links
 						var i = uiGraph.links.length;
 						while (i--) {
-							var sourceName = uiGraph.links[i]['sourceName'];
-							var targetName = uiGraph.links[i]['targetName'];
-							var source = findNode2(sourceName);
-							var target = findNode2(targetName);
-							if ((source != -1) && (target != -1)) {
-								uiGraph.links[i]['source'] = source;
-								uiGraph.links[i]['target'] = target;
-								uiGraph.links[i]['value'] = 15;								
-							} else {
+							if (!connectLink(uiGraph.links[i])) {
 								uiGraph.links.splice(i, 1);
 							}
 						}
 					}									
+
+					function connectLink(link) {
+						var sourceName = link['sourceName'],
+							targetName = link['targetName'],
+							source = findNode2(sourceName),
+							target = findNode2(targetName);
+						if ((source != -1) && (target != -1)) {
+							link['source'] = source;
+							link['target'] = target;
+							link['value'] = 15;	
+							return true;							
+						} 				
+						return false;		
+					}
 
 					////////////////////////////////////////////////////
 					// User interaction functions
@@ -1067,6 +1241,13 @@ var LuxUi = (function() {
 							setUpNewNode(node, rosInstanceId);
 							uiFullGraph.nodes.push(node);
 							addToNameSpaceTree(node);
+
+							// EXPERIMENTAL
+							if (INCREMENTAL_SYSTEM) {
+								var node = uiFullGraph.nodes[uiFullGraph.nodes.length - 1];
+								insertNodeIntoGraph(node);
+								//copyNodeFromFullGraph();
+							}
 						}
 
 						// Add edges last
@@ -1077,7 +1258,11 @@ var LuxUi = (function() {
 							link['value'] = 15;
 							
 							if ((link['source']!=-1) && (link['target']!=-1)) {
-								uiFullGraph.links.push(link);								
+								uiFullGraph.links.push(link);	
+
+								if (INCREMENTAL_SYSTEM) {
+									insertLinkIntoGraph(link);
+								}							
 							}
 						}
 
@@ -1086,7 +1271,11 @@ var LuxUi = (function() {
 							uiFullGraph.machines.push(update.machines[i]);
 						}
 						
-						uiGraphUpdate();
+						if (INCREMENTAL_SYSTEM) {
+							uiGraphUpdate2();
+						} else {
+							uiGraphUpdate();
+						}
 					}
 					
 					var deleteNodeFromFullGraph = function(nameNodeToDelete) {
@@ -1527,6 +1716,8 @@ var LuxUi = (function() {
 			//HashTopicManager.addStrutsToHashTopics(uiGraph);
 		}
 		
+
+
 
     return module;
 })();
