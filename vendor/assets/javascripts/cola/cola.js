@@ -1476,6 +1476,10 @@ var cola;
                     visitNeighbours("next", "prev", function (u, v) { return makeConstraint(v, u); });
                 }
             }
+            if (scanline.size!==0) {
+                //var uiGraph = LuxUi.getUiGraph();
+                //console.log(uiGraph);
+            }
             console.assert(scanline.size === 0);
             return cs;
         }

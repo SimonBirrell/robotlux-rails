@@ -95,7 +95,7 @@ describe("hash topic", function() {
 		expect(jointTopicNodeThree.data.message.name[1]).toEqual('joint_three');
 
 		// Now update the graph
-		LuxUi.uiGraphUpdate();
+		LuxUi.uiGraphUpdate2();
 
 		// Topic viewers should be present on both sub topics
 		jointTopicNodeOne.viewer.rotateViewLeft();

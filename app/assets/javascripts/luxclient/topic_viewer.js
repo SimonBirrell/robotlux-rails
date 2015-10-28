@@ -8,19 +8,21 @@ var TopicViewer = (function() {
     		CircleRadius = null,
             Renderer = null;
 
-        var VIEWS = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
+        var VIEW_TYPES = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
         var ViewsAvailable = {
             "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
             //"tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
             //"sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
-            "sensor_msgs/foo" : ['test3DTopicView'],
+            "sensor_msgs/foo" : ['test3DTopicView'],            
+            
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],
         };
 
     	// "Class methods" called from UI.
+        // This is the TopicViewer API.
 
     	module.setup = function(d3, svg, margin, circleRadius, shrinkDuration) {
     		D3 = d3;
@@ -34,27 +36,36 @@ var TopicViewer = (function() {
             module.tick();
 		};	
 
+        // Called from graph.tick(), once per tick of force layout simulation
+        //
     	module.tick = function() {
-            for (var v=0; v<VIEWS.length; v++) {
-                var viewName = VIEWS[v];
-                this[viewName].tick();
+            // Call tick() for each view_type
+            for (var v=0; v<VIEW_TYPES.length; v++) {
+                var viewTypeName = VIEW_TYPES[v];
+                this[viewTypeName].tick();
             }
     	};
 
+        // Called whenever graph is updated and force.start() called
+        //  selection - The node selection
+        //  uiGraph - graph to join with
+        //
     	module.topicDisplay = function(selection, uiGraph) {
             this.renderTopicBackground(selection);
-            this.renderCurrentViews(selection, uiGraph);
+            this.updateCurrentViews(selection, uiGraph);
 		};
 
         // Render the grey circles that back each topic
         module.renderTopicBackground = function(selection) {
         }
 
-        // Render the views of all topics on the screen
-        module.renderCurrentViews = function(selection, uiGraph) {
-            for (var v=0; v<VIEWS.length; v++) {
-                var viewName = VIEWS[v];
-                this[viewName].render(selection, uiGraph);
+        // Update the views of all topics on the screen.
+        // Called whenever UI graph is updated
+        //
+        module.updateCurrentViews = function(selection, uiGraph) {
+            for (var v=0; v<VIEW_TYPES.length; v++) {
+                var viewName = VIEW_TYPES[v];
+                this[viewName].updateViews(selection, uiGraph);
             }
         };
 
@@ -70,15 +81,19 @@ var TopicViewer = (function() {
             this.nextView = null;
             this.viewsSetUp = false;
 
-            console.log(topicNode.name + " -> " + this.messageType);
+            //console.log(topicNode.name + " -> " + this.messageType);
 			setUpViews(this);
     	};
 
+        // Set up the different views that can appear on this TopicViewer
+        // There's always at least a generic view and others if we have an implemented
+        // viewer for the topic message type.
+        //
     	function setUpViews(that) {
             var viewSpec;
             if ((!that.viewsSetUp)&&(that.messageType)) {
-                console.log("setting up views for");
-                console.log(that.messageType);
+             //   console.log("setting up views for");
+             //   console.log(that.messageType);
                 that.views = [];
                 viewSpec = {node: that.topicNode};
                 var genericView = TopicViewer['genericTopicView'](viewSpec);
@@ -93,7 +108,7 @@ var TopicViewer = (function() {
                         that.views.push(view);
                     }
                 } else {
-                    console.log("UNKNOWN TOPIC TYPE: " + that.messageType);
+                    //console.log("UNKNOWN TOPIC TYPE: " + that.messageType);
                 }
                 that.numberOfViews = NUMBER_GENERIC_VIEWS + availableViews.length;
                 that.currentViewIndex = that.views.length -1;
@@ -101,11 +116,13 @@ var TopicViewer = (function() {
                 setViewsFromIndexes(that);
                 that.viewsSetUp = true;
             } else {
-                console.log("NOT setting up views for");
-                console.log(that);
+                //console.log("NOT setting up views for");
+                //console.log(that);
             }
     	}
 
+        // Show previous view on this TopicViewer
+        //
         module.TopicViewer.prototype.rotateViewLeft = function() {
             if (this.currentView) {
                 return rotateView(this, -1);
@@ -114,6 +131,8 @@ var TopicViewer = (function() {
             console.log(this);
         };
 
+        // Show next view on this TopicViewer
+        //
         module.TopicViewer.prototype.rotateViewRight = function() {
             if (this.currentView) {
                 return rotateView(this, +1);
@@ -122,6 +141,9 @@ var TopicViewer = (function() {
             console.log(this);
         };
 
+        // Topic has been updated with a ROS message (probably from server). 
+        // Update the current view.
+        //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
                 this.currentView.update(node);
@@ -130,18 +152,25 @@ var TopicViewer = (function() {
             }
         };
 
+        // Called by d3 within requestAnimationFrame
+        //
         module.TopicViewer.prototype.animateAndRender = function() {
+
             if (this.currentView) {
                 this.currentView.animateAndRender();
             }
         }
 
-        function rotateView(self, offset) {
-            var numberViews = self.views.length;
+        // Change the view currently diaplayed.
+        //  topicViewer - the TopicViewer
+        //  offset - index of new view to display
+        //
+        function rotateView(topicViewer, offset) {
+            var numberViews = topicViewer.views.length;
             if (numberViews > 1) {
-                self.currentViewIndex = (self.currentViewIndex + offset + numberViews) % numberViews;
-                self.nextViewIndex = (self.nextViewIndex + offset + numberViews) % numberViews;
-                setViewsFromIndexes(self);
+                topicViewer.currentViewIndex = (topicViewer.currentViewIndex + offset + numberViews) % numberViews;
+                topicViewer.nextViewIndex = (topicViewer.nextViewIndex + offset + numberViews) % numberViews;
+                setViewsFromIndexes(topicViewer);
                 updateUi();
                 return true;
             } else {
@@ -154,8 +183,10 @@ var TopicViewer = (function() {
             self.nextView = self.views[self.nextViewIndex];
         }
 
+        // Trigger an overall UI update
+        //
         function updateUi() {
-            LuxUi.uiGraphUpdate();
+            LuxUi.uiGraphUpdate2();
         }
 
         // Test functions TODO: delete
@@ -173,6 +204,10 @@ var TopicViewer = (function() {
 
         // Utility Functions
 
+        // Calculate the CSS id for a text line in a topic
+        //  name - topic name
+        //  i - index of text line
+        //
         function topicNameToId(name, i) {
             name = name.replace(/\//g, '--');
             return 'topic-display-' + name.substring(2) + "-" + i.toString();
@@ -189,6 +224,9 @@ var TopicViewer = (function() {
             return messageTextArray;
         }
 
+        // Return an array of topics from a graph that match a given view type
+        // Used for D3 joins
+        //
         function nodeTopicsWithCurrentViewType(uiGraph, viewType) {
             return uiGraph.nodes.filter(function(node){
                                             return  ((node.rtype==='topic') &&
@@ -269,17 +307,15 @@ var TopicViewer = (function() {
         //  2. Each topicView has an "instance method" called update(), called
         //  whenever an update is received from the server.
         //
-        //  3. Each topicView type has a render() method that renders all the topicViews
-        //  of that type in the uiGraph. This is sort of like a class method.
+        //  3. Each topicView type has an updateViews() method that renders all the topicViews
+        //  of that type in the uiGraph whenever the graph changes. This is sort of like a class method.
         //
         //  4. Each topicView type has a tick() method that is called from the D3/Cole tick()
         //  functions. This too is a class method equivalent.
         //
+        //  Uses Douglas Crockford's convention for inheritance
+        //
         // ===================================================== 
-
-        // RESTART
-        // ROS book p87
-        // roslaunch rbx1_bringup fake_turtlebot.launch
 
         var topicView = function(spec, my) {
 
@@ -296,6 +332,12 @@ var TopicViewer = (function() {
         }
 
         // ==================== GenericTopicView ================ 
+
+        // Generic topic views are displayed when we don't have a specific topic view for
+        // a given ROS message type on a topic. 
+        // Currently, the topic is left blank unless it is large, in which case we display
+        // a set of text lines that show the (poorly formatted) ROS message
+        //
 
         module.genericTopicView = function(spec, my) {
             var spec = spec || {};
@@ -325,14 +367,18 @@ var TopicViewer = (function() {
             return that;            
         };
 
-        module.genericTopicView.render = function(selection, uiGraph) {
+        module.genericTopicView.updateViews = function(selection, uiGraph) {
             var NUMBER_TOPIC_DISPLAY_TEXT_LINES = 15,
                 TOPIC_DISPLAY_TOP = -100,
                 TOPIC_DISPLAY_TEXT_HEIGHT = 14,
                 TOPIC_DISPLAY_LEFT_MARGIN = -100,
                 SHRINK_DURATION = 1000;
 
-            var topicDisplay = selection.selectAll(".topic-display")
+            // Join with a set of text lines that constitute the topic display.
+            // Currently used in display for large generic topics.
+            // For each matching topic, return an array of text lines.
+            //
+            var topicDisplayTextLines = selection.selectAll(".topic-display")
                 .data(function(d) {
                     
                     if ((d.nodeFormat==='large')&&
@@ -350,11 +396,14 @@ var TopicViewer = (function() {
                 })
                 ;
 
-            topicDisplay.enter()
+            // Fade in text on topic display 
+            //
+            topicDisplayTextLines.enter()
                 .append("text")
                     .attr("opacity", 0.0)
                     .attr("class", "topic-display")
                     .attr("id", function(d) {
+                        console.log("opacity = 0");
                         return topicNameToId(d.name, d.index);
                     })
                     .attr("alignment-baseline", "middle")
@@ -367,29 +416,47 @@ var TopicViewer = (function() {
                         return TOPIC_DISPLAY_TOP + d.index * TOPIC_DISPLAY_TEXT_HEIGHT;
                     });
 
-            topicDisplay
+            // Display each text line
+            //
+            topicDisplayTextLines
                     .text(function(d) {
                         var textLine = d.node.viewer.currentView.textLine(d.node, d.index);
                         return textLine;
                     })
     
-
-            topicDisplay.exit().remove();   
+            // Remove text lines we're done with
+            //
+            topicDisplayTextLines.exit().remove();   
         };
 
+        // Nothing to update during on graph tick
+        //
         module.genericTopicView.tick = function() {
         };
 
+        // Nothing to animate during an animation frame
+        //
         module.genericTopicView.animateAndRender = function() {
-            //console.log("NEW genericTopicView.animateAndRender");
         };
 
 
         // ==================== ThreeDTopicView ================ 
 
+        // This is the abstract class for a topic that displays a 3D animation
+        // The topic contains an HTML canvas on which WebGL renders a 3D display.
+        //
+
         // 3D utility functions
         function canvasWidth(d) {
-            return (d.size + 1) * CircleRadius * 1.41421356237;
+            return widthWithinCircleOfSize(d.size);
+        }
+
+        function previousCanvasWidth(d) {
+            return widthWithinCircleOfSize(d.psize);
+        }
+
+        function widthWithinCircleOfSize(size) {
+            return (size + 1) * CircleRadius * 1.41421356237;
         }
 
         function getCanvasPosition(d) {
@@ -407,9 +474,6 @@ var TopicViewer = (function() {
             var my = my || {};
             var that = topicView(spec, my);
 
-            //console.log("*************");
-            //console.log(that);
-
             var setScene = function(canvas, renderWidth, renderHeight) {
 
                 function init() {
@@ -419,18 +483,14 @@ var TopicViewer = (function() {
                     that.camera = new THREE.PerspectiveCamera( 30, renderWidth / renderHeight, 1, 10000 );
                     that.camera.position.z = 1000;
 
-                    //alert("Calling buildScene from setScene");
                     that.buildScene(that.scene, that.camera);
 
                     that.renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
+                    that.rendererWidth = renderWidth;
+                    that.rendererHeight = renderHeight;
                     that.renderer.setSize( renderWidth, renderHeight );
                     that.renderer.setClearColor( 0xbcc8da, 0 );
-                }
-
-                function animate() {
-                    requestAnimationFrame( animate );
-                    that.animate();
-                    that.renderer.render( that.scene, that.camera );
+                    //that.renderer.setClearColor( 0xffffff, 1 );
                 }
 
                 init();
@@ -441,33 +501,58 @@ var TopicViewer = (function() {
             var update = function(node) {
                 copyUpdateToNode(node, spec.node)
             };
-            that.update = update;
+            that.update = update; 
 
+            // Called during each animation frame. Sets the size of the rendered view on the
+            // canvas and then renders it.
+            //
             var render3D = function() {
+                that.renderer.setSize( that.rendererWidth, that.rendererHeight );
                 that.renderer.render( that.scene, that.camera );
             };
             that.render3D = render3D;
 
+            // Record the desired size of the canvas and render window
+            //
             var setTopicWindowSize = function(canvas, renderWidth, renderHeight) {
-                that.renderer.setSize( renderWidth, renderHeight );
+                that.rendererWidth = renderWidth;
+                that.rendererHeight = renderHeight;
             };
             that.setTopicWindowSize = setTopicWindowSize;
 
             return that;            
         };
 
-        module.threeDTopicView.render = function(selection, uiGraph, viewType) {
-            console.log("threeDTopicView.render for");
+        // Called from subclass when graph is updated. 
+        //  selection - selection of nodes
+        //  uiGraph - graph to join with
+        //  viewType - defines subclass, ie. type of TopicView
+        //
+        module.threeDTopicView.updateViews = function(selection, uiGraph, viewType) {
+            console.log("threeDTopicView.updateViews for");
             console.log(viewType);
+
+            updateCanvasesForViewType(uiGraph, viewType);
+        };
+
+        // Add HTML canvases to 3D topics
+        // Update their size when the containing topic is scaling
+        // Remove them when topic disappears
+        //
+        // When scaling we need to scale both the width, height of the <canvas> element
+        // and the size of the renderer
+        //
+        function updateCanvasesForViewType(uiGraph, viewType) {
+            // Canvas is a square within a circle
             var topicWidth = CircleRadius * 1.41421356237;
-            var topicCanvas = D3.select("#canvas-layer")
+
+            // Canvases are kept in a separate part of the DOM from the SVG
+            var topicCanvases = D3.select("#canvas-layer")
                                 .selectAll(".topic-canvas-" + viewType)
                                     .data(nodeTopicsWithCurrentViewType(uiGraph, viewType), topicName);
 
-            console.log(nodeTopicsWithCurrentViewType(uiGraph, viewType));
-            //console.log(D3.select("#canvas-layer")[0].parentNode);
-
-            topicCanvas.enter() 
+            // Create new canvases for this viewType
+            topicCanvases.enter() 
                 .append("canvas")
                 .attr("id", function(d) {console.log("Adding canvas " + viewType);return "canvas-id";})
                 .classed("topic-canvas-" + viewType + " topic-canvas", true)
@@ -481,44 +566,58 @@ var TopicViewer = (function() {
                 })    
                ;
 
-            topicCanvas
+            
+            function endScaling(d) {
+                d.psize = d.size;
+            } 
+             
+
+            // Update existing canvases of this viewType
+            topicCanvases
                 .attr("dummy", function(d) {
-                    console.log("topic update");
-                    if (typeof d.targetSize === 'undefined') {
-                        d.targetSize = canvasWidth(d);
-                    }
-                    d.viewer.currentView.setTopicWindowSize(this, d.targetSize, d.targetSize);
+                    console.log("topic update " + canvasWidth(d) + " " + d.targetSize);
+                    d.targetSize = canvasWidth(d);
                     return d.targetSize;
                 })    
                 .transition()
+                // Define targetSize when transition starts
                 .attr("targetSize", function(d) {
                     var targetSize = canvasWidth(d);
-                    d.viewer.currentView.setTopicWindowSize(this, targetSize, targetSize);
+                    console.log("Set target size to " + targetSize);
+                    //d.viewer.currentView.setTopicWindowSize(this, targetSize, targetSize);
                     return targetSize;
                 })    
                 .duration(SHRINK_DURATION)
-                .attr("width", function(d) {return d.targetSize;})
-                .attr("height", function(d) {return d.targetSize;})
                 .tween("scaleCanvas", function(d, i) {
-                    console.log(d);
+                    // invoked for each selected element in the transition when transition starts
+                    // Set up start and target sizes. These are accessed from the closure below
                     var targetSize = d.targetSize,
-                        startSize = 0;                        
-                    console.log("START VALUES: " + startSize + " " + d.targetSize);    
+                        startSize = previousCanvasWidth(d);   
+                    d.psize = d.size;             
+
+                    // Returns tween closure to be called over course of the transition
                     return function(t) {
                         var currentSize = startSize + (targetSize - startSize) * t;
+                        // Set renderer size during transition
                         d.viewer.currentView.setTopicWindowSize(this, currentSize, currentSize);
                     };
                 })
                 ;
 
-            topicCanvas.exit().remove(); 
+            // Remove exitting canvases for this viewType
+            topicCanvases.exit().remove(); 
 
-            module.threeDTopicView.topicCanvas = topicCanvas;
+            // Save for use in tick() function
+            module.threeDTopicView.topicCanvases = topicCanvases;
             module.threeDTopicView.uiGraph = uiGraph;
-            module.threeDTopicView.canvasLayer = D3.select("#canvas-layer");
-        };
+            module.threeDTopicView.canvasLayer = D3.select("#canvas-layer");            
+        }
 
+        // Called in each tick() of the force layout simulation
+        // TODO: Is this necessary on every tick?
+        //
         module.threeDTopicView.tick = function(viewType) {
+            
             module.threeDTopicView.canvasLayer
                 .selectAll(".topic-canvas-" + viewType)
                 .data(nodeTopicsWithCurrentViewType(module.threeDTopicView.uiGraph, viewType), topicName)
@@ -528,6 +627,7 @@ var TopicViewer = (function() {
                         y = position[1];
                         return "top:" + y.toString() + "px; left:" + x.toString() + "px;";
                     })
+                    /*
                     .attr("width", function(d) {
                         var currentSize = D3.select(this).attr("targetSize");
                         return currentSize;
@@ -536,11 +636,16 @@ var TopicViewer = (function() {
                         var currentSize = D3.select(this).attr("targetSize");
                         return currentSize;
                     })
+*/
                 ;
+   
         };
 
         // ==================== test3DTopicView ================ 
 
+        // The spinning red cube. Used when we have a topic we know will be 3D, but we
+        // don't have an implementation yet.
+        //
         module.test3DTopicView = function(spec, my) {
             var viewType = "test3DTopicView";
             var my = my || {};
@@ -560,7 +665,7 @@ var TopicViewer = (function() {
                 mesh = new THREE.Mesh( geometry, material );
                 scene.add(mesh);
 
-                console.log(mesh);
+                //    console.log(mesh);
 
                 light = new THREE.PointLight( 0xffffff, 5, 600 );
                 light.position.x = 300;
@@ -582,8 +687,13 @@ var TopicViewer = (function() {
             };
             that.animate = animate;
 
+            // Called by d3 within requestAnimationFrame
+            //
             var animateAndRender = function() {
                 //console.log("NEW test3DTopicView.animateAndRender");
+                if ((that.rendererHeight)&&(that.rendererWidth)) {
+
+                }
                 animate();
                 that.render3D();
             };
@@ -592,16 +702,23 @@ var TopicViewer = (function() {
             return that;            
         };
 
-        module.test3DTopicView.render = function(selection, uiGraph) {
-            //console.log("test3DTopicView.render");
-            module.threeDTopicView.render(selection, uiGraph, "test3DTopicView");
+        // Called each time the graph is changed
+        //
+        module.test3DTopicView.updateViews = function(selection, uiGraph) {
+            console.log("test3DTopicView.updateViews");
+            module.threeDTopicView.updateViews(selection, uiGraph, "test3DTopicView");
         };
 
+        // Called in each tick() of the force layout simulation
+        //
         module.test3DTopicView.tick = function() {
             module.threeDTopicView.tick("test3DTopicView");
         };
 
-       // ==================== Two3DGraphsTopicView ================ 
+        // ==================== Two3DGraphsTopicView ================ 
+
+        // Another "demo" 3D view. Just shows the basic 3D axes.
+        //
 
         module.two3DGraphsTopicView = function(spec, my) {
             var viewType = "two3DGraphsTopicView";
@@ -661,6 +778,8 @@ var TopicViewer = (function() {
             }
             that.animate = animate;
 
+            // Called by d3 within requestAnimationFrame
+            //
             var animateAndRender = function() {
                 //console.log("NEW two3DGraphsTopicView.animateAndRender");
                 //console.log(spec.node.data);
@@ -672,15 +791,26 @@ var TopicViewer = (function() {
             return that;            
         }
 
-        module.two3DGraphsTopicView.render = function(selection, uiGraph) {
-            module.threeDTopicView.render(selection, uiGraph, "two3DGraphsTopicView");
+        // Called each time the graph is changed
+        //
+        module.two3DGraphsTopicView.updateViews = function(selection, uiGraph) {
+            module.threeDTopicView.updateViews(selection, uiGraph, "two3DGraphsTopicView");
         };
 
+        // Called in each tick() of the force layout simulation
+        //
         module.two3DGraphsTopicView.tick = function() {
             module.threeDTopicView.tick("two3DGraphsTopicView");
         };
 
         // ==================== DiffRobotControlTopicView ================ 
+
+        // This view is used for the cmd_vel topic for differential drive robots.
+        // It visualizes and allows control of the velocities that we want a two-wheeled
+        // robot to move in. A puck is shown on a floor grid and may be controlled with the 
+        // keyboard. 
+        // It generates ROS messages specifiying a forward velocity and rotational angular velocity.
+        //
 
         var ARROW_CONTROL_COLOR_HIGHLIGHT = 0x00ff00;
         var ARROW_CONTROL_COLOR_NORMAL = 0xffff00;
@@ -693,7 +823,7 @@ var TopicViewer = (function() {
                 CMD_VEL_MESSAGE_FREQUENCY = 10;
 
         function interactiveArrow(circle, x, y) {
-            console.log("Create arrow");
+            //console.log("Create arrow");
             var dir = new THREE.Vector3(x, y, 0.0),
                 origin = new THREE.Vector3( 0.0, 0.0, 0.0 ),
                 length = 0.5,
@@ -784,6 +914,8 @@ var TopicViewer = (function() {
                 object3D.rotation.z = rot.z;
             }
 
+            // Called by d3 within requestAnimationFrame
+            //
             var animateAndRender = function() {
                 var node = spec.node,
                     messageFromServer = spec.node.data.message, deltaTime, now, pos,
@@ -899,11 +1031,11 @@ var TopicViewer = (function() {
             }
 
             var textLine = function(d, index) {
-                console.log("t");
+                // console.log("t");
                 if (index===0) {
                     var message = d.data.message;
                     if (message) {
-                        console.log(message);
+                        //console.log(message);
                         var velocities = getVelocitiesFromMessage(message);
 
                         return "Forward Vel. " + twoDecimalPlaces(velocities.linear.x) + "    " + "Angular Vel. " + twoDecimalPlaces(velocities.angular.z);
@@ -918,10 +1050,14 @@ var TopicViewer = (function() {
             return that;            
         }
 
-        module.diffRobotControlTopicView.render = function(selection, uiGraph) {
-            module.threeDTopicView.render(selection, uiGraph, "diffRobotControlTopicView");
+        // Called each time the graph is changed
+        //
+        module.diffRobotControlTopicView.updateViews = function(selection, uiGraph) {
+            module.threeDTopicView.updateViews(selection, uiGraph, "diffRobotControlTopicView");
         };
 
+        // Called in each tick() of the force layout simulation
+        //
         module.diffRobotControlTopicView.tick = function() {
             module.threeDTopicView.tick("diffRobotControlTopicView");
         };
@@ -947,8 +1083,11 @@ var TopicViewer = (function() {
 
         // ==================== ImuSimpleTopicView ================ 
 
+        // Uses the good old spinning red cube to represent the orientation
+        // of an IMU (gyroscope).
+        //
 
-        // Remove for demo
+        // Not finished - Remove for ROScon 2015 demo
         /*
 
         module.imuSimpleTopicView = function(spec, my) {
@@ -1014,9 +1153,9 @@ var TopicViewer = (function() {
             return that;            
         };
 
-        module.test3DTopicView.render = function(selection, uiGraph) {
-            console.log("imuSimpleTopicView.render");
-            module.threeDTopicView.render(selection, uiGraph, "imuSimpleTopicView");
+        module.test3DTopicView.updateViews = function(selection, uiGraph) {
+            console.log("imuSimpleTopicView.updateViews");
+            module.threeDTopicView.updateViews(selection, uiGraph, "imuSimpleTopicView");
         };
 
         module.test3DTopicView.tick = function() {

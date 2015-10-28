@@ -6,7 +6,7 @@ var LuxUi = (function() {
     	var module = {};
 
     	var QUIET_NAMES = ['/diag_agg', '/runtime_logger', '/pr2_dashboard', '/rviz', '/rosout', '/cpu_monitor', '/monitor', '/hd_monitor', '/rxloggerlevel', '/clock', '/rqt', '/statistics', '/luxagent','/rosout_agg'];
-		var SHRINK_DURATION = 1000;  
+		var SHRINK_DURATION = 5000;  
 		var KILL_DURATION = 1000;  
 		var PILE_CONSOLIDATION_DURATION = 3000;
 		var	NODE_LABEL_TOP = 20,
@@ -14,7 +14,8 @@ var LuxUi = (function() {
 
 
     	var uiGraph = {nodes: [], links: [], groups: [], machines: []},
-    		uiFullGraph = uiGraph;
+    		uiFullGraph = uiGraph,
+    		uiGraphIncomplete;
  
     	var forced = null;	 
 
@@ -29,6 +30,10 @@ var LuxUi = (function() {
 
     	module.getUiFullGraph = function() {
     		return uiFullGraph;
+    	};
+
+    	module.getUiIncompleteGraph = function() {
+    		return uiGraphIncomplete;
     	};
 
     	module.close = function() {
@@ -98,6 +103,9 @@ var LuxUi = (function() {
 					
 					// Set up main visualization area
 
+					var canvas = d3.select("#robotlux").append("div")
+						.attr("id", "canvas-layer");
+
 					var svg = d3.select("#robotlux").append("svg")
 					    .attr("width", width + margin.right + margin.left)
 					    .attr("height", height + margin.top + margin.bottom)
@@ -134,8 +142,9 @@ var LuxUi = (function() {
 						}
 					}
 
+					uiGraphIncomplete = emptyGraph();
 					uiFullGraph = emptyGraph();
-					uiGraphUpdate();
+					//uiGraphUpdate();
 					
 					uiFullGraph = initialUiGraph();
 					
@@ -143,13 +152,13 @@ var LuxUi = (function() {
 					protocolToUiLayer.open(uiGraphAdd, uiGraphDel, uiGraphUpd, uiGraphClear);
 
 					// First update
-					uiGraphUpdate();
+					uiGraphUpdate2();
 
 					// Start animations & renderings
 					animateAndRender();
 
 					function animateAndRender() {
-                    	requestAnimationFrame(animateAndRender);
+                    	//requestAnimationFrame(animateAndRender);
                     	for (var i=0; i<uiGraph.nodes.length; i++) {
                     		var node = uiGraph.nodes[i];
                     		if (node.viewer) {
@@ -158,7 +167,12 @@ var LuxUi = (function() {
                     	}
                     	// Call Keydrown.js which handles keyboard state
                     	kd.tick();
+                    	// return true to cancel animation
+                    	return false;
 					}
+					// This merges animateAndRender into the requestAnimationFrame() call.
+					//
+					d3.timer(animateAndRender);
 
 					function deleteLeavesThatPointToNode(graph, indexNodeToDelete) {
 						for (var g=0; g<graph.groups.length; g++) {	
@@ -207,15 +221,26 @@ var LuxUi = (function() {
 						}							
 					}
 
+					function deleteLinkFromGraph(targetLink, graph) {
+						for (var i=0; i<graph.links.length; i++) {
+							var link = graph.links[i];
+							if (link === targetLink) {
+								graph.links.splice(i, 1);
+								return true;
+							}
+						}
+						return false;
+					}
+
 					function deleteNode(nameNodeToDelete) {
 						deleteNodeFromGraph(uiGraph, nameNodeToDelete);
 					};
 
 					function removeOrphanedTopics() {
 						if (FilterOrphanedTopics) {
-							console.log("removeOrphanedTopics");
-							console.log(uiGraph.nodes.length);
-							console.log(uiGraph.links);
+							//console.log("removeOrphanedTopics");
+							//console.log(uiGraph.nodes.length);
+							//console.log(uiGraph.links);
 							var i = uiGraph.nodes.length;
         					while (i--) {
           						if (uiGraph.nodes[i]['rtype']==='topic') {
@@ -229,9 +254,9 @@ var LuxUi = (function() {
               							}
             						}
             						if (!found) {
-            							console.log("DELETING " + nodeName);
-            							console.log("Links: ");
-            							console.log(uiGraph.links.length);
+            							//console.log("DELETING " + nodeName);
+            							//console.log("Links: ");
+            							//console.log(uiGraph.links.length);
             							deleteNode(nodeName);
             						}
           						}
@@ -317,20 +342,28 @@ var LuxUi = (function() {
 						return newNode;
 					}
 
-					function copyNodeFromFullGraph(original) {
+					function copyOfNode(original) {
 						var savedNode = getSavedNode(original.name),
 							newNode = mergeFullNodeWithSaved(original, savedNode);
+						return newNode;						
+					}
+
+					function copyNodeFromFullGraph(original) {
+						/*var savedNode = getSavedNode(original.name),
+							newNode = mergeFullNodeWithSaved(original, savedNode);*/
+						var newNode	= copyOfNode(original);
 
 						uiGraph.nodes.push(newNode);
 					}
 
+/*
 					function copyNodesFromFullGraph() {
 						//var i = uiFullGraph.nodes.length;
 						//while (i--) {
 						for (var i=0; i<uiFullGraph.nodes.length; i++) {
 							var original = uiFullGraph.nodes[i];
 							copyNodeFromFullGraph(original);
-/*
+
 							if (HashTopicManager.isAHashableTopic(newNode)) {
 								console.log("Rescuing subtopics of " + newNode.name);
 								for (var h=1; h<newNode.hashSubTopics.length; h++) {
@@ -340,11 +373,10 @@ var LuxUi = (function() {
 								}
 								//HashTopicManager.setLinksOnSubTopics(uiGraph, newNode.hashSubTopics);
 							}
-*/							
+							
 						}
 
 					}
-
 					function copyLinksFromFullGraph() {
 						for (var i=0; i<uiFullGraph.links.length; i++) {
 							var original = uiFullGraph.links[i];
@@ -355,14 +387,17 @@ var LuxUi = (function() {
 							};
 						}
 					}
+*/
 
 					function copyLinkFromFullGraph(original) {
+						console.log("copyLinkFromFullGraph " + original.sourceName + " > " + original.targetName);
 						uiGraph.links.push({
 								sourceName: original.sourceName,
 								targetName: original.targetName
 							});
 					}
 
+/*
 					function copyGroupsFromFullGraph() {
 						for (var i=0; i<uiFullGraph.groups.length; i++) {
 							uiGraph.groups[i] = {leaves: []};
@@ -371,7 +406,6 @@ var LuxUi = (function() {
 							}
 						}
 					}
-
 					function copyMachinesFromFullGraph() {
 						for (var i=0; i<uiFullGraph.machines.length; i++) {
 							uiGraph.machines[i] = uiFullGraph.machines[i];
@@ -379,12 +413,13 @@ var LuxUi = (function() {
 					}
 
 					function copyFromFullGraph() {
-						uiGraph = emptyGraph();
+						//uiGraph = emptyGraph();
 						copyNodesFromFullGraph();
 						copyLinksFromFullGraph();
 						copyGroupsFromFullGraph();
 						copyMachinesFromFullGraph();
 					}
+*/
 
 					function copyFieldIfPresent(fieldName, originalNode, newNode) {
 						if (originalNode[fieldName]) {
@@ -441,94 +476,8 @@ var LuxUi = (function() {
         					} 
 						}
 					}
-					
-					////////////////////////////////////////////////////
-					// Update function - called when graph is changed
-					////////////////////////////////////////////////////	
-
-					// dependencies: uiGraph, circleRadius, dragColaSetup
-					
-					function uiGraphUpdate() {
-
-						console.log("uiGraphUpdate ********************************************");
-
-						// Nodes that are already on the graph shouldn't "jump" on an update
-						saveCurrentNodePositions();
-
-						// Filter out full graph
-						copyFromFullGraph();
-
-						// Connect any links on uiGraph
-						connectLinks();
-
-						hideQuietNodes();
-						removeOrphanedTopics();
-						
-						// Collapse nodes into piles where necessary
-						// TODO Make viewers regenerate on expand
-						collapsePiles();
-
-						// Set up groups
-						createGroupsOnGraph(uiGraph);
-
-						// Hash-style topics and groups
-						createHashTopics();
-						HashTopicManager.addStrutsToHashTopics(uiGraph);
-
-						// Data joins			
-						var group = svg.selectAll(".group")
-				          .data(uiGraph.groups);
-					    var link = svg.selectAll(".linkPath")
-					      .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
-						var node = svg.selectAll(".node")
-						  .data(uiGraph.nodes, function(d) {return d.name;});
-
-						// Groups
-						var groupEnter = setUpEnteringGroups(group);
-						group.exit().remove();
-					
-						// Links
-						var linkEnter = setUpEnteringLinks(link);
-						link.exit().remove();	
-
-						// Nodes
-						var nodeEnter = setUpEnteringNodes(node);
-
-					    // view switch icons - only visible on medium and large topics
-					    switchIcons(node);
-
-						updateNodes(node);
-
-					    // Handle dying nodes
-					    var dying = setUpDyingNodes(node);
-
-					    // handle Kill Icons - only visible on large format ROS node
-					    killIcons(node);
-					    					
-					    // Prototype topic display
-					    TopicViewer.topicDisplay(node, uiGraph);
-
-					    // Gracefully remove any exiting nodes
-						var exitingNodes = setupExitingNodes(node);								
-						
-						// Start force layout
-						forced = force.nodes(uiGraph.nodes)
-						      .links(uiGraph.links)
-							  .groups(uiGraph.groups)
-						      .symmetricDiffLinkLengths(circleRadius * 2)
-						      .start(10,15,20);	
-
-						// Apply force to entering and updating elements
-						// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
-						force.on("tick", function() {
-							graphTick(link, node, group);
-						});	
-
-						// Package tree added to menu
-						MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
-					}
-					module.uiGraphUpdate = uiGraphUpdate;
-
+	
+	/*
 					function saveCurrentNodePositions() {
 						var node, savedNode;
 						SavedNodes = [];
@@ -553,7 +502,7 @@ var LuxUi = (function() {
 							SavedNodes.push(savedNode);
 						}
 					}
-
+*/
 					function getSavedNode(nodeName) {
 						for (var i=0; i< SavedNodes.length; i++) {
 							if (SavedNodes[i].name === nodeName) {
@@ -563,48 +512,66 @@ var LuxUi = (function() {
 						return null;
 					}
 
+					////////////////////////////////////////////////////					
+					//
+					// Tick functions
+					//
+					////////////////////////////////////////////////////
+
+					// One tick of the force layout simulation. This is generally
+					// one animation frame, but doesn't have to be.
+					//
 					function graphTick(link, node, group) {
-							link
-							    .attr("d", function(d) {
-							    	if ((!d.target)||(!d.source)) {
-							    		connectLink(d);
-							    	}
-							    	if ((d.target)&&(d.source)) {
-								    	var dx = d.target.x - d.source.x,
-	        								dy = d.target.y - d.source.y,
-	        								dr = 300/1,
-	        								rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
-	    								return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
-	    							}
-	    							return "";
-							    });
+						defineLinkPath(link);
+						copyWidthOnNodeFromTransition(node);
+						positionGroup(group);
+				        TopicViewer.tick();
+					}
 
-							node
-								.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"})
-								.attr("dummy", function(d) {
-									// Get width from domElement where it has been
-									// subject to a transition
-									var widthOnDomElement = d3.select(this).attr("width") || 0;
-									// Set size on data to allow bounding box to transition smoothly
-									d.width = widthOnDomElement;
-									d.height = widthOnDomElement;
+					function defineLinkPath(link) {
+						link
+						    .attr("d", function(d) {
+						    	
+						    	if ((typeof(d.target) === "undefined")||(typeof(d.source) === "undefined")) {
+						    		console.log("Reconnecting...")
+						    		connectLink(d);
+						    	}
+						    	if ((typeof(d.target) !== "undefined")&&(typeof(d.source) !== "undefined")) { 
+							    	var dx = d.target.x - d.source.x,
+        								dy = d.target.y - d.source.y,
+        								dr = 300/1,
+        								rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
+    								return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
+    							} else {
+    								console.log(d);
+    								throw "Link with no source or target";
+    							}
 
-									if (d.keepForceLayoutHeated) {
-										setTimeout(function() {
-											force.resume();
-										},10);
-									}
+    							return "";
+						    });
+					}
 
-									//console.log(widthOnDomElement);
-									// Dummy attribute
-									return 0});
+					function copyWidthOnNodeFromTransition(node) {
+						node
+							.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"})
+							.attr("dummy", function(d) {
+								// Get width from domElement where it has been
+								// subject to a transition
+								var widthOnDomElement = d3.select(this).attr("width") || 0;
+								// Set size on data to allow bounding box to transition smoothly
+								// d points to node on uiGraph
+								d.width = widthOnDomElement;
+								d.height = widthOnDomElement;
+								// We can keep the force layout animation going
+								// longer than usual by setting this flag.
+								if (d.keepForceLayoutHeated) {
+									setTimeout(function() {
+										force.resume();
+									},10);
+								}
 
-							group.attr("x", function (d) { return d.bounds.x; })
-				                 .attr("y", function (d) { return d.bounds.y; })
-				                 .attr("width", function (d) { return d.bounds.width(); })
-				                 .attr("height", function (d) { return d.bounds.height(); });
-
-				            TopicViewer.tick();
+								// Dummy attribute
+								return 0});
 					}
 
 					function setUpEnteringGroups(group) {
@@ -628,6 +595,16 @@ var LuxUi = (function() {
 
 						return groupEnter;
 					}
+
+					function positionGroup(group) {
+							group.attr("x", function (d) { return d.bounds.x; })
+				                 .attr("y", function (d) { return d.bounds.y; })
+				                 .attr("width", function (d) { return d.bounds.width(); })
+				                 .attr("height", function (d) { return d.bounds.height(); });
+
+					}
+
+					////////////////// End of tick functions ////////////////////////////////////
 
 					function setUpEnteringLinks(link) {
 						var linkEnter = link
@@ -677,12 +654,76 @@ var LuxUi = (function() {
 
 					// NEW INCREMENTAL VERSION =============================================
 
+					// Nodes
 					function insertNodeIntoGraph(node) {
 						if (shouldNodeWithNameBeDisplayed(node.name)) {
 							copyNodeFromFullGraph(node);
 						}
 					}
 
+					function insertNodeIntoIncompleteGraph(node) {
+						var newNode = copyOfNode(node);
+						uiGraphIncomplete.nodes.push(newNode);
+					}
+
+					function moveNodeFromIncompleteToUiGraph(node) {
+						uiGraph.nodes.push(node);
+						addNodeToMatchingMachineGroups(node);
+						//uiGraphUpdate2();
+						deleteNodeFromGraph(uiGraphIncomplete, node.name);
+					}
+
+					function nodeIsReadyForDisplay(node) {
+						return !isNodeAQuietNode(node);
+					}
+
+					function isNodeAQuietNode(node) {
+						var nodeName = node.name;
+						return ((QUIET_NAMES.indexOf(nodeName) > -1) ||
+              					(QUIET_NAMES.indexOf(nodeName.substring(1)) > -1));
+					}
+
+					function findNodeOnGraph(node, graph) {
+						for (var i=0; i<graph.nodes.length; i++) {
+							if (name===graph.nodes[i]['name'])
+								return i;
+						}
+						return -1;
+					}	
+
+					function nodesWithHostnameOnGraph(hostname, graph) {
+						var list = [];
+
+						for (var i=0; i<graph.nodes.length; i++) {
+							var node = graph.nodes[i];
+							if (nodeHasHostname(node, hostname)) {
+								list.push(node);
+							}
+						}
+						return list;
+					}
+
+					function nodeHasHostname(node, hostname) {
+						return ((node.data) && (node.data.hostname) && (node.data.hostname === hostname));
+					}
+
+					function getHostnameOnNode(node) {
+						if ((node.data) && (node.data.hostname)) {
+							return node.data.hostname;
+						}
+						return "";
+					}
+
+					function getNodeIndex(node, graph) {
+						for (var i=0; i<graph.nodes.length; i++) {
+							if (node === graph.nodes[i]) {
+								return i;
+							}
+						}
+						return -1;
+					}
+			
+					// Links
 					function insertLinkIntoGraph(link) {
 						var sourceName = link.sourceName,
 							targetName = link.targetName;
@@ -690,8 +731,42 @@ var LuxUi = (function() {
 						if (shouldNodeWithNameBeDisplayed(sourceName) &&
 							shouldNodeWithNameBeDisplayed(sourceName)) {
 							var newLink = createLink(link);
-							uiGraph.links.push(newLink);							
+							uiGraph.links.push(newLink);	
+							//uiGraphUpdate2();
+
+							return true;						
 						}
+						return false;
+					}
+
+					function insertLinkIntoIncompleteGraph(link) {
+						uiGraphIncomplete.links.push(link);
+					}
+
+					function moveAnyConnectedLinksFromIncompleteToMainGraph() {
+						var link, i=uiGraphIncomplete.links.length;
+
+						while (i--) {
+							link = uiGraphIncomplete.links[i];
+							if ((link.source>-1) && (link.target>-1)) {
+								moveLinkFromIncompleteToUiGraph(link);
+							}
+						}						
+					}					
+
+					function moveLinkFromIncompleteToUiGraph(link) {
+						if (insertLinkIntoGraph(link)) {
+							deleteLinkFromGraph(link, uiGraphIncomplete);
+						} else {
+							console.log("Couldn't move link " + link.sourceName + " > " + link.targetName);
+						}
+					}
+
+					function linkIsReadyForDisplay(link) {
+						link['source'] = findNodeInGraph(uiGraph, link['sourceName']);
+						link['target'] = findNodeInGraph(uiGraph, link['targetName']);
+
+						return ((link['source']!=-1) && (link['target']!=-1));
 					}
 
 					function createLink(link) {
@@ -709,31 +784,185 @@ var LuxUi = (function() {
 						};						
 					}
 
+					function connectLinksOnGraph(graph) {
+						var link;
+
+						for (var i=0; i<graph.links.length; i++) {
+							link = graph.links[i];
+							connectLinkOnGraph(link, graph);
+						}
+					}
+
+					function connectLinkOnGraph(link, graph) {
+						var sourceName = link['sourceName'],
+							targetName = link['targetName'],
+							source = findNodeOnGraph(sourceName, graph),
+							target = findNodeOnGraph(targetName, graph);
+							if ((source != -1) && (target != -1)) {
+								completeLink(link, source, target);
+								return true;
+							}
+						return false;
+					}
+
+					function completeLink(link, source, target) {
+						link['source'] = source;
+						link['target'] = target;
+						link['value'] = 15;							
+					}
+
+					// Groups
+					function createNewGroup(existingNodes, title, groupType) {
+						var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
+
+						var newGroup = {
+										leaves: indexNodes, 
+										title: title,
+										gtype: groupType,
+										padding: circleRadius
+									   };
+						if (groupType==="machine") {
+							newGroup.hostname = title;
+						}
+
+						return newGroup;
+					}
+
+					function convertNodesToIndexes(nodes, graph) {
+						var indexes = [];
+
+						for (var i=0; i<nodes.length; i++) {
+							var node = nodes[i];
+							for (var j=0; j<graph.nodes.length; j++) {
+								if (node === graph.nodes[j]) {
+									indexes.push(j);
+									break;
+								}
+							}
+						}
+
+						return indexes;
+					}
+
+					function connectGroupsOnGraph(graph) {
+						var group;
+
+						for (var i=0; i<graph.groups.length; i++) {
+							group = graph.groups[i];
+							connectGroupOnGraph(group, graph);
+						}
+					}
+
+					function connectGroupOnGraph(group, graph) {
+
+					}				
+
+					function moveAnyConnectedGroupsFromIncompleteToMainGraph() {
+
+					}
+
+					function addNodeToGroup(node, group) {
+						var indexes = convertNodesToIndexes([node], uiGraph);
+
+						group.leaves.push(indexes[0]);
+					}
+
+					function removeDummyNodesFromGroup(group) {
+						var i = group.leaves.length;
+						while (i--) {
+							var leaf = group.leaves[i];
+							if (leaf.rtype === "dummy") {
+								group.leaves.splice(i, 1);
+							}
+						}
+					}
+
+					// Workaround for a bug in WebCola
+					// https://github.com/tgdwyer/WebCola/issues/140
+					function resetLeavesOnAllGroups(graph) {
+						for (var g=0; g<graph.groups.length; g++) {
+							var group = graph.groups[g];
+							resetLeavesOnGroup(group, graph);
+						}
+					}
+
+					function resetLeavesOnGroup(group, graph) {
+						var index;
+						for (var l=0; l<group.leaves.length; l++) {
+							var leaf = group.leaves[l];
+							if (typeof leaf === "object") {
+								index = getNodeIndex(leaf, graph);
+								if (index<0) {
+									console.log(group);
+									throw "Node not found in resetLeavesOnGroup()";
+								}	
+								group.leaves[l] = index;	
+							}
+						}
+					}
+
+					// Machines
+					function insertMachineIntoMainGraph(machine) {
+						uiGraph.machines.push(machine);
+						createGroupForMachine(machine);
+					}
+
+					function createGroupForMachine(machine) {
+						var machineName = (machine.hostname || "unknown"),
+							existingNodes = nodesWithHostnameOnGraph(machineName, uiGraph);
+
+						// If there are no nodes in this group then make a dummy one
+						if (existingNodes.length === 0)	{
+							var dummyNode = createDummyNode("/dummy" + machineName);
+							uiGraph.nodes.push(dummyNode);
+							existingNodes.push(dummyNode);
+						}
+
+						var group = createNewGroup(existingNodes, machineName, "machine");
+						uiGraph.groups.push(group);
+					}
+
+					function testDummyNode(name) {
+						var dummyNode = createDummyNode("/dummy" + name);
+						uiGraph.nodes.push(dummyNode);
+					}
+
+					function addNodeToMatchingMachineGroups(node) {
+						var hostname = getHostnameOnNode(node);
+						if (!hostname) {
+							return;
+						}
+
+						console.log("Node " + node.name + " has hostname " + hostname);
+						for (var i=0; i<uiGraph.groups.length; i++) {
+							var group = uiGraph.groups[i];
+							console.log("Group has hostname " + group.hostname);
+							if (hostname === group.hostname) {
+								console.log("match");
+								addNodeToGroup(node, group);
+								removeDummyNodesFromGroup(group);
+							}
+						}
+					}
+
+					// New slimmer update routine
+
 					function uiGraphUpdate2() {
 
-						console.log("uiGraphUpdate2");
-
-						// Nodes that are already on the graph shouldn't "jump" on an update
-						saveCurrentNodePositions();
-
-						uiGraph.groups = [];
-						uiGraph.machines = [];
-
-						copyGroupsFromFullGraph();
-						copyMachinesFromFullGraph();
-
-						//removeOrphanedTopics();
+						console.log("uiGraphUpdate2 ---------------------------------");
 						
 						// Collapse nodes into piles where necessary
 						// TODO Make viewers regenerate on expand
-						collapsePiles();
+						//collapsePiles();
 
 						// Set up groups
-						createGroupsOnGraph(uiGraph);
+						//createGroupsOnGraph(uiGraph);
+
 
 						// Hash-style topics and groups
-						createHashTopics();
-						HashTopicManager.addStrutsToHashTopics(uiGraph);
+						//createHashTopics();
+						//HashTopicManager.addStrutsToHashTopics(uiGraph);
+
 
 						// Data joins			
 						var group = svg.selectAll(".group")
@@ -770,24 +999,32 @@ var LuxUi = (function() {
 
 					    // Gracefully remove any exiting nodes
 						var exitingNodes = setupExitingNodes(node);								
+
 						
 						// Start force layout
-						
-						forced = force.nodes(uiGraph.nodes)
+						console.log("forced in update2");
+						resetLeavesOnAllGroups(uiGraph);
+						forced = force
+							  .nodes(uiGraph.nodes)
 						      .links(uiGraph.links)
 							  .groups(uiGraph.groups)
 						      .symmetricDiffLinkLengths(circleRadius * 2)
 						      .start(10,15,20);	
-						
+						console.log(uiGraph);
+		     
+						console.log("finished forced in update2");
+
 						// Apply force to entering and updating elements
 						// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
+						
 						force.on("tick", function() {
 							graphTick(link, node, group);
 						});	
+			
 
 						// Package tree added to menu
 						MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
-						console.log("Finished update2");
+						console.log("Finished update2 --------------------------");
 					}
 					module.uiGraphUpdate2 = uiGraphUpdate2;
 
@@ -800,7 +1037,7 @@ var LuxUi = (function() {
 					function appendNodeLabels(nodeEnter) {
 						nodeEnter.selectAll('.nodetopic-label') 
 						    .data(function(d) {
-						    	var nameChunks = prepareLabels(d.name, d);
+						    	var nameChunks = (d.rtype === "dummy") ? "" : prepareLabels(d.name, d);
 						    	return nameChunks;
 						    })
 						    .enter()
@@ -868,13 +1105,13 @@ var LuxUi = (function() {
 
 					function foldup() {
 						module.addPileUpLevel(this.pileLevel + '/');
-						uiGraphUpdate();
+						uiGraphUpdate2();
 					}
 
 					function unfold() {
 						var levelToUnfold = this.pileLevel.substring(0, this.pileLevel.length-4);
 						module.removePileUpLevel(levelToUnfold);
-						uiGraphUpdate();
+						uiGraphUpdate2();
 					}
 
 					function updateNodeLabels(node) {
@@ -934,7 +1171,7 @@ var LuxUi = (function() {
 					    animateSwitchIcon(node, "switch-left-icon", -1);
 					    animateSwitchIcon(node, "switch-right-icon", 1);
 
-					    updateNodeLabels(node);
+					    updateNodeLabels(node);				    
 					}
 
 					function setUpDyingNodes(node) {
@@ -1068,11 +1305,20 @@ var LuxUi = (function() {
 						return (size + 1) * circleRadius;
 					}
 
+					// Called by D3 when a user double-clicks on a node to expand it.
+					//	d - the node being clicked
+					//	i - node index (not currently used)
+					//
 					function nextNodeSize(d, i) {
+						// Don't expand dummies
 						if (d.rtype==='dummy') {
 							return;
 						}
+						// The first click will expand a node
 						d.size = d.size || 0;
+						// Save the previous size
+						d.psize = d.size;
+						// Decide whether we're getting bigger or smaller
 						d.scaling = d.scaling || "expanding";
 						if (d.scaling==="expanding") {
 							d.size += 2;
@@ -1088,16 +1334,23 @@ var LuxUi = (function() {
 							}
 						}
 						// User has clicked on circle but uiGraph is bound to parent 
-						// group
+						// group, so copy the data.
 						var parentDatum = this.parentElement.__data__;
 						parentDatum.size = d.size;
 						parentDatum.scaling = d.scaling;
 						captureFocus(parentDatum);
 						setNodeAttributes(d);
 						setNodeAttributes(parentDatum);
+						// This is stop the double-click triggering a zoom
 						d3.event.stopPropagation();
-						uiGraphUpdate();
+						// Now update what needs updating on the layout
+						var node = svg.selectAll(".node")
+						  .data(uiGraph.nodes, function(d) {return d.name;});
+						updateNodes(node);
+					    TopicViewer.topicDisplay(node, uiGraph);
 					}
+
+
 
 					function setNodeAttributes(d) {
 						var NODE_SIZE_TO_FORMAT = ['small', 'small', 'medium', 'medium', 'large', 'large'];
@@ -1110,59 +1363,19 @@ var LuxUi = (function() {
 						}
 					}
  
-					function createGroupsOnGraph(graph) {
-						// Add groups from hostname definitions in the nodes
-						graph.groups = []
-						for (var i=0; i<graph.nodes.length; i++) {
-							var node = graph.nodes[i];
-							if ((node.data)&&('hostname' in node['data'])) {
-								var hostname = node['data']['hostname'],
-									targetGroup = -1;
-								if ((node.rtype==='node')||(node.rtype==='pileOfNodes')) {
-									for (var g=0; g<graph.groups.length; g++) {
-										if ('hostname' in graph.groups[g]) {
-											if (graph.groups[g]['hostname'] === hostname) {
-												targetGroup = g;											
-											}
-										}
-									}
-									if (targetGroup>-1) {
-										graph.groups[targetGroup]['leaves'].push(i);
-									} else {
-										graph.groups.push({leaves: [i], hostname: hostname, padding: circleRadius});
-									}
-								}	
-							}	
-						}	
-
-						// Add groups that currently have no nodes
-						for (var i=0; i<graph.machines.length; i++) {
-							var machineHostname = graph.machines[i].hostname,
-								found = false;
-							for (var g=0; g<graph.groups.length; g++) {
-								if (graph.groups[g].hostname === machineHostname) {
-									found = true;
-								}
-							}
-							if (!found) {
-								// Add a dummy node
-								graph.nodes.push(
-									{	"name" : "/dummy" + g.toString(), 
+ 					// A dummy node is placed inside an empty "machine" group and removed
+ 					// once any real node is added. Groups can't contain zero leaves and still
+ 					// show up on the screen.
+ 					//
+					function createDummyNode(name) {
+						return {	"name" : name, 
 										"rtype": "dummy", 
 										"x": 0, 
 										"y": 0, 
 										"size": 0, 
 										"width": 50, 
 										"height": 50
-									});
-								graph.groups.push(
-									{
-										leaves: [graph.nodes.length -1], 
-										hostname: machineHostname, 
-										padding: circleRadius
-									});
-							}
-						}					
+								};
 					}
 
 					function connectLinks() {
@@ -1188,6 +1401,7 @@ var LuxUi = (function() {
 						} 				
 						return false;		
 					}
+
 
 					////////////////////////////////////////////////////
 					// User interaction functions
@@ -1218,7 +1432,8 @@ var LuxUi = (function() {
 					}
 
 					var setUpNewNode = function(node, rosInstanceId) {
-						node['size'] = 0;
+						node.size = node.psize = 0;
+						node.width = node.height = circleRadius;
 						setNodeAttributes(node);
 						if (node.rtype==='topic') {
 							node.viewer = new TopicViewer.TopicViewer(node);
@@ -1235,49 +1450,72 @@ var LuxUi = (function() {
 					
 					function uiGraphAdd(update, rosInstanceId) {
 
+						force.stop();
 						// Add nodes first
 						for (var i=0; i<update.nodes.length; i++) {
 							var node = update.nodes[i];
-							setUpNewNode(node, rosInstanceId);
-							uiFullGraph.nodes.push(node);
-							addToNameSpaceTree(node);
-
-							// EXPERIMENTAL
-							if (INCREMENTAL_SYSTEM) {
-								var node = uiFullGraph.nodes[uiFullGraph.nodes.length - 1];
-								insertNodeIntoGraph(node);
-								//copyNodeFromFullGraph();
-							}
+							console.log("ADDING NODE " + node.name);
+							addNodeToAllGraphs(node, rosInstanceId);
 						}
 
-						// Add edges last
+						// Add links next
 						for (var i=0; i<update.links.length; i++) {
 							var link = update.links[i];
-							link['source'] = findNodeInGraph(uiFullGraph, link['sourceName']);
-							link['target'] = findNodeInGraph(uiFullGraph, link['targetName']);
-							link['value'] = 15;
-							
-							if ((link['source']!=-1) && (link['target']!=-1)) {
-								uiFullGraph.links.push(link);	
-
-								if (INCREMENTAL_SYSTEM) {
-									insertLinkIntoGraph(link);
-								}							
-							}
+							console.log("ADDING LINK " + link.sourceName + " > " + link.targetName);
+							addLinkToAllGraphs(link);
 						}
 
 						// Add Machines
 						for (var i=0; i<update.machines.length; i++) {
-							uiFullGraph.machines.push(update.machines[i]);
+							var machine = update.machines[i];
+							console.log("ADDING MACHINE " + machine.name);
+							addMachineToAllGraphs(machine);
 						}
 						
 						if (INCREMENTAL_SYSTEM) {
+							connectLinksOnGraph(uiGraphIncomplete);
+							moveAnyConnectedLinksFromIncompleteToMainGraph();
+							connectGroupsOnGraph(uiGraphIncomplete);
+							moveAnyConnectedGroupsFromIncompleteToMainGraph();
+							console.log("========= uiGraphAdd =========");
+							//uiGraphPrint();
 							uiGraphUpdate2();
 						} else {
 							uiGraphUpdate();
 						}
+						console.log(uiGraph.groups[0].leaves)
+						console.log("Finished uiGraphAdd()");
 					}
 					
+					function addNodeToAllGraphs(node, rosInstanceId) {
+						setUpNewNode(node, rosInstanceId);
+						uiFullGraph.nodes.push(node);
+						addToNameSpaceTree(node);
+
+						// EXPERIMENTAL
+						if (INCREMENTAL_SYSTEM) {
+							insertNodeIntoIncompleteGraph(node);
+							if (nodeIsReadyForDisplay(node)) {
+								moveNodeFromIncompleteToUiGraph(node);
+							}
+						}
+					}
+
+					function addLinkToAllGraphs(link) {
+						link['value'] = 15;
+						
+						insertLinkIntoIncompleteGraph(link);
+						if (linkIsReadyForDisplay(link)) {
+							uiFullGraph.links.push(link);	
+							moveLinkFromIncompleteToUiGraph(link);
+						}
+					}
+
+					function addMachineToAllGraphs(machine) {
+						uiFullGraph.machines.push(machine);
+						insertMachineIntoMainGraph(machine);
+					}
+
 					var deleteNodeFromFullGraph = function(nameNodeToDelete) {
 						deleteNodeFromGraph(uiFullGraph, nameNodeToDelete);	
 					};
@@ -1298,7 +1536,7 @@ var LuxUi = (function() {
 							startKillAnimation(nameNodeToDelete);
 							removeFromNameSpaceTree(nameNodeToDelete);
 						}
-						uiGraphUpdate();
+						uiGraphUpdate2();
 					}
 
 					function startKillAnimation(nameNodeToKill) {
@@ -1327,11 +1565,43 @@ var LuxUi = (function() {
 				
 					function uiGraphClear() {
 						console.log("Clearing uiGraph and uiFullGraph");
-						uiGraph.groups = uiFullGraph.groups = [];
-						uiGraph.links = uiFullGraph.links = [];
-						uiGraph.nodes = uiFullGraph.nodes = [];
-						uiGraph.machines = uiFullGraph.machines = [];
-						uiGraphUpdate();
+						if (INCREMENTAL_SYSTEM) {
+							uiFullGraph.groups = [];
+							uiFullGraph.links = [];
+							uiFullGraph.nodes = [];
+							uiFullGraph.machines = [];
+							if (!uiGraph.groups) {
+								uiGraph.groups = [];
+							} else {
+								emptyArray(uiGraph.groups);
+							}
+							if (!uiGraph.links) {
+								uiGraph.links = [];
+							} else {
+								emptyArray(uiGraph.links);
+							}
+							if (!uiGraph.nodes) {
+								uiGraph.nodes = [];
+							} else {
+								emptyArray(uiGraph.nodes);
+							}
+							if (!uiGraph.machines) {
+								uiGraph.machines = [];
+							} else {
+								emptyArray(uiGraph.machines);
+							}
+						} else {
+							uiGraph.groups = uiFullGraph.groups = [];
+							uiGraph.links = uiFullGraph.links = [];
+							uiGraph.nodes = uiFullGraph.nodes = [];
+							uiGraph.machines = uiFullGraph.machines = [];
+						}
+						//uiGraphUpdate();
+					}
+
+					function emptyArray(array) {
+						//console.log("Emptying array of length " + array.length.toString());
+						array.splice(0, array.length);
 					}
 					
 					function uiGraphPrint() {
@@ -1345,11 +1615,13 @@ var LuxUi = (function() {
 						for (var i=0; i<graph.nodes.length; i++) {
 							console.log(i + " " + graph.nodes[i].name);
 						}
-						console.log("");
+						console.log("Links");
+						console.log(graph.links);
 						for (var i=0; i<graph.links.length; i++) {
 							console.log(i + " " + graph.links[i].source + " " + graph.links[i].sourceName + " -> " + graph.links[i].target + " " + graph.links[i].targetName);
 						}
 						console.log(graph.groups);
+						console.log(graph.machines);
 						console.log(".....................................");
 					}
 
@@ -1551,6 +1823,7 @@ var LuxUi = (function() {
 									}
 								}
 								if (!itsADuplicate) {
+									console.log("modifyAndConsolidateLinksToPointToSummaryNode2 " + newLink.sourceName + " > "+ newLink.targetName);
 									uiGraph.links.push(newLink);
 								}
 							}
@@ -1697,12 +1970,12 @@ var LuxUi = (function() {
 					
 					for (var s=0; s<node.hashSubTopics.length; s++) {
 						var name = node.hashSubTopics[s].name;
-						console.log("Searching for subtopic " + s.toString() + " " + name);
+						//console.log("Searching for subtopic " + s.toString() + " " + name);
 						for (var t=0; t<uiGraph.nodes.length; t++) {
 							var targetNode = uiGraph.nodes[t];
-							console.log(">> " + targetNode.name);
+							//console.log(">> " + targetNode.name);
 							if ((targetNode.name) && (targetNode.name === name)) {
-								console.log("LINKED " + s.toString() + " " + name);
+								//console.log("LINKED " + s.toString() + " " + name);
 								node.hashSubTopics[s] = targetNode;
 								break;
 							}

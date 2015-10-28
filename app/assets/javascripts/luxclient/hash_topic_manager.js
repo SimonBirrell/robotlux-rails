@@ -30,6 +30,7 @@ var HashTopicManager = (function() {
 	}
 
 	var isAHashableTopic = function(node) {
+		return false;
 		// Cache result
 		if ((node.hashTopicOrigin===true)||(node.hashTopicOrigin===false)) {
 			return node.hashTopicOrigin;
@@ -122,7 +123,8 @@ var HashTopicManager = (function() {
 
 		if (!found) {
 			console.log("cloning -> " + key);
-			makeCloneOfOriginalTopic(graph, subTopics, key);
+			// TODO Restore and clean up mess
+			//makeCloneOfOriginalTopic(graph, subTopics, key);
 		} else {
 		}
 
@@ -186,7 +188,7 @@ var HashTopicManager = (function() {
 			console.log("&&&&&&&&&&&&&&&&&&&&");
 			clearLinksOnSubTopics(graph, node.hashSubTopics);
 			setLinksOnSubTopics(graph, node.hashSubTopics);
-			LuxUi.uiGraphUpdate();
+			LuxUi.uiGraphUpdate2();
 		}
 
 	};
