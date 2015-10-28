@@ -6,7 +6,7 @@ var LuxUi = (function() {
     	var module = {};
 
     	var QUIET_NAMES = ['/diag_agg', '/runtime_logger', '/pr2_dashboard', '/rviz', '/rosout', '/cpu_monitor', '/monitor', '/hd_monitor', '/rxloggerlevel', '/clock', '/rqt', '/statistics', '/luxagent','/rosout_agg'];
-		var SHRINK_DURATION = 5000;  
+		var SHRINK_DURATION = 1000;  
 		var KILL_DURATION = 1000;  
 		var PILE_CONSOLIDATION_DURATION = 3000;
 		var	NODE_LABEL_TOP = 20,
@@ -654,7 +654,15 @@ var LuxUi = (function() {
 
 					// NEW INCREMENTAL VERSION =============================================
 
-					// Nodes
+					// uiGraph - where we store the D3 nodes that are actually being displayed
+					// uiGraphIncomplete - where we store the nodes that will be displayed as soon as
+					//						they are fully connected
+					// uiFullGraph - the full set of ROS nodes/topics sent from the server
+					//
+
+					// Functions to manipulate NODES on the data graphs ====================
+					//
+
 					function insertNodeIntoGraph(node) {
 						if (shouldNodeWithNameBeDisplayed(node.name)) {
 							copyNodeFromFullGraph(node);
@@ -681,6 +689,38 @@ var LuxUi = (function() {
 						var nodeName = node.name;
 						return ((QUIET_NAMES.indexOf(nodeName) > -1) ||
               					(QUIET_NAMES.indexOf(nodeName.substring(1)) > -1));
+					}
+
+					// Remove node and associated links from uiGraph
+					//
+					function removeNodeAndAssociatedLinksFromUiGraph(targetNode) {
+						removeNodeFromAnyGroups(targetNode);
+						deleteLinksFromGraphConnectedToNode(targetNode, uiGraph);
+						removeNode(targetNode);	
+					}
+
+					// Remove node from uiGraph
+					//	targetNode - reference to node object
+					// Returns TRUE if found and deleted else FALSE
+					//
+					function removeNode(targetNode) {
+						removeNodeFromGraph(targetNode, uiGraph);
+					}
+
+					// Remove node from a graph.
+					//	targetNode - reference to node object
+					// Returns TRUE if found and deleted else FALSE
+					//
+					function removeNodeFromGraph(targetNode, graph) {
+						var i = graph.nodes.length;
+						while (i--) {
+							var node = graph.nodes[i];
+							if (node === targetNode) {
+								graph.nodes.splice(i, 1);
+								return true;
+							} 
+						}
+						return false;
 					}
 
 					function findNodeOnGraph(node, graph) {
@@ -723,7 +763,9 @@ var LuxUi = (function() {
 						return -1;
 					}
 			
-					// Links
+					// Functions to manipulate LINKS on the data graphs ====================
+					//
+
 					function insertLinkIntoGraph(link) {
 						var sourceName = link.sourceName,
 							targetName = link.targetName;
@@ -811,7 +853,30 @@ var LuxUi = (function() {
 						link['value'] = 15;							
 					}
 
-					// Groups
+					// Remove any links that are connected to targetNode on a given graph
+					//
+					function deleteLinksFromGraphConnectedToNode(targetNode, graph) {
+						var nameNodeToDelete = targetNode.name;
+						deleteLinksFromGraphConnectedToNodeName(nameNodeToDelete, graph);
+					}
+
+					// Remove any links that are connected to a node with given name on a given graph
+					//
+					function deleteLinksFromGraphConnectedToNodeName(targetNode, graph) {
+						var j = graph.links.length;
+						while (j--) {
+							if ((graph.links[j].sourceName===targetNode) ||
+								(graph.links[j].targetName===targetNode)) {
+								graph.links.splice(j, 1);
+							}
+						}
+					}
+
+
+
+					// Functions to manipulate GROUPS on the data graphs ===================
+					//
+
 					function createNewGroup(existingNodes, title, groupType) {
 						var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
 
@@ -901,7 +966,9 @@ var LuxUi = (function() {
 						}
 					}
 
-					// Machines
+					// Functions to manipulate MACHINES on the data graphs ==================
+					//
+
 					function insertMachineIntoMainGraph(machine) {
 						uiGraph.machines.push(machine);
 						createGroupForMachine(machine);
@@ -945,7 +1012,12 @@ var LuxUi = (function() {
 						}
 					}
 
-					// New slimmer update routine
+					// New slimmer update routine. This is called when nodes, links or groups are
+					// added or deleted from uiGraph.
+					// 
+					// TODO: force.start() definitely needs calling on each graph change. Should 
+					// check how much of the below D3 code actually needs calling.
+					//
 
 					function uiGraphUpdate2() {
 
@@ -953,7 +1025,7 @@ var LuxUi = (function() {
 						
 						// Collapse nodes into piles where necessary
 						// TODO Make viewers regenerate on expand
-						//collapsePiles();
+						collapsePiles();
 
 						// Set up groups
 						//createGroupsOnGraph(uiGraph);
@@ -982,25 +1054,14 @@ var LuxUi = (function() {
 
 						// Nodes
 						var nodeEnter = setUpEnteringNodes(node);
-
-					    // view switch icons - only visible on medium and large topics
-					    switchIcons(node);
-
 						updateNodes(node);
 
-					    // Handle dying nodes
-					    var dying = setUpDyingNodes(node);
-
-					    // handle Kill Icons - only visible on large format ROS node
-					    killIcons(node);
-					    					
-					    // Prototype topic display
+					    // Topic displays
 					    TopicViewer.topicDisplay(node, uiGraph);
 
 					    // Gracefully remove any exiting nodes
 						var exitingNodes = setupExitingNodes(node);								
 
-						
 						// Start force layout
 						console.log("forced in update2");
 						resetLeavesOnAllGroups(uiGraph);
@@ -1009,9 +1070,8 @@ var LuxUi = (function() {
 						      .links(uiGraph.links)
 							  .groups(uiGraph.groups)
 						      .symmetricDiffLinkLengths(circleRadius * 2)
-						      .start(10,15,20);	
+						      .start();
 						console.log(uiGraph);
-		     
 						console.log("finished forced in update2");
 
 						// Apply force to entering and updating elements
@@ -1020,7 +1080,6 @@ var LuxUi = (function() {
 						force.on("tick", function() {
 							graphTick(link, node, group);
 						});	
-			
 
 						// Package tree added to menu
 						MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
@@ -1131,19 +1190,53 @@ var LuxUi = (function() {
 					// End of Node and Topic labels
 					//////////////////////////////////////////////////////////////////
 
+					/////////////////// Basic D3 Node setup ////////////////////////////////////
 
-					function updateNodes(node) {
+					// This is called on every update to the graph
+					//	nodeSelection - the D3 selection of nodes, already joined.
+					//
+
+					function updateNodes(nodeSelection) {
+					    // view switch icons - only visible on medium and large topics
+					    switchIcons(nodeSelection);
+
 						// Update existing nodes with transitions
-						node
+						setNodeClass(nodeSelection);
+
+					    // Set up scaling of nodes for when user double-clicks
+					    scaleNodes(nodeSelection);
+
+					    // Animate switch icons when scaling topic
+					    animateSwitchIcon(nodeSelection, "switch-left-icon", -1);
+					    animateSwitchIcon(nodeSelection, "switch-right-icon", 1);
+
+					    // Set up and animate node labels
+					    updateNodeLabels(nodeSelection);		
+
+					    // Handle dying nodes
+					    setUpDyingNodes(nodeSelection);
+
+					    // handle Kill Icons - only visible on large format ROS node
+					    killIcons(nodeSelection);
+					}
+
+					// Set the CSS class on a D3 node
+					//
+					function setNodeClass(nodeSelection) {
+						nodeSelection
 					        .attr("class", function(d) {
 					        	var nodeClass = "node";
 					        	if (d.nodeFormat) {
 					        		nodeClass = nodeClass + " node-format-" + d.nodeFormat;
 					        	}
 					        	return nodeClass;
-					        });
+					        });						
+					}
 
-						node
+					// Set up scaling of nodes for when user double-clicks
+					//
+					function scaleNodes(nodeSelection) {
+						nodeSelection
 							.transition()
 							.duration(SHRINK_DURATION)
 					        .attr("width", function(d) {return nodeRadius(d) * 2;})
@@ -1156,7 +1249,7 @@ var LuxUi = (function() {
 						        d.keepForceLayoutHeated = false;
 					        });
 
-						node.selectAll("circle")
+						nodeSelection.selectAll("circle")
 							.classed("focus", function(d) {
 								//console.log("Checking focus on " +d.name);
 								//console.log(d.focus);
@@ -1168,15 +1261,15 @@ var LuxUi = (function() {
 					   		.duration(SHRINK_DURATION)
 					        .attr("r", function(d) {return nodeRadius(d);});
 
-					    animateSwitchIcon(node, "switch-left-icon", -1);
-					    animateSwitchIcon(node, "switch-right-icon", 1);
-
-					    updateNodeLabels(node);				    
 					}
 
-					function setUpDyingNodes(node) {
+					// These are ROS nodes that have been brutally murdered by the user by clicking
+					// on the kill icon.
+					// They die slowly, then remove themselves from uiGraph
+					//
+					function setUpDyingNodes(nodeSelection) {
 					    // Handle dying nodes
-					    var dying = node
+					    var dying = nodeSelection
 					    	.filter(function(d) {return (d.dying===true);});
 						dying.selectAll("circle")
 							.transition()
@@ -1194,17 +1287,20 @@ var LuxUi = (function() {
 									d.keepForceLayoutHeated = true;
 								})
 					    		.each("end", function(d) {
+					    			removeNodeAndAssociatedLinksFromUiGraph(d);
+					    			// TODO - are these two lines still necessary?
 					    			deleteLinksFromFullGraphConnectedTo(d.name);
 									deleteNodeFromFullGraph(d.name);
-									setTimeout(uiGraphUpdate, 100);
+									// Trigger a graph update 
+									setTimeout(uiGraphUpdate2, 100);
 					    		})
 								.remove();
 						return dying;						
 					}
 
-					function setupExitingNodes(node) {
+					function setupExitingNodes(nodeSelection) {
 					    // Gracefully remove any exiting nodes
-						var exitingNodes = node.exit();
+						var exitingNodes = nodeSelection.exit();
 						exitingNodes
 							.attr("opacity", 1.0)
 							.transition()
@@ -1221,15 +1317,30 @@ var LuxUi = (function() {
 						return exitingNodes;						
 					}
 
+					/////////////////// End of Basic D3 Node setup ////////////////////////////////
+					
+					///////////////////// Switch Icons ////////////////////////////////////////////
+
+					// Add in switchIcons to all topics
+					// These are the < and > that swap between topic views
+					//	selection - the 'node' D3 selection
+					//
 					function switchIcons(selection) {
+						console.log("Setting up switchIcons ********************");
 						switchIcon(selection, "switch-left-icon", -1, "\ue64a");
 						switchIcon(selection, "switch-right-icon", +1, "\ue649");
 					}
 
+					// Add switch icons to a D3 selection of topics
+					//	selection - the 'node' D3 selection
+					// 	klass - the CSS class of the type of switch icon to add
+					//	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
+					//  icon - Font Awesome icon code
+					//
 					function switchIcon(selection, klass, side, icon) {
 					    var switchIcons = selection.selectAll("." + klass)
 					    	.data(function(d) {
-					    		return largeOrMediumTopicWithSeveralViews(d) ? [{hostname: d.data.hostname, size: d.size, width: d.width, viewer: d.viewer}] : []
+					    		return topicNeedsSwitchIcons(d) ? [{hostname: d.data.hostname, size: d.size, width: d.width, viewer: d.viewer}] : []
 					    	});
 
 					    switchIcons.enter()
@@ -1257,13 +1368,22 @@ var LuxUi = (function() {
 					    switchIcons.exit().remove();	
 					}
 
-					function largeOrMediumTopicWithSeveralViews(d) {
+					// Return TRUE if this D3 node needs a switch icon added.
+					// This is TRUE for topics that are "large" size
+					//
+					function topicNeedsSwitchIcons(d) {
 						return (((d.nodeFormat==='large')||(d.nodeFormat==='medium'))
 								&&(d.rtype==='topic')
 								&&(d.viewer.numberOfViews > 1)
 								);
 					}
 
+					// Set up scaling animation on switch icons for when the topic is
+					// double-clicked
+					//	node - the D3 node selection
+					//	klass - the CSS class of these switch icons
+					//	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
+					//
 					function animateSwitchIcon(node, klass, side) {
 					    node.selectAll("." + klass)
 					   		.transition()
@@ -1272,17 +1392,30 @@ var LuxUi = (function() {
 					    	.attr("x", function(d) {return side * nodeRadius(d) - side * 20});						
 					}
 
-					function killIcons(selection) {
-					    // handle Kill Icons - only visible on large format ROS node
-					    var killIcons = selection.selectAll(".kill-icon")
+					///////////////////// End of Switch Icons /////////////////////////////////////
+
+
+					// Set up Kill Icons - only visible as an "X" on large format ROS nodes
+					//	nodeSelection - d3 selection of nodes
+					//
+					//	When the user clicks the kill icon, the UI-to-protocol layer is told
+					//	to send a kill message back to the server
+					//
+					function killIcons(nodeSelection) {
+
+						// Display on d3 nodes that are ROS nodes, large size
+					    var killIcons = nodeSelection.selectAll(".kill-icon")
 					    	.data(function(d) {
 					    		return ((d.nodeFormat==='large')&&(d.rtype==='node')&&(!d.shrinking)) ? [{hostname: d.data.hostname, pid: d.data.pid}] : []
 					    	});
+
+					    // Set up kill icons to be clickable and to make them scale when the node scales
 					    killIcons.enter()
 					    	.append("text")
 					    	.attr("class", "kill-icon")
 					    	.attr("opacity", 0.0)
 					    	.on("click", function(d) {
+					    		console.log("Sending kill message to UI layer with hostname " + d.hostname + " PID " + d.pid);
 					    		ProtocolToUiLayer.kill(d.hostname, d.pid);
 					    	})
 					    	.transition()
@@ -1290,7 +1423,10 @@ var LuxUi = (function() {
 					    	.attr("opacity", 1.0)
 					    	.attr("y", function(d) {return 4 * nodeRadius(d); });
 
+					    // Remove exitting kill icons (when node is removed)
 					    killIcons.exit().remove();	
+
+					    // Actual click icon is a boring "X"
 					    killIcons
 					    	.text("\ue646")
 					    	.style("font-family", "themify")
@@ -1521,6 +1657,8 @@ var LuxUi = (function() {
 					};
 
 					var deleteLinksFromFullGraphConnectedTo = function (nameNodeToDelete) {
+						deleteLinksFromGraphConnectedToNodeName(nameNodeToDelete, uiFullGraph);
+						/*
 						var j = uiFullGraph.links.length;
 						while (j--) {
 							if ((uiFullGraph.links[j].sourceName===nameNodeToDelete) ||
@@ -1528,6 +1666,7 @@ var LuxUi = (function() {
 								uiFullGraph.links.splice(j, 1);
 							}
 						}
+						*/
 					};
 
 					function uiGraphDel(update) {
@@ -1947,12 +2086,14 @@ var LuxUi = (function() {
 		// Handle focus on Nodes and Topics
 		// Double click on a node/topic captures focus
 		// TODO: Single click should capture focus too
-
+		//
 		function captureFocus(node) {
 			clearFocusOnAllNodes()
 			node.focus = true;
 		}
 
+		// Unfocus all nodes
+		//
 		function clearFocusOnAllNodes() {
 			for (var i=0; i<uiGraph.nodes.length; i++) {
 				uiGraph.nodes[i].focus = false;

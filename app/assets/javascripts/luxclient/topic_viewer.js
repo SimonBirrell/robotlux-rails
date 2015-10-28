@@ -328,6 +328,11 @@ var TopicViewer = (function() {
                 console.log("Unhandled update() function");
             };
 
+            // Called when topic window size is changed
+            //
+            that.setTopicWindowSize = function(canvas, renderWidth, renderHeight) {
+            };
+
             return that;
         }
 
@@ -371,8 +376,7 @@ var TopicViewer = (function() {
             var NUMBER_TOPIC_DISPLAY_TEXT_LINES = 15,
                 TOPIC_DISPLAY_TOP = -100,
                 TOPIC_DISPLAY_TEXT_HEIGHT = 14,
-                TOPIC_DISPLAY_LEFT_MARGIN = -100,
-                SHRINK_DURATION = 1000;
+                TOPIC_DISPLAY_LEFT_MARGIN = -100;
 
             // Join with a set of text lines that constitute the topic display.
             // Currently used in display for large generic topics.
@@ -542,6 +546,9 @@ var TopicViewer = (function() {
         // When scaling we need to scale both the width, height of the <canvas> element
         // and the size of the renderer
         //
+        // TODO: There's an issue if you click a topic while another one is still scaling
+        // To clearly see the problem, increase SHRINK_DURANTION in ui.js to 5000
+        //
         function updateCanvasesForViewType(uiGraph, viewType) {
             // Canvas is a square within a circle
             var topicWidth = CircleRadius * 1.41421356237;
@@ -584,7 +591,6 @@ var TopicViewer = (function() {
                 .attr("targetSize", function(d) {
                     var targetSize = canvasWidth(d);
                     console.log("Set target size to " + targetSize);
-                    //d.viewer.currentView.setTopicWindowSize(this, targetSize, targetSize);
                     return targetSize;
                 })    
                 .duration(SHRINK_DURATION)
@@ -599,6 +605,9 @@ var TopicViewer = (function() {
                     return function(t) {
                         var currentSize = startSize + (targetSize - startSize) * t;
                         // Set renderer size during transition
+                        //this.rendererWidth = renderWidth;
+                        //this.rendererHeight = renderHeight;
+
                         d.viewer.currentView.setTopicWindowSize(this, currentSize, currentSize);
                     };
                 })
