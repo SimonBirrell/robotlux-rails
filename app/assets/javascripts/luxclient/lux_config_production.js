@@ -1,3 +1,6 @@
+// Production configuration with node.js server on Heroku, port 80
+//
+
 var LuxConfig = (function() {
 	var module = {};
 

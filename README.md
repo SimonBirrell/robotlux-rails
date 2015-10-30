@@ -9,7 +9,10 @@ The Rails Server will handle
 
 Right now it contains a fairly crappy temporary admin theme called Piluku with a lot of cruft. Beyond that, the Rails part currently does little.
 
-The client-side JavaScript app uses the following frameworks:
+The client-side JavaScript app is called "luxclient" and lives in
+/app/assets/javascripts/luxclient
+
+LuxClient uses the following frameworks:
 - d3 for data visualization
 - SVG for general rendering
 - three.js for 3D graphics
@@ -67,5 +70,5 @@ An awful lot. The bulk of the app is here.
 License
 -------
 
-(c) 2015 Robot Lux. All Rights Reserved.
+(c) 2015 Simon Birrell. All Rights Reserved.
 

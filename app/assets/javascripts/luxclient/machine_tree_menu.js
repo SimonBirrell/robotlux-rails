@@ -1,3 +1,8 @@
+// This module manages the menu on the left hand side of the screen.
+// The menu lists the ROS packages and rosrun / roslaunch targets supplied by
+// the server. d3 is used to render the menu.
+//
+
 var MachineTreeMenu = (function() {
     "use strict";
     

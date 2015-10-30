@@ -1,3 +1,7 @@
+// The interface with the websockets communication with the server.
+// This could potentially be swapped out for some other type of protocol.
+//
+
 var LuxProtocolWebsockets = (function() {   
     "use strict";
      

@@ -1,3 +1,10 @@
+// The TopicViewer is responsible for displaying TopicViews.
+// These are the little diagrams in the displayed ROS topics that represent
+// and manipulate the underlying ROS messages.
+//
+// TODO: Split this into various separate files
+//
+
 var TopicViewer = (function() { 
     	"use strict"; 
 
@@ -186,7 +193,7 @@ var TopicViewer = (function() {
         // Trigger an overall UI update
         //
         function updateUi() {
-            LuxUi.uiGraphUpdate2();
+            LuxUi.uiGraphUpdate();
         }
 
         // Test functions TODO: delete

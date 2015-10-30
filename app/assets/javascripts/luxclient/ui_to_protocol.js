@@ -1,3 +1,7 @@
+// This module liases between the UI module and the server communications module.
+// It interprets and passes messages back and forth between these two layers
+//
+
 var LuxUiToProtocol = (function() {
     "use strict";
     

@@ -6,6 +6,9 @@
 // So a single topic from ROS's point of view becomes an array of topics (from RobotLux's point
 // of view). The Robot Lux topics are bounded by a group.
 
+// This code is not working yet and is not complete, hence largely undocumented!
+//
+
 var HashTopicManager = (function() {
 	"use strict"; 
 
@@ -188,7 +191,7 @@ var HashTopicManager = (function() {
 			console.log("&&&&&&&&&&&&&&&&&&&&");
 			clearLinksOnSubTopics(graph, node.hashSubTopics);
 			setLinksOnSubTopics(graph, node.hashSubTopics);
-			LuxUi.uiGraphUpdate2();
+			LuxUi.uiGraphUpdate();
 		}
 
 	};
