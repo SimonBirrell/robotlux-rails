@@ -8,8 +8,16 @@ var MachineTreeMenu = (function() {
     
     var module = {};
 
-
+    // Called from UI to indicate that the machine menu (currently on screen left)
+    // needs updating.
+    //	machineTreeMenu - d3 selection of the <div> containing the machine menu
+    //	uiGraph - The graph that holds the UI contents
+    //	DragDropManager - Object that allows you to drag and drop from HTML to SVG
+    //	ProtocolToUiLayer - the layer that handles communication with the server
+    //
 	module.updateMachineMenu = function(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer) {
+	
+		// Lookup table that converts a package content type with the CSS class of an icon
 		var machineTypesToIcons = {
 			'embedded' : 'icon ti-package',
 			'cloud' : 'icon ti-cloud',
@@ -19,28 +27,38 @@ var MachineTreeMenu = (function() {
 			'script' : 'icon ti-receipt'
 		};
 
+		// Save some data on the DOM element
 		machineTreeMenu
 			.datum({name:'', node_type: 'root', children : uiGraph.machines});
 
+		// Render a hierarchical menu where the top level is "machine"
 		var machines = machineTreeMenu.selectAll(".menu-machine")	
 			.data(function(d) { return (d.children) ? (d.children) : []});	
 		var newMachines = machines.enter()
 							  		.append('li')
 							  		.attr("class", "submenu menu-machine");
+		// render the menu rows that display the machine name and icon							  		
 		addMachines(newMachines);
+
+		// Remove any disconnected machines
 		machines.exit().remove();
+
+		// Each machine contains packages
 		machines.each(function(d) {
 			if (d.children) {
 				var packages = machines.selectAll(".menu-packages")
 								.selectAll(".menu-package")
 								.data(function(d) { return (d.children) ? (d.children) : []});
+				// Create rows for new packages								
 				var newPackages = packages.enter()
 											.append('li')
 											.attr("class", "submenu menu-package");
+				// Render package rows											
 				addPackages(newPackages);
 				packages.exit().remove();
 				packages.each(function(d) {
 					if (d.children) {
+						// Render a row for each target
 						var targets = packages.selectAll(".menu-targets")
 										.selectAll(".menu-target")
 										.data(function(d) { return (d.children) ? (d.children) : []});
@@ -57,6 +75,9 @@ var MachineTreeMenu = (function() {
 		});
 		setAllTargetsToBeDraggable();
 
+		// Each machine has a row with an icon, machine name and an arrow
+		//	menuItem - d3 selection of <div>s for rendering machines into 
+		//
 		function addMachines(menuItem) {
 			var link = newLink(menuItem, "#menu_levels", "");
 
@@ -74,6 +95,9 @@ var MachineTreeMenu = (function() {
 			return link;
 		}
 
+		// Each package has a row with the package name and an arrow
+		//	menuItem - d3 selection of <div>s for rendering packages into 
+		//
 		function addPackages(menuItem) {
 			var link = newLink(menuItem, "#menu_level_one", "");
 
@@ -89,6 +113,9 @@ var MachineTreeMenu = (function() {
 			return link;
 		}
 
+		// Each target has a row with an icon, target name and an arrow
+		//	menuItem - d3 selection of <div>s for rendering targets into 
+		//
 		function addTargets(menuItem) {
 			var link = newLink(menuItem, "#menu_level_one", "drag-to-launch");	
 
@@ -102,6 +129,11 @@ var MachineTreeMenu = (function() {
 			return link;
 		}
 
+		// Render an <a href> link on the menu
+		//	menuItem - d3 selection of <div>s
+		//	href - URL to link to
+		//	extraClass - additional CSS class to render
+		//
 		function newLink(menuItem, href, extraClass) {
 			return menuItem
 				.append("a")
@@ -109,6 +141,11 @@ var MachineTreeMenu = (function() {
 				.attr("href", href);
 		}
 
+		// Render a <ul> list on the menu
+		//	menuItem - d3 selection of <div>s
+		//	listId - CSS ID to add to the list
+		//	levelDefinition - another CSS class that defines the level
+		//
 		function newList(menuItem, listId, levelDefinition) {
 			return menuItem
 				.append("ul")
@@ -116,6 +153,9 @@ var MachineTreeMenu = (function() {
 				.attr("id", listId);	
 		}
 
+		// All targets in the menu can be dragged onto the SVG display
+		// This function sets it up.
+		//
 		function setAllTargetsToBeDraggable() {
 			var body = d3.select("body");
 
@@ -157,6 +197,12 @@ var MachineTreeMenu = (function() {
 		}
 
 		// User has dragged a draggable item and released it on top of a machine
+		// This callback gets called and the corresponding action is triggered on
+		// the UI to protocol layer.
+		//	draggedItem - 	the dragged DOM <a href>
+		//	dropTarget - 	the DOM element (the group) where the link is dragged to. This contains
+		//					a hostname that is the place to do rosrun / roslaunch in the real world.
+		//
 		function droppedDraggableItemOntoGroup(draggedItem, dropTarget) {
 			console.log(draggedItem);
 			if (draggedItem.node_type === 'node') {

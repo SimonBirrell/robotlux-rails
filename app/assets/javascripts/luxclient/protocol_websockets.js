@@ -8,30 +8,41 @@ var LuxProtocolWebsockets = (function() {
     var module = {}; 
     var ws = false;
     
+    // Open a websocket to the node.js server
+    //
+    //  TODO: Proper authentication system
+    //  TODO: Maintain a list of connected ROS instances for user selection
+    //  TODO: Make the browser attempt reconnects if connection drops
+    //
     module.open = function(interpretMessage) {
         if ("WebSocket" in window)  {
-            // Remote server
-            //ws = new WebSocket("ws://luxserver.herokuapp.com/");
-
-            // Local server for testing
-            //ws = new WebSocket("ws://localhost:8080/");
-
+            // Get the actual websocket URL from the config
             ws = new WebSocket(LuxConfig.socketsServer);
 
+            // Callback when socket connects
             ws.onopen = function() {
                 // Web Socket is connected, send data using send()
                 console.log("Websocket connected to server...");
+
+                // This is the first message we send to kick things off
                 module.sendMessage({mtype: 'browserConnect',
                                         mbody: {rosinstance: 'ros_instance_base', 
                                                 org: 'org_id', 
                                                 user: 'userName', 
                                                 secret: 'secret'}});
+                // Ask the server to give us a list of ROS instances that we have access
+                // to.
                 module.sendMessage({mtype: 'subscribeRosInstances'});
+
+                // Choose a ROS instance.
+                // HARDWIRED DEMO CODE
                 module.sendMessage({mtype: 'subscribeRosInstance',
                                     mbody: {rosInstance: 'org_id 0 ros_instance_base'}});
+
                 console.log("Message is sent...");
             }
             
+            // Receive a message from the server
             ws.onmessage = function (event) 
             { 
                //console.log("Message is received...");
@@ -40,6 +51,7 @@ var LuxProtocolWebsockets = (function() {
                interpretMessage(receivedMessage);
             };
 
+            // Close the websocket
             ws.onclose = function()
             { 
                // websocket is closed.
@@ -51,6 +63,9 @@ var LuxProtocolWebsockets = (function() {
         }        
     }
     
+    // Called from LuxUiToProtocol layer to send message to the server
+    //  message - a JavaScript object to be JSONified.
+    //
     module.sendMessage = function(message) {
         if (ws) {
             ws.send(JSON.stringify(message));
@@ -59,6 +74,8 @@ var LuxProtocolWebsockets = (function() {
         }
     }
     
+    // Close down this module. Useful for tests.
+    //
     module.close = function() {
         if (ws) {
             ws.close();
