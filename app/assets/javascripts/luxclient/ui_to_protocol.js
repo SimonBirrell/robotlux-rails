@@ -6,56 +6,51 @@ var LuxUiToProtocol = (function() {
     "use strict";
     
     var module = {};
+
+    // The protocol communications object
     var serverComm;
+
+    // A local copy of the graph on the server
     var serverGraph = {};
+
+    // Save the API callbacks to the UI module.
     var uiGraphAdd = null, 
         uiGraphDel = null, 
         uiGraphUpd = null,  
         uiGraphClear = null;
 
-    // Add new nodes to server graph
-    var mergeServerGraph = function(newGraph) {
-      for (var key in newGraph) {
-        if (newGraph.hasOwnProperty(key)) {
-          serverGraph[key] = newGraph[key];
-        }
-      }
+    // Called from the main orchestration script to define which server protocol to use.
+    //  communicationsProtocol - a protocol object that should be saved for later use
+    //
+    module.setProtocol = function(communicationsProtocol) {
+        serverComm = communicationsProtocol;      
+    };
+    
+    // Called by the UI layer to initiate contact with the server.
+    // UI API callbacks are injected and saved.
+    // The server protocol should have been set with setProtocol() prior to opening.
+    //
+    module.open = function(uiGraphAddFn, uiGraphDelFn, uiGraphUpdFn, uiGraphClearFn) {
+        uiGraphAdd = uiGraphAddFn;
+        uiGraphDel = uiGraphDelFn;
+        uiGraphUpd = uiGraphUpdFn;
+        uiGraphClear = uiGraphClearFn;
+        if (!serverComm) {
+          throw "No communications protocol defined";
+        } 
+        serverComm.open(module.interpretMessage);
     }   
     
-    // Update nodes on server graph that already exist. Ignore the rest.
-    var updateServerGraph = function(newGraph) {
-      var nodesToUpdate = {}; 
+    // Called by the UI layer to close contact with the server.
+    //
+    module.close = function() {
+      // Doesn't do much right now    
+    }    
 
-      for (var i=0; i<newGraph.length; i++) {
-        var key = newGraph[i][0],
-            value = newGraph[i][1];
-
-        if (key in serverGraph) {
-          serverGraph[key] = value;
-          nodesToUpdate[key] = value;
-        }
-      }
-
-      return nodesToUpdate;
-    };   
-    
-    var deleteFromServerGraph = function(listNodesToDelete) {
-      var nodeKeysToDelete = [],
-          linkKeysToDelete = [];
-      for (var i=0; i<listNodesToDelete.length; i++) {
-        var key = listNodesToDelete[i];
-        if (key in serverGraph) {
-          delete serverGraph[key];
-          if ((key.substring(0,1)==='n') || (key.substring(0,1)==='t')) {
-            nodeKeysToDelete.push(key.substring(2));
-          } else if (key.substring(0,1)==='e') {
-            linkKeysToDelete.push(serverEdgeToUiLink(key));
-          }
-        }
-      }
-      return {nodes: nodeKeysToDelete, links: linkKeysToDelete};
-    };
-
+    // Called by the protocol when a message arrives form the server that needs
+    // interpreting.
+    //  message - A string of a JSON-formatted message.
+    //
     module.interpretMessage = function(message) {
         if (!uiGraphAdd || !uiGraphDel || !uiGraphUpd || !uiGraphClear) {
             throw("Message being interpreted before ui_to_protol.open() called.");
@@ -97,47 +92,145 @@ var LuxUiToProtocol = (function() {
         }   
     } 
 
-    module.printServerGraph = function() {
-      console.log("...........serverGraph..........");
-      for (var key in serverGraph) {
-        if (serverGraph.hasOwnProperty(key)) {
-          console.log(key + " : " + serverGraph[key]);
+    // ======== Functions called from UI layer =========================================
+
+    // Send a command to the server to execute rosrun on the robot
+    //  hostname - the machine to run the command on
+    //  packageName - the package name
+    //  runTarget- the actual run target
+    // So this is equivalent to typing
+    //  rosrun <packageName> <runTarget>
+    // on the robot itself
+    // TODO: Security! How do we stop someone saying "rosrun kill_humans" ?
+    //
+    module.rosrun = function(hostname, packageName, runTarget) {
+      var fullMachineId = hostnameToFullMachineId(hostname);
+      //console.log("Calling rosrun with " + fullMachineId + " " + packageName + " " + runTarget);
+      serverComm.sendMessage({mtype: 'rosrun', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
+    };
+
+    // Send a command to the server to execute roslaunch on the robot
+    //  hostname - the machine to run the command on
+    //  packageName - the package name
+    //  runTarget- the actual run target
+    //
+    // So this is equivalent to typing
+    //  roslaunch <packageName> <runTarget>
+    // on the robot itself
+    //
+    module.roslaunch = function(hostname, packageName, runTarget) {
+      var fullMachineId = hostnameToFullMachineId(hostname);
+      serverComm.sendMessage({mtype: 'roslaunch', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
+    };
+
+    // Perform a kill -9 <pid> on the specified host.
+    //  hostname - the machine to run the command on
+    //  pid - The PID of the process to kill
+    //
+    // TODO: Replace this rather insecure protocol with one where you kill a ROS node
+    // by name
+    //
+    module.kill = function(hostname, pid) {
+      var fullMachineId = hostnameToFullMachineId(hostname);
+      //console.log("Calling kill with " + fullMachineId + " " + pid);
+      serverComm.sendMessage({mtype: 'kill', mbody: {rosmachine: fullMachineId, args: [pid]}});      
+    }
+
+    // Send a ROS topic message that has been generated on the browser back to the robot.
+    //  rosInstanceId - the ROS instance to send the message to
+    //  rosTopic - the name of the ROS topic to publish to
+    //  rosMessage - A JSON-formatted message
+    //
+    module.sendRosTopicMessage = function(rosInstanceId, rosTopic, rosMessage) {
+      serverComm.sendMessage({mtype: 'message', 
+                              mbody: {
+                                rosInstance: rosInstanceId, 
+                                topic: rosTopic, 
+                                message: rosMessage
+                              }
+                            });      
+    }
+
+    // Convert a hostname to a full machine ID for specifying in a message
+    // DEMO ONLY CODE
+    // TODO: The browser should maintain a list of connected ROS instances
+    function hostnameToFullMachineId(hostname) {
+      return "org_id 0 ros_instance_base "+ hostname;
+    }
+
+    // ================ Server Graph ==============================================
+
+    // Maintain a copy of the graph we receive from the server.
+    // This should be structurally identical to the copy on the node.js server
+    // In some ways this may be overkill as we also have uiFullGraph at the UI
+    // layer.
+
+    // Add new nodes to server graph
+    //  newGraph -  The new mini-graph to merge into our copy of the server graph
+    //              An array of [key, value] arrays, where key is a server key
+    //              like "n /foo/bar" and the value is some hunk of JSON
+    //
+    var mergeServerGraph = function(newGraph) {
+      for (var key in newGraph) {
+        if (newGraph.hasOwnProperty(key)) {
+          serverGraph[key] = newGraph[key];
         }
       }
-      console.log("................................");
-    };
-
-    module.getServerGraph = function() {
-        return serverGraph;
-    };
-
-    module.setProtocol = function(communicationsProtocol) {
-        serverComm = communicationsProtocol;      
-    };
-    
-    module.open = function(uiGraphAddFn, uiGraphDelFn, uiGraphUpdFn, uiGraphClearFn) {
-        uiGraphAdd = uiGraphAddFn;
-        uiGraphDel = uiGraphDelFn;
-        uiGraphUpd = uiGraphUpdFn;
-        uiGraphClear = uiGraphClearFn;
-        if (!serverComm) {
-          throw "No communications protocol defined";
-        } 
-        serverComm.open(module.interpretMessage);
     }   
     
-    module.close = function() {
-        
-    }
+    // Update nodes on server graph that already exist. Ignore the rest.
+    //  newGraph -  The new mini-graph to merge into our copy of the server graph
+    //              An array of [key, value] arrays, where key is a server key
+    //              like "n /foo/bar" and the value is some hunk of JSON
+    //
+    var updateServerGraph = function(newGraph) {
+      var nodesToUpdate = {}; 
 
-    var serverKeyToEmptyNode = function(serverKey) {
-        return {'name': serverKey.substring(2).trim(), 'rtype': 'node', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0};
-    }
+      for (var i=0; i<newGraph.length; i++) {
+        var key = newGraph[i][0],
+            value = newGraph[i][1];
+
+        if (key in serverGraph) {
+          serverGraph[key] = value;
+          nodesToUpdate[key] = value;
+        }
+      }
+
+      return nodesToUpdate;
+    };   
     
-    var serverKeyToEmptyTopic = function(serverKey) {
-        return {'name': serverKey.substring(2), 'rtype': 'topic', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0}; 
-    }
+    // Delete a list of nodes from our copy of the server graph
+    //  listNodesToDelete - an array of keys, each one of which represents a server node
+    // These keys start with n, t, e (nodes, topics, edges) as per the protocol
+    //
+    // Returns an object that can be passed to the UI for pruning their copy of the
+    // graph.
+    //
+    var deleteFromServerGraph = function(listNodesToDelete) {
+      var nodeKeysToDelete = [],
+          linkKeysToDelete = [];
+      for (var i=0; i<listNodesToDelete.length; i++) {
+        var key = listNodesToDelete[i];
+        if (key in serverGraph) {
+          delete serverGraph[key];
+          if ((key.substring(0,1)==='n') || (key.substring(0,1)==='t')) {
+            nodeKeysToDelete.push(key.substring(2));
+          } else if (key.substring(0,1)==='e') {
+            linkKeysToDelete.push(serverEdgeToUiLink(key));
+          }
+        }
+      }
+      return {nodes: nodeKeysToDelete, links: linkKeysToDelete};
+    };
 
+
+    // =============== Server format -> UI format conversion ==============================
+
+    // Convert a server-formatted ROS edge to a UI-formatted link
+    //  serverEdge -
+    //  edgeData - 
+    // Returns an object that can be passed to the UI layer
+    //
     var serverEdgeToUiLink = function(serverEdge, edgeData) {
         edgeData = typeof edgeData !== 'undefined' ? edgeData : null;
         var edge= serverEdge.substring(1).replace('  ', ' .');
@@ -159,10 +252,13 @@ var LuxUiToProtocol = (function() {
         return null;                 
     };
 
-    var generateMachineTree = function(node) {
-
-    }
-
+    // Convert a machine received from the server into a machine formatted for
+    // use by the UI.
+    //  machineKey - 
+    //  machineGraph -
+    //
+    // Accessible from outside the module so we can test it.
+    //
     module.serverMachineToUiMachine = function(machineKey, machineGraph) {
 
         var uiMachineGraph = {
@@ -193,7 +289,12 @@ var LuxUiToProtocol = (function() {
 
         return uiMachineGraph;
     };
-    
+
+    // The graph for the addition / deletion / update is received in an "mbody" in the protocol
+    // This function converts it into a UI-formatted graph
+    //  graph - taken directly from the mbody
+    // Returns a new object that can be passed to the UI layer
+    //
     module.mbodyToUiGraph = function(graph) {
         var update = {nodes: [], links: [], groups: [], machines: []},
             groups = [],
@@ -241,39 +342,49 @@ var LuxUiToProtocol = (function() {
         return {nodes: nodes, links: links, groups: groups, machines: machines};
     }
 
-    // Functions called from UI layer
+    // Convert a server key to an object that represents an empty ROS node
+    // This can be passed to the UI layer.
+    //  serverKey - "n /foo/bar", where n means node.
+    //
+    // NOTE: The n is actually redundant as we also use a leading space to differentiate
+    // topics from nodes.
+    //
+    var serverKeyToEmptyNode = function(serverKey) {
+        return {'name': serverKey.substring(2).trim(), 'rtype': 'node', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0};
+    }
+    
+    // Convert a server key to an object that represents an empty ROS topic
+    // This can be passed to the UI layer.
+    //  serverKey - "n  /foo/bar", where n means node. Note the extra space for ROS topics.
+    //
+    // NOTE: The n is actually redundant as we also use a leading space to differentiate
+    // topics from nodes.
+    //
+    var serverKeyToEmptyTopic = function(serverKey) {
+        return {'name': serverKey.substring(2), 'rtype': 'topic', 'group': 1, 'width': 64, 'height': 64, 'x': 0, 'y': 0}; 
+    }
 
-    module.rosrun = function(hostname, packageName, runTarget) {
-      var fullMachineId = hostnameToFullMachineId(hostname);
-      //console.log("Calling rosrun with " + fullMachineId + " " + packageName + " " + runTarget);
-      serverComm.sendMessage({mtype: 'rosrun', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
+    // ================ DEBUGGING FUNCTIONS =======================================
+
+    // Print a copy of the serverGraph to the browser console.
+    // Call from Chrome console with LuxUiToProtocol.printServerGraph();
+    //
+    module.printServerGraph = function() {
+      console.log("...........serverGraph..........");
+      for (var key in serverGraph) {
+        if (serverGraph.hasOwnProperty(key)) {
+          console.log(key + " : " + serverGraph[key]);
+        }
+      }
+      console.log("................................");
     };
 
-    module.roslaunch = function(hostname, packageName, runTarget) {
-      var fullMachineId = hostnameToFullMachineId(hostname);
-      //console.log("Calling roslaunch with " + fullMachineId + " " + packageName + " " + runTarget);
-      serverComm.sendMessage({mtype: 'roslaunch', mbody: {rosmachine: fullMachineId, args: [packageName, runTarget]}});
+    // Used by Jasmine tests
+    //
+    module.getServerGraph = function() {
+        return serverGraph;
     };
 
-    module.kill = function(hostname, pid) {
-      var fullMachineId = hostnameToFullMachineId(hostname);
-      //console.log("Calling kill with " + fullMachineId + " " + pid);
-      serverComm.sendMessage({mtype: 'kill', mbody: {rosmachine: fullMachineId, args: [pid]}});      
-    }
-
-    module.sendRosTopicMessage = function(rosInstanceId, rosTopic, rosMessage) {
-      serverComm.sendMessage({mtype: 'message', 
-                              mbody: {
-                                rosInstance: rosInstanceId, 
-                                topic: rosTopic, 
-                                message: rosMessage
-                              }
-                            });      
-    }
-
-    function hostnameToFullMachineId(hostname) {
-      return "org_id 0 ros_instance_base "+ hostname;
-    }
 
     return module;
 })();

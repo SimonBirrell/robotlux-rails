@@ -9,8 +9,14 @@ The Rails Server will handle
 
 Right now it contains a fairly crappy temporary admin theme called Piluku with a lot of cruft. Beyond that, the Rails part currently does little.
 
+LuxClient
+---------
+
 The client-side JavaScript app is called "luxclient" and lives in
 /app/assets/javascripts/luxclient
+
+The setup occurs in the script on
+/app/views/home/index.html.erb
 
 LuxClient uses the following frameworks:
 - d3 for data visualization
