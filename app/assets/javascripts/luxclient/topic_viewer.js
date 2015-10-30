@@ -18,6 +18,9 @@ var TopicViewer = (function() {
         var VIEW_TYPES = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
+
+        // These are the ROS message types and the views we have available to render them.
+        // All views can also be rendered as a GenericView    
         var ViewsAvailable = {
             "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
             //"tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
@@ -31,6 +34,9 @@ var TopicViewer = (function() {
     	// "Class methods" called from UI.
         // This is the TopicViewer API.
 
+        // When setting up the TopicViewer, it will need various items
+        // from the UI level.
+        //
     	module.setup = function(d3, svg, margin, circleRadius, shrinkDuration) {
     		D3 = d3;
     		Svg = svg;
@@ -39,11 +45,13 @@ var TopicViewer = (function() {
             SHRINK_DURATION = shrinkDuration;
     	}; 
  
+        // This is called when d3 calls the zoomAndPan() callback in the UI
+        //
 		module.zoomAndPan =	function () {
             module.tick();
 		};	
 
-        // Called from graph.tick(), once per tick of force layout simulation
+        // Called from graph.tick() in the UI module, once per tick of force layout simulation
         //
     	module.tick = function() {
             // Call tick() for each view_type
@@ -63,7 +71,9 @@ var TopicViewer = (function() {
 		};
 
         // Render the grey circles that back each topic
+        //
         module.renderTopicBackground = function(selection) {
+            // Nothing to do yet
         }
 
         // Update the views of all topics on the screen.
@@ -80,6 +90,10 @@ var TopicViewer = (function() {
     	// The TopicViewer "Class"
     	//
 
+        // One TopicViewer is created for each topic that needs one.
+        // It is responsible for rendering and swapping between the different
+        // TopicViews that are available.
+        //
     	module.TopicViewer = function(topicNode) {
     		this.topicNode = topicNode;
     		this.messageType = (topicNode.data) ? topicNode.data.type : "";
@@ -88,25 +102,28 @@ var TopicViewer = (function() {
             this.nextView = null;
             this.viewsSetUp = false;
 
-            //console.log(topicNode.name + " -> " + this.messageType);
+            // Set up the individual TopicViews, if we're ready
 			setUpViews(this);
     	};
 
         // Set up the different views that can appear on this TopicViewer
         // There's always at least a generic view and others if we have an implemented
         // viewer for the topic message type.
+        //  that - reference to the TopicViewer
         //
     	function setUpViews(that) {
             var viewSpec;
+
+            // Set up only if ready and the message type is understood
             if ((!that.viewsSetUp)&&(that.messageType)) {
-             //   console.log("setting up views for");
-             //   console.log(that.messageType);
                 that.views = [];
                 viewSpec = {node: that.topicNode};
+                // Always have a generic view available
                 var genericView = TopicViewer['genericTopicView'](viewSpec);
                 that.views.push(genericView);
 
                 var availableViews = [];
+                // Check ViewsAvailable list to see what we have for each messageType
                 if (that.messageType in ViewsAvailable) {
                     availableViews = ViewsAvailable[that.messageType];
                     for (var i=0; i<availableViews.length; i++) {
@@ -128,7 +145,7 @@ var TopicViewer = (function() {
             }
     	}
 
-        // Show previous view on this TopicViewer
+        // Call to switch to previous view on this TopicViewer
         //
         module.TopicViewer.prototype.rotateViewLeft = function() {
             if (this.currentView) {
@@ -138,7 +155,7 @@ var TopicViewer = (function() {
             console.log(this);
         };
 
-        // Show next view on this TopicViewer
+        // Call to switch to next view on this TopicViewer
         //
         module.TopicViewer.prototype.rotateViewRight = function() {
             if (this.currentView) {
@@ -150,6 +167,7 @@ var TopicViewer = (function() {
 
         // Topic has been updated with a ROS message (probably from server). 
         // Update the current view.
+        //  node - reference to the node on uiGraph
         //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
@@ -160,9 +178,9 @@ var TopicViewer = (function() {
         };
 
         // Called by d3 within requestAnimationFrame
+        // Used to update any animations in the TopicView
         //
         module.TopicViewer.prototype.animateAndRender = function() {
-
             if (this.currentView) {
                 this.currentView.animateAndRender();
             }
@@ -185,25 +203,22 @@ var TopicViewer = (function() {
             }
         }
 
+        // currentViewIndex and nextViewIndex are indexes 0, 1, 2...n into the list
+        // of views on this TopicViewer
+        //
         function setViewsFromIndexes(self) {
             self.currentView = self.views[self.currentViewIndex];
             self.nextView = self.views[self.nextViewIndex];
         }
 
         // Trigger an overall UI update
+        // A bit drastic. Currently used when we swap to a new view (might have new
+        // canvas)
+        // TODO Check how necessray this is.
         //
         function updateUi() {
             LuxUi.uiGraphUpdate();
         }
-
-        // Test functions TODO: delete
-    	module.TopicViewer.prototype.size = function() {
-    		return this.topicNode.size;
-    	}
-
-    	module.TopicViewer.prototype.foo = function() {
-    		return true;
-    	};
 
     	//
     	// ================= VIEWS =====================
@@ -220,6 +235,10 @@ var TopicViewer = (function() {
             return 'topic-display-' + name.substring(2) + "-" + i.toString();
         }
 
+        // Convert the most recent ROS message in a topic into an array of text 
+        // strings for display in the GenericView.
+        //  node - reference to the node on uiGraph
+        //
         function messageTextArrayFromNode(node) {
             var header = node.data.type + " " + node.data.count,
                 messageTextArray = [header],
@@ -244,10 +263,17 @@ var TopicViewer = (function() {
                                             });
         }
 
+        // Get the topic name from the d3 node
+        //  d - Reference to the node in uiGraph
+        //
         function topicName(d) {
             return d.name;
         }
 
+        // Extract the angular and linear velocities from a standard
+        // ROS message representation and extract them to a more manageable object.
+        //  message - reference to ROS message object on a node
+        //
         function getVelocitiesFromMessage(message) {
             var linear, angular,
                 linearX = 0.0, linearY = 0.0, linearZ = 0.0,
@@ -274,26 +300,34 @@ var TopicViewer = (function() {
             };
         }
 
+        // Round to 2 decimal places
+        //
         function twoDecimalPlaces(number) {
             return Number(number).toFixed(2);
         }
 
+        // Return true if UP key is pressed
         function keyPressedForNodeUp(node) {
             return kd.K.isDown();
         }
 
+        // Return true if DOWN key is pressed
         function keyPressedForNodeDown(node) {
             return kd.M.isDown();
         }
 
+        // Return true if LEFT key is pressed
         function keyPressedForNodeLeft(node) {
             return kd.Z.isDown();
         }
 
+        // Return true if RIGHT key is pressed
         function keyPressedForNodeRight(node) {
             return kd.X.isDown();
         }
 
+        // Copy ROS message to a target node
+        //  updateNode - 
         // TODO: Make this a full copy
         function copyUpdateToNode(updateNode, targetNode) {
             targetNode.data = updateNode.data;
