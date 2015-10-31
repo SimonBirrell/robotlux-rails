@@ -62,7 +62,7 @@ var TopicViewer = (function() {
     	};
 
         // Called whenever graph is updated and force.start() called
-        //  selection - The node selection
+        //  selection - The d3 node selection
         //  uiGraph - graph to join with
         //
     	module.topicDisplay = function(selection, uiGraph) {
@@ -71,6 +71,7 @@ var TopicViewer = (function() {
 		};
 
         // Render the grey circles that back each topic
+        //  selection - The d3 node selection
         //
         module.renderTopicBackground = function(selection) {
             // Nothing to do yet
@@ -78,6 +79,8 @@ var TopicViewer = (function() {
 
         // Update the views of all topics on the screen.
         // Called whenever UI graph is updated
+        //  selection - The d3 node selection
+        //  uiGraph - pointer to uiGraph
         //
         module.updateCurrentViews = function(selection, uiGraph) {
             for (var v=0; v<VIEW_TYPES.length; v++) {
@@ -93,6 +96,7 @@ var TopicViewer = (function() {
         // One TopicViewer is created for each topic that needs one.
         // It is responsible for rendering and swapping between the different
         // TopicViews that are available.
+        //  topicNode - Reference to the node object that represents a ROS topic
         //
     	module.TopicViewer = function(topicNode) {
     		this.topicNode = topicNode;
@@ -167,7 +171,7 @@ var TopicViewer = (function() {
 
         // Topic has been updated with a ROS message (probably from server). 
         // Update the current view.
-        //  node - reference to the node on uiGraph
+        //  node - reference to the topic node on uiGraph
         //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
@@ -188,7 +192,7 @@ var TopicViewer = (function() {
 
         // Change the view currently diaplayed.
         //  topicViewer - the TopicViewer
-        //  offset - index of new view to display
+        //  offset - index of new view to display (into <TopicViewer>.views)
         //
         function rotateView(topicViewer, offset) {
             var numberViews = topicViewer.views.length;
@@ -346,7 +350,7 @@ var TopicViewer = (function() {
         //  where spec is a hash of options for the creation of the topicView
         //
         //  2. Each topicView has an "instance method" called update(), called
-        //  whenever an update is received from the server.
+        //  whenever an update (ie. ROS message) is received from the server.
         //
         //  3. Each topicView type has an updateViews() method that renders all the topicViews
         //  of that type in the uiGraph whenever the graph changes. This is sort of like a class method.
@@ -354,10 +358,19 @@ var TopicViewer = (function() {
         //  4. Each topicView type has a tick() method that is called from the D3/Cole tick()
         //  functions. This too is a class method equivalent.
         //
+        //  5. Each topicView has an animateAndRender() method that is called each
+        //  animation frame by the browser.
+        //
         //  Uses Douglas Crockford's convention for inheritance
+        //
+        // TODO: Try splitting these into separate spurce files for convenience
         //
         // ===================================================== 
 
+        // The base "class".
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
+        //
         var topicView = function(spec, my) {
 
             var my = my || {};
@@ -365,6 +378,9 @@ var TopicViewer = (function() {
 
             that.viewType = my.viewType || "Abstract";
 
+            // Called whenever a ROS message is received
+            //  node - the d3 node selection
+            //
             that.update = function() {
                 console.log("Unhandled update() function");
             };
@@ -383,14 +399,18 @@ var TopicViewer = (function() {
         // a given ROS message type on a topic. 
         // Currently, the topic is left blank unless it is large, in which case we display
         // a set of text lines that show the (poorly formatted) ROS message
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
         //
-
         module.genericTopicView = function(spec, my) {
             var spec = spec || {};
             var my = my || {};
             my.viewType = my.viewType || "genericTopicView";
             var that = topicView(spec, my);
 
+            // Called whenever the UI graph is changed
+            //  node - the d3 node selection
+            //
             var update = function(node) {
                 var messageTextArray = messageTextArrayFromNode(node); 
                 for (var l=0; l<messageTextArray.length; l++) { 
@@ -400,6 +420,8 @@ var TopicViewer = (function() {
             };
             that.update = update;
 
+            // Called by browser on each animation frame
+            //
             var animateAndRender = function() {
             };
             that.animateAndRender = animateAndRender;
@@ -413,6 +435,11 @@ var TopicViewer = (function() {
             return that;            
         };
 
+        // "Class method" called whenever graph is updated and force.start() called
+        // Updates all visible GenericTopicViews
+        //  selection - d3 selection of all nodes
+        //  uiGraph - pointer to uiGraph
+        //
         module.genericTopicView.updateViews = function(selection, uiGraph) {
             var NUMBER_TOPIC_DISPLAY_TEXT_LINES = 15,
                 TOPIC_DISPLAY_TOP = -100,
@@ -422,15 +449,15 @@ var TopicViewer = (function() {
             // Join with a set of text lines that constitute the topic display.
             // Currently used in display for large generic topics.
             // For each matching topic, return an array of text lines.
-            //
             var topicDisplayTextLines = selection.selectAll(".topic-display")
                 .data(function(d) {
-                    
+                    // Join with the text list of large, visible GenericTopicViews
                     if ((d.nodeFormat==='large')&&
                             (d.rtype==='topic')&&
                             ((d.viewer.currentView.viewType==="genericTopicView") || (d.viewer.currentView.viewType==="diffRobotControlTopicView"))
                             ) {
                         var list = [];
+                        // This will display the ROS message as a list of text lines
                         for (var i=0; i<NUMBER_TOPIC_DISPLAY_TEXT_LINES; i++) {
                             list.push({name: d.name, index: i, message_type: d.message_type, node: d});
                         }
@@ -441,8 +468,7 @@ var TopicViewer = (function() {
                 })
                 ;
 
-            // Fade in text on topic display 
-            //
+            // Fade in text on topic display when topic scales up to "large"
             topicDisplayTextLines.enter()
                 .append("text")
                     .attr("opacity", 0.0)
@@ -462,7 +488,6 @@ var TopicViewer = (function() {
                     });
 
             // Display each text line
-            //
             topicDisplayTextLines
                     .text(function(d) {
                         var textLine = d.node.viewer.currentView.textLine(d.node, d.index);
@@ -489,53 +514,33 @@ var TopicViewer = (function() {
 
         // This is the abstract class for a topic that displays a 3D animation
         // The topic contains an HTML canvas on which WebGL renders a 3D display.
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
         //
-
-        // 3D utility functions
-        function canvasWidth(d) {
-            return widthWithinCircleOfSize(d.size);
-        }
-
-        function previousCanvasWidth(d) {
-            return widthWithinCircleOfSize(d.psize);
-        }
-
-        function widthWithinCircleOfSize(size) {
-            return (size + 1) * CircleRadius * 1.41421356237;
-        }
-
-        function getCanvasPosition(d) {
-            var svgOffset = D3.transform(Svg.attr("transform"));
-            var topicWidth = CircleRadius * 1.41421356237;
-            var offset = (d.width/(CircleRadius*2)) * (2*CircleRadius - topicWidth) / 2;
-
-            var x = d.x + svgOffset.translate[0] - d.width/2 + offset,
-                y = d.y + svgOffset.translate[1] - d.height/2 + offset;
-
-            return [x, y];
-        }  
-
         module.threeDTopicView = function(spec, my) {
             var my = my || {};
             var that = topicView(spec, my);
 
+            // Called by subclasses to set the camera, scene and rendering window
             var setScene = function(canvas, renderWidth, renderHeight) {
 
                 function init() {
                     console.log("3D init()");
+                    // "that" is the TopicView "instance"
                     that.scene = new THREE.Scene();
 
                     that.camera = new THREE.PerspectiveCamera( 30, renderWidth / renderHeight, 1, 10000 );
                     that.camera.position.z = 1000;
 
+                    // Calls buildScene() method on subclasses
                     that.buildScene(that.scene, that.camera);
 
                     that.renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
                     that.rendererWidth = renderWidth;
                     that.rendererHeight = renderHeight;
                     that.renderer.setSize( renderWidth, renderHeight );
+                    // Canvas background color is the same as the topic background
                     that.renderer.setClearColor( 0xbcc8da, 0 );
-                    //that.renderer.setClearColor( 0xffffff, 1 );
                 }
 
                 init();
@@ -543,13 +548,16 @@ var TopicViewer = (function() {
             }
             that.setScene = setScene;
 
+            // Called whenever a ROS message is received
+            //  node - the d3 node selection
+            //
             var update = function(node) {
                 copyUpdateToNode(node, spec.node)
             };
             that.update = update; 
 
-            // Called during each animation frame. Sets the size of the rendered view on the
-            // canvas and then renders it.
+            // Called by subclasses during each animation frame. Sets the size of the 
+            // rendered view on the canvas and then renders it.
             //
             var render3D = function() {
                 that.renderer.setSize( that.rendererWidth, that.rendererHeight );
@@ -580,8 +588,48 @@ var TopicViewer = (function() {
             updateCanvasesForViewType(uiGraph, viewType);
         };
 
+        // 3D utility functions
+
+        // Get the current canvas width on node d
+        //  d - the d3 node for the ROS topic
+        //
+        function canvasWidth(d) {
+            return widthWithinCircleOfSize(d.size);
+        }
+
+        // Get the previous canvas width on node d
+        //  d - the d3 node for the ROS topic
+        //
+        function previousCanvasWidth(d) {
+            return widthWithinCircleOfSize(d.psize);
+        }
+
+        // Get the width of the canvas within the node
+        //  size - "size" 0, 1, 2, 3... of the node
+        //
+        function widthWithinCircleOfSize(size) {
+            return (size + 1) * CircleRadius * 1.41421356237;
+        }
+
+        // Get the canvas x,y position with respect to the SVG window
+        //  d - the d3 node for the ROS topic
+        //  
+        function getCanvasPosition(d) {
+            var svgOffset = D3.transform(Svg.attr("transform"));
+            var topicWidth = CircleRadius * 1.41421356237;
+            var offset = (d.width/(CircleRadius*2)) * (2*CircleRadius - topicWidth) / 2;
+
+            var x = d.x + svgOffset.translate[0] - d.width/2 + offset,
+                y = d.y + svgOffset.translate[1] - d.height/2 + offset;
+
+            return [x, y];
+        }  
+
         // Add HTML canvases to 3D topics
         // Update their size when the containing topic is scaling
+        // Get the current canvas width on node d
+        //  d - the d3 node for the ROS topic
+        //
         // Remove them when topic disappears
         //
         // When scaling we need to scale both the width, height of the <canvas> element
@@ -613,12 +661,6 @@ var TopicViewer = (function() {
                     return targetSize;
                 })    
                ;
-
-            
-            function endScaling(d) {
-                d.psize = d.size;
-            } 
-             
 
             // Update existing canvases of this viewType
             topicCanvases
@@ -654,7 +696,7 @@ var TopicViewer = (function() {
                 })
                 ;
 
-            // Remove exitting canvases for this viewType
+            // Remove exiting canvases for this viewType
             topicCanvases.exit().remove(); 
 
             // Save for use in tick() function
@@ -664,7 +706,9 @@ var TopicViewer = (function() {
         }
 
         // Called in each tick() of the force layout simulation
-        // TODO: Is this necessary on every tick?
+        //  viewType - type of current TopicView
+        // This changes the canvas position to make it appear that the canvases are 
+        // part of the SVG ROS topic.
         //
         module.threeDTopicView.tick = function(viewType) {
             
@@ -677,24 +721,16 @@ var TopicViewer = (function() {
                         y = position[1];
                         return "top:" + y.toString() + "px; left:" + x.toString() + "px;";
                     })
-                    /*
-                    .attr("width", function(d) {
-                        var currentSize = D3.select(this).attr("targetSize");
-                        return currentSize;
-                    })
-                    .attr("height", function(d) {
-                        var currentSize = D3.select(this).attr("targetSize");
-                        return currentSize;
-                    })
-*/
                 ;
    
         };
 
         // ==================== test3DTopicView ================ 
 
-        // The spinning red cube. Used when we have a topic we know will be 3D, but we
-        // don't have an implementation yet.
+        // The spinning red cube. Used as a placeholderwhen we have a topic we know will be 
+        // 3D, but we don't have an implementation yet.
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
         //
         module.test3DTopicView = function(spec, my) {
             var viewType = "test3DTopicView";
@@ -707,16 +743,19 @@ var TopicViewer = (function() {
                 mesh = null,
                 light = null;
 
+            // Called by threeDTopicView superclass
+            //  scene - THREE.js scene
+            //  camera - THREE.js camera
+            //
             var buildScene = function(scene, camera) {
-                //alert('buildScene in test3DTopicView');
+                // Spinning red cube
                 geometry = new THREE.BoxGeometry( 200, 200, 200 );
                 //material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
                 material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
                 mesh = new THREE.Mesh( geometry, material );
                 scene.add(mesh);
 
-                //    console.log(mesh);
-
+                // Set up some lights
                 light = new THREE.PointLight( 0xffffff, 5, 600 );
                 light.position.x = 300;
                 light.position.y = 300;
@@ -731,20 +770,20 @@ var TopicViewer = (function() {
             };
             that.buildScene = buildScene;
 
+            // Called by this class
+            //
             var animate = function() {
+                // Make the cube spin
                 mesh.rotation.x += 0.01;
                 mesh.rotation.y += 0.02;
             };
             that.animate = animate;
 
-            // Called by d3 within requestAnimationFrame
+            // Called by browser on each animation frame
             //
             var animateAndRender = function() {
-                //console.log("NEW test3DTopicView.animateAndRender");
-                if ((that.rendererHeight)&&(that.rendererWidth)) {
-
-                }
                 animate();
+                // Call threeDTopicView superclass
                 that.render3D();
             };
             that.animateAndRender = animateAndRender;
@@ -753,29 +792,37 @@ var TopicViewer = (function() {
         };
 
         // Called each time the graph is changed
+        //  selection - selection of nodes
+        //  uiGraph - graph to join with
         //
         module.test3DTopicView.updateViews = function(selection, uiGraph) {
             console.log("test3DTopicView.updateViews");
+            // Call superclass
             module.threeDTopicView.updateViews(selection, uiGraph, "test3DTopicView");
         };
 
         // Called in each tick() of the force layout simulation
         //
         module.test3DTopicView.tick = function() {
+            // Call superclass
             module.threeDTopicView.tick("test3DTopicView");
         };
 
         // ==================== Two3DGraphsTopicView ================ 
 
-        // Another "demo" 3D view. Just shows the basic 3D axes.
+        // Another "demo" 3D view. Currently just shows the basic 3D axes.
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
         //
-
         module.two3DGraphsTopicView = function(spec, my) {
             var viewType = "two3DGraphsTopicView";
             var my = my || {};
             my.viewType = my.viewType || viewType;
             var that = module.threeDTopicView(spec, my);
 
+            // Three axes in six pieces
+            //  length - length of each piece
+            //
             function buildAxes( length ) {
                 var axes = new THREE.Object3D();
 
@@ -789,6 +836,12 @@ var TopicViewer = (function() {
                 return axes;
             }
 
+            // Build a single piece of an axis
+            //  src - Where axis begins
+            //  dst - Wher axis ends
+            //  colorHex - color to make this piece of the axis
+            //  dashed - true or false for styling
+            //
             function buildAxis( src, dst, colorHex, dashed ) {
                 var geom = new THREE.Geometry(), mat; 
 
@@ -807,33 +860,34 @@ var TopicViewer = (function() {
                 return axis;
             }
 
+            // Called by threeDTopicView superclass
+            //  scene - THREE.js scene
+            //  camera - THREE.js camera
+            //
             var buildScene = function(scene, camera) {
-                 //               alert('buildScene in two3DGraphsTopicView');
 
+                // Position the camera
                 camera.position.x = 100;
                 camera.position.y = 100;
                 camera.position.z = 1000;
 
+                // Build the axes
                 var axes = buildAxes( 1000 );
                 scene.add( axes );
             }
             that.buildScene = buildScene;
 
+            // Called by this class
+            //
             var animate = function() {
-
-                //mesh.rotation.x += 0.01;
-                //mesh.rotation.y += 0.02;
-
-                //  controls.update();                
+                // Nothing to do yet
             }
             that.animate = animate;
 
-            // Called by d3 within requestAnimationFrame
+            // Called by browser on each animation frame
             //
             var animateAndRender = function() {
-                //console.log("NEW two3DGraphsTopicView.animateAndRender");
-                //console.log(spec.node.data);
-                //console.log(that);
+                // Call superclass
                 that.render3D();
             };
             that.animateAndRender = animateAndRender;
@@ -842,26 +896,24 @@ var TopicViewer = (function() {
         }
 
         // Called each time the graph is changed
+        //  selection - selection of nodes
+        //  uiGraph - graph to join with
         //
         module.two3DGraphsTopicView.updateViews = function(selection, uiGraph) {
+            // Call superclass
             module.threeDTopicView.updateViews(selection, uiGraph, "two3DGraphsTopicView");
         };
 
         // Called in each tick() of the force layout simulation
         //
         module.two3DGraphsTopicView.tick = function() {
+            // Call superclass
             module.threeDTopicView.tick("two3DGraphsTopicView");
         };
 
         // ==================== DiffRobotControlTopicView ================ 
 
-        // This view is used for the cmd_vel topic for differential drive robots.
-        // It visualizes and allows control of the velocities that we want a two-wheeled
-        // robot to move in. A puck is shown on a floor grid and may be controlled with the 
-        // keyboard. 
-        // It generates ROS messages specifiying a forward velocity and rotational angular velocity.
-        //
-
+        // Some tweakable constants for this view
         var ARROW_CONTROL_COLOR_HIGHLIGHT = 0x00ff00;
         var ARROW_CONTROL_COLOR_NORMAL = 0xffff00;
             var START_LINEAR_VELOCITY = 0.5,
@@ -872,22 +924,14 @@ var TopicViewer = (function() {
                 ANGULAR_ACCELERATION = 0.25,
                 CMD_VEL_MESSAGE_FREQUENCY = 10;
 
-        function interactiveArrow(circle, x, y) {
-            //console.log("Create arrow");
-            var dir = new THREE.Vector3(x, y, 0.0),
-                origin = new THREE.Vector3( 0.0, 0.0, 0.0 ),
-                length = 0.5,
-                color = ARROW_CONTROL_COLOR_NORMAL,
-                headLength = 0.1,
-                headWidth = 0.1,
-                arrow = new THREE.ArrowHelper(dir, origin, length, color, headLength, headWidth);
-
-            arrow.position.z = 0.02;
-            circle.add(arrow);
-
-            return arrow;
-        }
-
+        // This view is used for the cmd_vel topic for differential drive robots.
+        // It visualizes and allows control of the velocities that we want a two-wheeled
+        // robot to move in. A puck is shown on a floor grid and may be controlled with the 
+        // keyboard. 
+        // It generates ROS messages specifiying a forward velocity and rotational angular velocity.
+        //  spec - a hash of options from the creator
+        //  my - a hash of options created by the subclasses
+        //
         module.diffRobotControlTopicView = function(spec, my) {
             var viewType = "diffRobotControlTopicView";
             var my = my || {};
@@ -898,10 +942,31 @@ var TopicViewer = (function() {
                 angularVelocity = 0.0,
                 lastVelocities = {linear: {x:0, y:0, z:0}, angular: {x:0, y:0, z:0}};
 
+            // Build an interactive arrow for the puck
+            function interactiveArrow(circle, x, y) {
+                var dir = new THREE.Vector3(x, y, 0.0),
+                    origin = new THREE.Vector3( 0.0, 0.0, 0.0 ),
+                    length = 0.5,
+                    color = ARROW_CONTROL_COLOR_NORMAL,
+                    headLength = 0.1,
+                    headWidth = 0.1,
+                    arrow = new THREE.ArrowHelper(dir, origin, length, color, headLength, headWidth);
+
+                arrow.position.z = 0.02;
+                circle.add(arrow);
+
+                return arrow;
+            }
+
+            // Called by threeDTopicView superclass
+            //  scene - THREE.js scene
+            //  camera - THREE.js camera
+            //
             var buildScene = function(scene, camera) {
-                //   alert("diffRobotControlTopicView.buildScene()")
                 var grid, light;
 
+                // base is an invisible object that carries the puck and the camera
+                // It moves with the viewer
                 that.base = new THREE.Object3D();
                 that.base.add(camera);
                 that.base.rosPosition = {x: 0.0, y: 0.0, z: 0.1};
@@ -912,6 +977,7 @@ var TopicViewer = (function() {
                 that.camera.rotation.x = - Math.PI / 15;
                 that.camera.position.set(0.0, 0.6, 2.0);
 
+                // Floor grid
                 var grid = new THREE.GridHelper (20, 1);
                 scene.add (grid);
 
@@ -922,7 +988,7 @@ var TopicViewer = (function() {
                 var radius = 0.5;
                 var segments = 32;
 
-                // Create a floating circle
+                // Create a floating circle, the "puck"
                 var circleGeometry = new THREE.CircleGeometry( radius, segments );              
                 var circle = new THREE.Mesh( circleGeometry, material );
                 circle.rotation.x = - Math.PI / 2;
@@ -933,6 +999,7 @@ var TopicViewer = (function() {
                 that.leftArrow = interactiveArrow(circle, -1.0, 0.0);
                 that.rightArrow = interactiveArrow(circle, 1.0, 0.0);   
 
+                // Add pck to invisible base
                 that.base.add(circle);
 
                 // Add a light to the base
@@ -945,14 +1012,23 @@ var TopicViewer = (function() {
             }
             that.buildScene = buildScene;
 
+            // Called by this class
             var animate = function() {
             }
             that.animate = animate;
 
+            // ROS and THREE.js use different coordinate schemes, sadly
+            //  position - position in ROS coordinates
+            // Returns equivalent in THREE coordinates
+            //
             function rosPositionToThreePosition(position) {
                 return {x: -position.y, y: position.z, z: -position.x};
             }
 
+            // Convert THREE object position and orientation from ROS
+            // coordinates (already on object)
+            //  object3D - THREE object
+            //
             function setPositionFromRosPosition(object3D) {
                 var pos = rosPositionToThreePosition(object3D.rosPosition),
                     rot = rosPositionToThreePosition(object3D.rosRotation);
@@ -964,13 +1040,24 @@ var TopicViewer = (function() {
                 object3D.rotation.z = rot.z;
             }
 
-            // Called by d3 within requestAnimationFrame
+            // Called by browser on each animation frame
             //
             var animateAndRender = function() {
                 var node = spec.node,
                     messageFromServer = spec.node.data.message, deltaTime, now, pos,
                     messageForServer;
 
+                // Detect if key is pressed and alter velocity accordingly
+                // What a lot of parameters
+                //  keyPressed - key handler callback
+                //  arrow - reference to the THREE object for the interactive arrow
+                //  velocity - current velocity
+                //  direction - 1 or -1
+                //  start_velocity - when you press a key, what velocity does it start with
+                //  acceleration - just that
+                //  max_velocity - maximum velocity (without sign) that puck can reach
+                // Returns the new velocity
+                //
                 function adjustVelocityIfKeyPressed(keyPressed, arrow, velocity, direction, start_velocity, acceleration, max_velocity) {
                     if (keyPressed(node)) {
                         arrow.setColor(ARROW_CONTROL_COLOR_HIGHLIGHT);
@@ -991,12 +1078,24 @@ var TopicViewer = (function() {
                     return velocity;
                 }
 
+                // The title says it all
+                //  keyPressed - key handler callback
+                //  arrow - reference to the THREE object for the interactive arrow
+                //  velocity - current velocity
+                //  direction - 1 or -1
+                //  
                 function adjustLinearVelocityIfKeyPressed(keyPressed, arrow, direction) {
                     linearVelocity = adjustVelocityIfKeyPressed( keyPressed, arrow, 
                                                             linearVelocity, direction, START_LINEAR_VELOCITY, 
                                                             LINEAR_ACCELERATION, MAX_LINEAR_VELOCITY);
                 }
 
+                // The title says it all
+                //  keyPressed - key handler callback
+                //  arrow - reference to the THREE object for the interactive arrow
+                //  velocity - current velocity
+                //  direction - 1 or -1
+                //  
                 function adjustAngularVelocityIfKeyPressed(keyPressed, arrow, direction) {
                     angularVelocity = adjustVelocityIfKeyPressed( keyPressed, arrow, 
                                                             angularVelocity, direction, START_ANGULAR_VELOCITY, 
@@ -1028,10 +1127,16 @@ var TopicViewer = (function() {
                     lastTimestamp = now;
                 } 
 
+                // Call superclass
                 that.render3D();
             };
             that.animateAndRender = animateAndRender;
 
+            // Prepare the ROS message
+            // Note that differential drive robot motion is defined by
+            // linear velocity forwards or backwards 
+            // and angular velocity left or right round the centre point
+            //
             function createCmdVelMessageFromVelocities(linearVelocity, angularVelocity) {
                 return {
                     "linear": {
@@ -1047,6 +1152,13 @@ var TopicViewer = (function() {
                 }; 
             }
 
+            // Update the position of the base from the ROS message received
+            // from the server (not from local keypresses). We always visualize
+            // what the server tells us. 
+            //  base - the THREE object that holds camera and puck
+            //  message - the ROS message that contains linear and angular velocities
+            //  deltaTime - time since last frame
+            //
             function updateBasePosition(base, message, deltaTime) {
                 var distanceRosX, distanceRosY, distanceRosZ,
                     rotationRosX, rotationRosY, rotationRosZ,
@@ -1080,6 +1192,10 @@ var TopicViewer = (function() {
                 base.position.z = (base.position.z % 5.0);
             }
 
+            // Return the text to d3 for a text line on the topic
+            // We only use 2 text lines for this view
+            //  d - the node
+            //  i - the index of the text line 0, 1, 2...
             var textLine = function(d, index) {
                 // console.log("t");
                 if (index===0) {
@@ -1101,6 +1217,8 @@ var TopicViewer = (function() {
         }
 
         // Called each time the graph is changed
+        //  selection - selection of nodes
+        //  uiGraph - graph to join with
         //
         module.diffRobotControlTopicView.updateViews = function(selection, uiGraph) {
             module.threeDTopicView.updateViews(selection, uiGraph, "diffRobotControlTopicView");
@@ -1112,6 +1230,11 @@ var TopicViewer = (function() {
             module.threeDTopicView.tick("diffRobotControlTopicView");
         };
 
+        // Don't overload the server with messages.
+        //  node - the node that's sending the message
+        //  messageForServer - the ROS message to send
+        //  frequency - in Hz. Don't send moreoften than this
+        //
         function sendRosMessageToTopicAtFrequency(node, messageForServer, frequency) {
             var now = Date.now(),
                 deltaTime;
@@ -1177,6 +1300,8 @@ var TopicViewer = (function() {
             };
             that.animate = animate;
 
+            // Called by browser on each animation frame
+            //
             var animateAndRender = function() {
                 var node = spec.node,
                     messageFromServer = spec.node.data.message,
