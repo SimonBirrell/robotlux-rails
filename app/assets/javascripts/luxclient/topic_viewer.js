@@ -24,8 +24,8 @@ var TopicViewer = (function() {
         var ViewsAvailable = {
             "geometry_msgs/Twist" : ['diffRobotControlTopicView'],
             //"tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
-            //"sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
-            "sensor_msgs/foo" : ['test3DTopicView'],            
+            "sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
+            //"sensor_msgs/foo" : ['test3DTopicView'],            
             
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],

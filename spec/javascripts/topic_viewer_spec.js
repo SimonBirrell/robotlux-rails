@@ -22,8 +22,6 @@ describe("Topic Viewer", function() {
 
 		expect(topicViewer.topicNode).toEqual(topicNode);
 		expect(topicViewer.numberOfViews).toEqual(1);
-
-		expect(topicViewer.size()).toEqual(3);
 	});
 
 	describe("sensor_msgs/foo", function() {

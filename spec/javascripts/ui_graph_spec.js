@@ -67,7 +67,7 @@ describe("updates to UI", function() {
 	afterEach(function() {
 		//LuxUi.close();
 	});
-	
+	 
 	it("should add and clear a graph with no filter", function() {
 		LuxUi.setFilterOrphanedTopics(false);
 		uiTest.clearGraphAndAddSegment(graphSegment2);
@@ -85,7 +85,7 @@ describe("updates to UI", function() {
 		console.log("===== result");
 		console.log(uiTest.uiGraph);
 		expect(uiTest.uiGraph.nodes.length).toEqual(2);
-		expect(uiTest.uiGraph.links.length).toEqual(1);
+		expect(uiTest.uiGraph.links.length).toEqual(0);
 	});
 
 	it("remove quiet nodes and /rosout with a quiet node filter set", function() {
@@ -123,9 +123,9 @@ describe("updates to UI", function() {
 		LuxUi.setFilterDebugNodes(false);
 		uiTest.clearGraphAndAddSegment(graphSegment3);
 		expect(isNodeInGraph(uiTest.uiGraph, " /root/next_level/baz")).toEqual(false);
-		expect(uiTest.uiGraph.nodes.length).toEqual(7);
+		expect(uiTest.uiGraph.nodes.length).toEqual(6);
 
-		expect(uiTest.uiGraph.links.length).toEqual(5);
+		expect(uiTest.uiGraph.links.length).toEqual(4);
 
 		var targetNodeName = ' /root/next_level/bar',
 			level = ' /root/next_level',
@@ -133,7 +133,7 @@ describe("updates to UI", function() {
 		LuxUi.addPileUpLevel(level, targetNodeName);
 		LuxUi.uiGraphUpdate();
 		uiGraph = LuxUi.getUiGraph();
-		expect(uiGraph.nodes.length).toEqual(7);
+		expect(uiGraph.nodes.length).toEqual(6);
 
 		// Check only one node left
 		var found = false;
@@ -151,7 +151,7 @@ describe("updates to UI", function() {
 		expect(isNodeInGraph(uiGraph, " /root/next_level/...")).toEqual(false);
 
 		// Check links consolidated
-		expect(uiGraph.links.length).toEqual(5);
+		expect(uiGraph.links.length).toEqual(4);
 	});
 
 	it("doesn't collapses pile if only one node", function() {

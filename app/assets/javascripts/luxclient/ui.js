@@ -726,7 +726,7 @@ var LuxUi = (function() {
 						.remove();
 				return dying;						
 			}
-
+ 
 			// These are d3 nodes that have been removed from the UI
 			//
 			function setupExitingNodes(nodeSelection) {
@@ -1862,10 +1862,10 @@ var LuxUi = (function() {
 			//
 			function addLinkToAllGraphs(link) {
 				link['value'] = 15;
+				uiFullGraph.links.push(link);	
 				
 				insertLinkIntoIncompleteGraph(link);
 				if (linkIsReadyForDisplay(link)) {
-					uiFullGraph.links.push(link);	
 					moveLinkFromIncompleteToUiGraph(link);
 				}
 			}
