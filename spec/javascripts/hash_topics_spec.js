@@ -1,7 +1,7 @@
 describe("hash topic", function() {
 // Code incomplete
 
-/*
+
 	var graphWithArrayTopic = {
 		nodes: [
 			{name: '/foo', rtype: 'node'},
@@ -48,6 +48,10 @@ describe("hash topic", function() {
 	});
 
 	it("detects hashable topics", function() {
+		console.log("******************** Nodes *************************");
+		console.log(uiTest.uiGraph.nodes[1]);
+		console.log(uiTest.uiGraph.nodes[2]);
+		console.log("****************************************************");
 		expect(HashTopicManager.isAHashableTopic(uiTest.uiGraph.nodes[1])).toEqual(false);
 		expect(HashTopicManager.isAHashableTopic(uiTest.uiGraph.nodes[2])).toEqual(true);
 	});
@@ -113,7 +117,6 @@ describe("hash topic", function() {
 		expect(links.length).toEqual(2);
 
 	});
-*/
 
 });
 

@@ -560,8 +560,10 @@ var TopicViewer = (function() {
             // rendered view on the canvas and then renders it.
             //
             var render3D = function() {
-                that.renderer.setSize( that.rendererWidth, that.rendererHeight );
-                that.renderer.render( that.scene, that.camera );
+                if (that.renderer) {
+                    that.renderer.setSize( that.rendererWidth, that.rendererHeight );
+                    that.renderer.render( that.scene, that.camera );
+                }
             };
             that.render3D = render3D;
 
@@ -582,8 +584,7 @@ var TopicViewer = (function() {
         //  viewType - defines subclass, ie. type of TopicView
         //
         module.threeDTopicView.updateViews = function(selection, uiGraph, viewType) {
-            console.log("threeDTopicView.updateViews for");
-            console.log(viewType);
+            console.log("threeDTopicView.updateViews for " + viewType);
 
             updateCanvasesForViewType(uiGraph, viewType);
         };
@@ -639,6 +640,8 @@ var TopicViewer = (function() {
         // To clearly see the problem, increase SHRINK_DURANTION in ui.js to 5000
         //
         function updateCanvasesForViewType(uiGraph, viewType) {
+            console.log("updateCanvasesForViewType " + viewType);
+            console.log(nodeTopicsWithCurrentViewType(uiGraph, viewType));
             // Canvas is a square within a circle
             var topicWidth = CircleRadius * 1.41421356237;
 
@@ -647,6 +650,7 @@ var TopicViewer = (function() {
                                 .selectAll(".topic-canvas-" + viewType)
                                     .data(nodeTopicsWithCurrentViewType(uiGraph, viewType), topicName);
 
+            console.log(topicCanvases);
             // Create new canvases for this viewType
             topicCanvases.enter() 
                 .append("canvas")
@@ -657,6 +661,7 @@ var TopicViewer = (function() {
                     console.log("topic.enter()");
                     var targetSize = canvasWidth(d);
                     d.targetSize = targetSize;
+                    console.log("Setting scene **********");
                     d.viewer.currentView.setScene(this, targetSize, targetSize);
                     return targetSize;
                 })    
@@ -688,9 +693,6 @@ var TopicViewer = (function() {
                     return function(t) {
                         var currentSize = startSize + (targetSize - startSize) * t;
                         // Set renderer size during transition
-                        //this.rendererWidth = renderWidth;
-                        //this.rendererHeight = renderHeight;
-
                         d.viewer.currentView.setTopicWindowSize(this, currentSize, currentSize);
                     };
                 })
@@ -774,8 +776,10 @@ var TopicViewer = (function() {
             //
             var animate = function() {
                 // Make the cube spin
-                mesh.rotation.x += 0.01;
-                mesh.rotation.y += 0.02;
+                if (mesh) {
+                    mesh.rotation.x += 0.01;
+                    mesh.rotation.y += 0.02; 
+                }
             };
             that.animate = animate;
 

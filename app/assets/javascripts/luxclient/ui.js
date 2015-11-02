@@ -1060,18 +1060,17 @@ var LuxUi = (function() {
 			function uiGraphUpd(update) {
 				console.log(".");
 				for (var i=0; i<update.nodes.length; i++) {
-					var node = update.nodes[i];
-					setNodeFormatFromSize(node);
+					var updateNode = update.nodes[i];
 					for (var j=0; j<uiFullGraph.nodes.length; j++) {
 						var uiFullGraphNode = uiFullGraph.nodes[j];
-						if (uiFullGraph.nodes[j].name === node.name) {
-							uiFullGraph.nodes[j] = node;
-							updateNodeOnUiGraph(uiFullGraph.nodes[j]);
+						if (uiFullGraphNode.name === updateNode.name) {
+							copyUpdateDataToUiFullGraphNode(updateNode, uiFullGraphNode);
+							updateNodeOnUiGraph(uiFullGraphNode);
 						}
 					}
 				}
 			}
-		
+
 			// This is called by the protocol layer to completely clear the display
 			// and our various internal graphs.
 			//
@@ -1110,6 +1109,15 @@ var LuxUi = (function() {
 				}
 			}
 
+			// Copy data received in server update to the uiFullGraphNode
+			//	updateNode - node from server update
+			//	uiFullGraphNode - node stored in uiFullGraph
+			//
+			function copyUpdateDataToUiFullGraphNode(updateNode, uiFullGraphNode) {
+				uiFullGraphNode.data.message = updateNode.data.message;
+				uiFullGraphNode.data.type = updateNode.data.type;
+			}
+		
 			// Remove all items in the array
 			// We don't want to overwrite the array with [] because d3 has a reference to
 			// it.
@@ -1576,11 +1584,11 @@ var LuxUi = (function() {
 			function addNodeToUi(node) {
 				addToNameSpaceTree(node);
 
-				copyNodeToIncompleteGraph(node);
-				if (nodeIsReadyForDisplay(node)) {
-					console.log("Moving " + node.name + " to uiGraph");
-					moveNodeFromIncompleteToUiGraph(node);
+				var uiNode = copyNodeToIncompleteGraph(node);
+				if (nodeIsReadyForDisplay(uiNode)) {
+					moveNodeFromIncompleteToUiGraph(uiNode);
 				}
+				node.uiNodes.push(uiNode);
 			}
 
 			// Remove a node from uiGraph and the display.
@@ -1606,6 +1614,7 @@ var LuxUi = (function() {
 			function copyNodeToIncompleteGraph(node) {
 				var newNode = copyOfNode(node);
 				uiGraphIncomplete.nodes.push(newNode);
+				return newNode;
 			}
 
 			// Move a d3 node from uiGraphIncomplete to uiGraph and display it
@@ -1816,13 +1825,14 @@ var LuxUi = (function() {
 				return indexes;
 			}
 
-			// Set up a neode to be displayed.
+			// Set up a new node to be displayed.
 			//	- set various parameters such as size and rosInstanceId
 			//	- Create a TopicViewer if it's a topic
 			//
 			var setUpNewNode = function(node, rosInstanceId) {
 				node.size = node.psize = 0;
 				node.width = node.height = circleRadius;
+				node.uiNodes = [];
 				setNodeFormatFromSize(node);
 				if (node.rtype==='topic') {
 					node.viewer = new TopicViewer.TopicViewer(node);
@@ -2328,6 +2338,7 @@ var LuxUi = (function() {
 					name: original.name,
 					rtype: original.rtype,
 					size: original.size,
+					psize: original.psize,
 					nodeFormat: original.nodeFormat,
 					viewer: original.viewer,
 					x: original.x,
@@ -2342,6 +2353,10 @@ var LuxUi = (function() {
 					hashSubTopics: hashSubTopics,
 					subTopicKey: subTopicKey,
 					subTopicIndex: subTopicIndex,
+					width: original.width,
+					height: original.height,
+					group: original.group,
+					rosInstanceId: original.rosInstanceId,
 				};
 
 				copyFieldIfPresent('width', original, newNode);

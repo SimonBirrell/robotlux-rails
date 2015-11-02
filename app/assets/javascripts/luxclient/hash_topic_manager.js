@@ -9,7 +9,7 @@
 // This code is not working yet and is not complete, hence largely undocumented!
 //
 
-var HashTopicManager = (function() {
+var HashTopicManager = (function() { 
 	"use strict"; 
 
 	var module = {};
