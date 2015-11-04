@@ -18,6 +18,23 @@ var HashTopicManager = (function() {
 		{name: 'sensor_msgs/JointState', keyFieldName: 'name', arrayFieldNames: ['position', 'velocity', 'effort']}
 	];
 
+
+	function getLatestMessageHashTopicUiNodeNames(uiFullGraphNode) {
+		var key = getHashKeyOfNodeMessage(uiFullGraphNode),
+			namesString = uiFullGraphNode.data.message[key];
+
+		return namesString;
+	}
+	module.getLatestMessageHashTopicUiNodeNames = getLatestMessageHashTopicUiNodeNames;
+
+	function getHashKeyOfNodeMessage(uiFullGraphNode) {
+		var mtype = findHashableTopic(uiFullGraphNode);
+		if (mtype) {
+			return mtype.keyFieldName;
+		}
+		return "";
+	}
+
 	function findHashableTopic(node) {
 		var targetMessageType = node.data ? node.data.type : "";
 
@@ -33,7 +50,6 @@ var HashTopicManager = (function() {
 	}
 
 	var isAHashableTopic = function(node) {
-		return false;
 		// Cache result
 		if ((node.hashTopicOrigin===true)||(node.hashTopicOrigin===false)) {
 			return node.hashTopicOrigin;
@@ -42,18 +58,104 @@ var HashTopicManager = (function() {
 		var mType = findHashableTopic(node);
 		if (mType) {
 			node.hashTopicOrigin = true;
-			node.hashTopic = true;
-			node.subTopicKey = node.name;
-			node.hashSubTopics = [node];
-			node.subTopicIndex = 0;
-			return true;
+			//node.hashTopic = true;
+			//node.subTopicKey = node.name;
+			//node.hashSubTopics = [node];
+			//node.subTopicIndex = 0;
 		} else {
 			node.hashTopicOrigin = false;
 		}
 
-		return false;
+		return node.hashTopicOrigin;
 	};
 	module.isAHashableTopic = isAHashableTopic;
+
+	// Check for hash topics that will require a new uiNode
+	//	
+	// Return true if the graph has changed (and uiGraphUpdate should therefore be called)
+	//	uiFullGraphNode - node with latest message to check.
+	//
+	var seeIfUpdateRequiresNewUiNodes = function(uiFullGraphNode) {
+		var newNodes = [];
+
+		// If it's not a hash topic then there's nothing to do
+		if (!isAHashableTopic(uiFullGraphNode)) {
+			return false;
+		}
+
+		// Go through all received sub topic names and see if there's a uiNode for each one
+		// Create one if not
+		var uiNodeNames = getLatestMessageHashTopicUiNodeNames(uiFullGraphNode);
+		for (var i=0; i<uiNodeNames.length; i++) {
+			var uiNodeName = uiNodeNames[i],
+				uiNode = getUiNodeOnUiFullGraphNodeWithName(uiFullGraphNode, uiNodeName);
+			if (!uiNode) {
+				var updateRequired = createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName);
+				return updateRequired;
+			}
+		}
+
+		return false;
+	}
+	module.seeIfUpdateRequiresNewUiNodes = seeIfUpdateRequiresNewUiNodes;
+
+	// We need a new uiNode for display. It could be the existing (first) one
+	// or one that we create
+	//	uiFullGraphNode - the "parent" of the uiNodes for this hash topic
+	//	uiNodeName - name of node to create
+	//
+	function createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName) {
+		// See if there's an "empty" uiNode to assign (generally, the first one)
+		for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
+			var uiNode = uiFullGraphNode.uiNodes[i];
+			if (!uiNode.hashSubTopicName) {
+				console.log("ASSIGNING NODE TO " + uiNodeName);
+				uiNode.hashSubTopicName = uiNodeName;
+				uiNode.name = uiNodeName;
+				return false;
+			}
+		}
+
+		// Create a new node
+		console.log("CREATING EXTRA NODE " + uiNodeName);
+		uiNode = LuxUi.addNodeToUi(uiFullGraphNode, uiNodeName);
+		uiNode.hashSubTopicName = uiNodeName;
+		putGroupOnAllUiNodes(uiFullGraphNode);
+
+		return true;
+	}
+
+	function putGroupOnAllUiNodes(uiFullGraphNode) {
+		// No group on the first topic
+		if (uiFullGraphNode.uiNodes.length < 2) {
+			return;
+		}
+
+			//return;
+		if (!uiFullGraphNode.hashTopicGroup) {
+			// Create group - how will the indexes work if topic is incomplete????
+			var group = {
+				leaves: uiFullGraphNode.uiNodes,
+				title: "foo",
+				gtype: "hashTopic",
+			}
+			LuxUi.addGroupToUi(group);
+		}
+	}
+
+	function getUiNodeOnUiFullGraphNodeWithName(uiFullGraphNode, nodeName) {
+		for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
+			var uiNode = uiFullGraphNode.uiNodes[i];
+			if (uiNode.name === nodeName) {
+				return uiNode;
+			}
+		}
+		return null;
+	}
+
+
+
+	// LEGACY CODE
 
 	// Generate any additional nodes necessary to display this hash topic
 	var getAdditionalNodes = function(node) {

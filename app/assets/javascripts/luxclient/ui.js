@@ -317,8 +317,18 @@ var LuxUi = (function() {
 		        var newGroups = groupEnter  
 					.append("rect")
 		            .attr("rx", 8).attr("ry", 8)
-		            .attr("class", "group")
-		            .attr("id", function(d) {return "machine_" + d.hostname;});
+		            .attr("class", function(d) {
+		            	if (d.gtype === "hashTopic") {
+		            		return "group-hash-topic";
+		            	}
+		            	return "group";
+		            })
+		            .attr("id", function(d) {
+		            	if (d.gtype === "hashTopic") {
+		            		return "";
+		            	}
+		            	return "machine_" + d.hostname;
+		            });
 
 		        // When mouse is over a group, tell the DragDropManager that it's available
 		        // as a drop target
@@ -1033,6 +1043,7 @@ var LuxUi = (function() {
 				// See if any links can be moved directly to the UI
 				connectLinksOnGraph(uiGraphIncomplete);
 				moveAnyConnectedLinksFromIncompleteToMainGraph();
+				moveAnyConnectedGroupsFromIncompleteToMainGraph();
 
 				// d3/webcola makes us do a lot of work on each addition/deletion
 				uiGraphUpdate();
@@ -1580,16 +1591,25 @@ var LuxUi = (function() {
 			// uiGraphIncomplete waiting the decision on when to move them to uiGraph
 			// and the display.
 			//	node - reference to the original update node stored in uiFullGraph
+			//  overwriteName - optional uiNode name to overwrite the one defined on node
 			// 
-			function addNodeToUi(node) {
+			function addNodeToUi(node, overwriteName) {
 				addToNameSpaceTree(node);
 
 				var uiNode = copyNodeToIncompleteGraph(node);
+
+				if (overwriteName) {
+					uiNode.name = overwriteName;
+				}
+
 				if (nodeIsReadyForDisplay(uiNode)) {
 					moveNodeFromIncompleteToUiGraph(uiNode);
 				}
 				node.uiNodes.push(uiNode);
+
+				return uiNode;
 			}
+			module.addNodeToUi = addNodeToUi;
 
 			// Remove a node from uiGraph and the display.
 			// 	nodeToDelete - reference to the node object on uiGraph
@@ -1809,6 +1829,7 @@ var LuxUi = (function() {
 		
 			// Find the indexes of an array of nodes on a given graph
 			//
+			/*
 			function convertNodesToIndexes(nodes, graph) {
 				var indexes = [];
 
@@ -1824,6 +1845,7 @@ var LuxUi = (function() {
 
 				return indexes;
 			}
+*/
 
 			// Set up a new node to be displayed.
 			//	- set various parameters such as size and rosInstanceId
@@ -2112,16 +2134,136 @@ var LuxUi = (function() {
 			// Functions to manipulate GROUPS on the data graphs ===================
 			//
 
+			// Set the group to be published to the display once all leaf nodes have also been published.
+			//	group - group to be added to display
+			//
+			function addGroupToUi(group) {
+				console.log("*************************** addGroupToUi ");
+				console.log(group);
+
+				var uiGroup = copyGroupToIncompleteGraph(group);
+				moveGroupIfReady(uiGroup);
+			}
+			module.addGroupToUi = addGroupToUi;
+
+			// Copy a group to the incomplete graph
+			// Groups will sit here until all their leaves are displayable
+			//	group - group to move
+			//
+			function copyGroupToIncompleteGraph(group) {
+				var uiGroup = copyGroup(group);
+				uiGraphIncomplete.groups.push(uiGroup);
+
+				return uiGroup;
+			}
+
+			function copyGroup(group) {
+				// Copy array
+				var leaves = [];
+				for (var i=0; i<group.leaves.length; i++) {
+					var leaf = group.leaves[i];
+					leaves.push(leaf);
+				}
+
+				// Copy group and add d3 specific padding
+				var uiGroup = {
+								leaves: leaves,
+								title: group.title,
+								gtype: group.gtype,
+								padding: circleRadius,
+							   };
+				if (group.hostname) {
+					uiGroup.hostname = group.hostname;
+				}			   
+
+				return uiGroup;				
+			}
+
+			// For group to be ready to display, all leaves must be ready to display
+			//	uiGroup - group that we want to display
+			//
+			function groupIsReadyForDisplay(uiGroup) {
+				for (var i=0; i<uiGroup.leaves.length; i++) {
+					var leaf = uiGroup.leaves[i];
+					if (!leafIsReadyForDisplay(leaf)) {
+						return false;
+					}
+				}
+				return true;
+			}
+
+			// For a leaf to be ready to display, it must be pointing to a node on uiGraph
+			// It can either be an index (because it has alrady been converted) or an object
+			// reference.
+			//	leaf - entry from group.leaves[]
+			//
+			function leafIsReadyForDisplay(leaf) {
+				// See if leaf has already been converted to an index
+				if (typeof leaf === "number") {
+					return true;
+				}
+
+				// If it's an object reference, see if node is on uiGraph
+				console.log("checking if leaf " + leaf.name + " is on uiGraph");
+				for (var i=0; i<uiGraph.nodes.length; i++) {
+					var node = uiGraph.nodes[i];
+					if (node === leaf) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			// Move a group from uiGraphIncomplete to uiGraph
+			// Do this when group is definitely ready to display (all leaves have been displayed)
+			//	uiGroup - group that we want to display
+			//	
+			function moveGroupFromIncompleteToUiGraph(uiGroup) {
+				uiGraph.groups.push(uiGroup);
+
+				var i = uiGraphIncomplete.groups.length;
+				while (i--) {
+					var group = uiGraphIncomplete.groups[i];
+					if (uiGroup === group) {
+						uiGraphIncomplete.groups.splice(i, 1);
+					}
+				}
+			}
+
+			// Move any groups to display graph if they are ready to display
+			// (i.e. all leaves are already displayed)
+			//
+			function moveAnyConnectedGroupsFromIncompleteToMainGraph() {
+				var i = uiGraphIncomplete.groups.length;
+				while (i--) {
+					var uiGroup = uiGraphIncomplete.groups[i];
+					moveGroupIfReady(uiGroup);
+				}
+			}
+
+			// Move a single group to display graph if it's ready to be diplayed.
+			//	uiGroup - group that can potentially be moved
+			//
+			function moveGroupIfReady(uiGroup) {
+				if (groupIsReadyForDisplay(uiGroup)) {
+					console.log("Moving group to uiGraph");
+					console.log(uiGroup);
+					moveGroupFromIncompleteToUiGraph(uiGroup);
+				}
+			}
+
 			// Create a new d3 group and add an array of nodes as the leaves.
 			// 	existingNodes - an array of nodes that should be on uiGraph
 			//	title - the name of the group TODO: Add a label to the display
 			//	groupType - right now, we only have "machine" as a groupType
 			//
 			function createNewGroup(existingNodes, title, groupType) {
-				var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
+				//var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
 
 				var newGroup = {
-								leaves: indexNodes, 
+								//leaves: indexNodes, 
+								leaves: existingNodes,
 								title: title,
 								gtype: groupType,
 								padding: circleRadius
@@ -2140,9 +2282,7 @@ var LuxUi = (function() {
 			// (though it then changes them to node references)
 			//
 			function addNodeToGroupOnUiGraph(node, group) {
-				var indexes = convertNodesToIndexes([node], uiGraph);
-
-				group.leaves.push(indexes[0]);
+				group.leaves.push(node);
 			}
 
 			// Remove a node from a group. Assumes that the leaf on the group
@@ -2288,7 +2428,8 @@ var LuxUi = (function() {
 
 				// Create the group and add it to uiGraph
 				var group = createNewGroup(existingNodes, machineName, "machine");
-				uiGraph.groups.push(group);
+				//uiGraph.groups.push(group);
+				addGroupToUi(group);
 			}
 
 			// In this case we add a ROS node to the graph and check if it matches any
@@ -2410,25 +2551,28 @@ var LuxUi = (function() {
 
 			// TODO Clean up. hashTopic code unfinished.
 			function updateNodeOnUiGraph(uiFullGraphNode) {
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					var node = uiGraph.nodes[i];
-					if (node.rtype==='topic') {
-						if (node.name === uiFullGraphNode.name) {
-							node.data = uiFullGraphNode.data;
-							if (HashTopicManager.isAHashableTopic(node)) {
-								// The node in this case is the 'original' topic
-								// which contains pointers to the subtopics
-								//HashTopicManager.update(uiGraph, node, uiFullGraphNode.data);
-								HashTopicManager.update(uiGraph, node, node.data);
-							}
-							if (node.viewer) {
-								node.viewer.update(node);
-							}
-						}
+				
+				if (HashTopicManager.seeIfUpdateRequiresNewUiNodes(uiFullGraphNode)) {
+					uiGraphUpdate();
+				}
+
+				var hashTopic = HashTopicManager.isAHashableTopic(uiFullGraphNode),
+					latestMessageHashTopicUiNodeName = "";
+
+				if (hashTopic) {
+					//latestMessageHashTopicUiNodeName = HashTopicManager.getLatestMessageHashTopicUiNodeName(uiFullGraphNode);
+				}
+
+				// uiFullGraphNodes carry a list of pointers to uiNodes
+				for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
+					var uiNode = uiFullGraphNode.uiNodes[i];
+					if ((latestMessageHashTopicUiNodeName === uiNode.name) || (!hashTopic)) {
+						uiNode.data = uiFullGraphNode.data;
+						uiNode.viewer.update(uiNode);
 					}
 				}
+				
 			}
-			
 
 			// End of legacy code ====================================================								
 
