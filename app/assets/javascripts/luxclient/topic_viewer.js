@@ -137,7 +137,7 @@ var TopicViewer = (function() {
                         if (typeof availableViews[i] === 'string') {
                           view = TopicViewer[availableViews[i]](viewSpec);
                         } else {
-                          view = new availableViews[i](viewSpec);
+                          view = new availableViews[i](viewSpec, updateCanvasesForViewType);
                         }
 
                         that.views.push(view);
