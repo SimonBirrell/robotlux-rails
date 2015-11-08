@@ -15,7 +15,7 @@ var TopicViewer = (function() {
     		CircleRadius = null,
             Renderer = null;
 
-        var VIEW_TYPES = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
+        var VIEW_TYPES = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView', LuxUi.TopicViews.ImageView];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
 
@@ -57,8 +57,13 @@ var TopicViewer = (function() {
     	module.tick = function() {
             // Call tick() for each view_type
             for (var v=0; v<VIEW_TYPES.length; v++) {
-                var viewTypeName = VIEW_TYPES[v];
-                this[viewTypeName].tick();
+                var viewOrTypeName = VIEW_TYPES[v];
+
+                if (typeof viewOrTypeName === 'string') {
+                  this[viewOrTypeName].tick();
+                } else {
+                  viewOrTypeName.tick();
+                }
             }
     	};
 
@@ -85,8 +90,12 @@ var TopicViewer = (function() {
         //
         module.updateCurrentViews = function(selection, uiGraph) {
             for (var v=0; v<VIEW_TYPES.length; v++) {
-                var viewName = VIEW_TYPES[v];
-                this[viewName].updateViews(selection, uiGraph);
+                var viewOrName = VIEW_TYPES[v];
+                if (typeof viewOrName === 'string') {
+                  this[viewOrName].updateViews(selection, uiGraph);
+                } else {
+                  viewOrName.updateViews(selection, uiGraph);
+                }
             }
         };
 
@@ -137,7 +146,9 @@ var TopicViewer = (function() {
                         if (typeof availableViews[i] === 'string') {
                           view = TopicViewer[availableViews[i]](viewSpec);
                         } else {
-                          view = new availableViews[i](viewSpec, updateCanvasesForViewType);
+                          var viewClass = availableViews[i];
+                          viewClass.injectUpdateViews(updateCanvasesForViewType);
+                          view = new viewClass(viewSpec);
                         }
 
                         that.views.push(view);
