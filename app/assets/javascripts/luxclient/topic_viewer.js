@@ -29,6 +29,7 @@ var TopicViewer = (function() {
             
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],
+            "sensor_msgs/Image" : [LuxUi.TopicViews.ImageView],
         };
 
     	// "Class methods" called from UI.
@@ -132,7 +133,13 @@ var TopicViewer = (function() {
                     availableViews = ViewsAvailable[that.messageType];
                     for (var i=0; i<availableViews.length; i++) {
                         // Call constructor (no 'new')
-                        var view = TopicViewer[availableViews[i]](viewSpec);
+                        var view;
+                        if (typeof availableViews[i] === 'string') {
+                          view = TopicViewer[availableViews[i]](viewSpec);
+                        } else {
+                          view = new availableViews[i](viewSpec);
+                        }
+
                         that.views.push(view);
                     }
                 } else {
