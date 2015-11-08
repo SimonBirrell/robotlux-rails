@@ -2,15 +2,13 @@ window.LuxUi.TopicViews = window.LuxUi.TopicViews || {};
 
 var injected = {};
 
-var ImageView = function(viewSpec, updateCanvasesForViewType) {
-  this.updateCanvasesForViewType = updateCanvasesForViewType;
-
+var ImageView = function(viewSpec) {
   return this;
 };
 
 ImageView.updateViews = function(selection, uiGraph, viewType) {
   if (injected.updateCanvasesForViewType !== undefined) {
-    injected.updateCanvasesForViewType(uiGraph, viewType);
+    injected.updateCanvasesForViewType(uiGraph, viewType || ImageView.prototype.viewType);
   }
 };
 
@@ -22,6 +20,12 @@ ImageView.tick = function() {
 };
 
 ImageView.prototype.animateAndRender = function() {
+};
+
+ImageView.prototype.setScene = function(canvas, renderWidth, renderHeight) {
+};
+
+ImageView.prototype.setTopicWindowSize = function() {
 };
 
 
