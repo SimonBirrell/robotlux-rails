@@ -380,7 +380,8 @@ var LuxUi = (function() {
 			        .on("dblclick", nextNodeSize)
 			        ;
 
-			    appendNodeLabels(nodeEnter);
+			    //appendNodeLabels(nodeEnter);
+			    appendNodeLabels(nodeSelection);
 
 			    return nodeEnter;  	
 			}
@@ -500,13 +501,14 @@ var LuxUi = (function() {
 			//	nodeEnter - the d3 selection for entering nodes
 			//
 			function appendNodeLabels(nodeEnter) {
-				nodeEnter.selectAll('.nodetopic-label') 
+				var nodeLabels = nodeEnter.selectAll('.nodetopic-label') 
 				    .data(function(d) {
 				    	// Make a join with an array of text labels
 				    	var nameChunks = (d.rtype === "dummy") ? "" : prepareLabels(d.name, d);
 				    	return nameChunks;
-				    })
-				    .enter()
+				    });
+
+				nodeLabels.enter()
 					    .append('text')
 					    .classed('nodetopic-label', true)
 					    .classed('nodetopic-label-active', function(d) {return (d.clickHandler !== null)})
@@ -523,6 +525,7 @@ var LuxUi = (function() {
 			    		})
                     	.attr("x", 0)
             			;
+
 			}
 
 			// Prepare an array of text labels that represent the ROS namespace
@@ -598,8 +601,12 @@ var LuxUi = (function() {
 			// being scaled up or down.
 			//
 			function updateNodeLabels(node) {
-			    node.selectAll(".nodetopic-label")
-			   		.transition()
+			    var nodeLabels = node.selectAll(".nodetopic-label")
+					.text(function(d) {
+					    console.log("************* >>>>> Changed label in UPDATE <<<<< ****************");
+					    return d.chunkName;
+					})			   		
+					.transition()
 			   		.duration(SHRINK_DURATION)
 			    	.attr("y", function(d) {
 		            	var y = nodeRadius(d.node) + 
@@ -607,7 +614,6 @@ var LuxUi = (function() {
 		            			d.yIndex * NODE_LABEL_TEXT_HEIGHT;
         		    	return y;
 			    	});
-
 			}
 
 			//////////////////////////////////////////////////////////////////
@@ -634,7 +640,7 @@ var LuxUi = (function() {
 			    animateSwitchIcon(nodeSelection, "switch-right-icon", 1);
 
 			    // Set up and animate node labels
-			    updateNodeLabels(nodeSelection);		
+			    updateNodeLabels(nodeSelection);	
 
 			    // Handle dying nodes
 			    setUpDyingNodes(nodeSelection);

@@ -77,7 +77,7 @@ var HashTopicManager = (function() {
 	//
 	var seeIfUpdateRequiresNewUiNodes = function(uiFullGraphNode) {
 		var newNodes = [];
-
+ 
 		// If it's not a hash topic then there's nothing to do
 		if (!isAHashableTopic(uiFullGraphNode)) {
 			return false;
@@ -109,7 +109,7 @@ var HashTopicManager = (function() {
 		for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
 			var uiNode = uiFullGraphNode.uiNodes[i];
 			if (!uiNode.hashSubTopicName) {
-				console.log("ASSIGNING NODE TO " + uiNodeName);
+				console.log("ASSIGNING NODE " + uiNodeName + " TO " + uiNode.name);
 				uiNode.hashSubTopicName = uiNodeName;
 				uiNode.name = uiNodeName;
 				return false;
