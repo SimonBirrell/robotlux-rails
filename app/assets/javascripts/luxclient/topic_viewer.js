@@ -246,7 +246,7 @@ var TopicViewer = (function() {
         function messageTextArrayFromNode(node) {
             var header = node.data.type + " " + node.data.count,
                 messageTextArray = [header],
-                messageText = JSON.stringify(node.data.message);
+                messageText = JSON.stringify(node.data.message) || "";
 
             var messageSplitUp = messageText.split(",");
 

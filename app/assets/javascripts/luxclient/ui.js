@@ -1078,12 +1078,19 @@ var LuxUi = (function() {
 				console.log(".");
 				for (var i=0; i<update.nodes.length; i++) {
 					var updateNode = update.nodes[i];
-					for (var j=0; j<uiFullGraph.nodes.length; j++) {
-						var uiFullGraphNode = uiFullGraph.nodes[j];
-						if (uiFullGraphNode.name === updateNode.name) {
-							copyUpdateDataToUiFullGraphNode(updateNode, uiFullGraphNode);
-							updateNodeOnUiGraph(uiFullGraphNode);
-						}
+					updateNodeOnAllGraphs(updateNode);
+				}
+			}
+
+			// Update a node on uiFullGraph and on uiGrpah
+			//	updateNode - reference to node object on update
+			//
+			function updateNodeOnAllGraphs(updateNode) {
+				for (var j=0; j<uiFullGraph.nodes.length; j++) {
+					var uiFullGraphNode = uiFullGraph.nodes[j];
+					if (uiFullGraphNode.name === updateNode.name) {
+						copyUpdateDataToUiFullGraphNode(updateNode, uiFullGraphNode);
+						updateNodeOnUiGraph(uiFullGraphNode);
 					}
 				}
 			}
@@ -1588,9 +1595,14 @@ var LuxUi = (function() {
 			// uiFullGraph.
 			//
 			function addNodeToAllGraphs(node, rosInstanceId) {
-				setUpNewNode(node, rosInstanceId);
-				uiFullGraph.nodes.push(node);
-				addNodeToUi(node);
+				if (findNodeByNameOnGraph(node.name, uiFullGraph) === -1) {
+					setUpNewNode(node, rosInstanceId);
+					uiFullGraph.nodes.push(node);
+					addNodeToUi(node);
+				} else {
+					console.log("NODE ALREADY EXISTS");
+					console.log(getHostnameOnNode(node));
+				}			
 			}
 
 			// Copy a ROS node or topic to the UI. The nodes are first buffered in
@@ -1763,6 +1775,7 @@ var LuxUi = (function() {
 			// Given a node name, find its index on a graph (in graph.nodes)
 			//	name - node name
 			//	graph - reference to uiGraph, uiFullGraph or uiGraphIncomplete
+			// returns index or -1 if not found
 			//
 			function findNodeByNameOnGraph(name, graph) {
 				for (var i=0; i<graph.nodes.length; i++) {
@@ -1896,16 +1909,39 @@ var LuxUi = (function() {
 			//
 
 			// Add a link from an update to the various graphs we maintain.
-			//	link - reference to the original link object in uiFullGraph
+			//	link - reference to the original link object in update
 			//
 			function addLinkToAllGraphs(link) {
-				link['value'] = 15;
-				uiFullGraph.links.push(link);	
-				
-				insertLinkIntoIncompleteGraph(link);
-				if (linkIsReadyForDisplay(link)) {
-					moveLinkFromIncompleteToUiGraph(link);
+				if (findLinkOnUiFullGraphFromIndexes(link.source, link.target) === -1) {
+					console.log("LINK IS NEW");
+					link['value'] = 15;
+					uiFullGraph.links.push(link);	
+					
+					insertLinkIntoIncompleteGraph(link);
+					if (linkIsReadyForDisplay(link)) {
+						moveLinkFromIncompleteToUiGraph(link);
+					}
+				} else {
+					console.log("LINK ALREADY EXISTS");
 				}
+			}
+
+			function findLinkOnUiFullGraphFromIndexes(sourceIndex, targetIndex) {
+				for (var l=0; l<uiFullGraph.links.length; l++) {
+					var link = uiFullGraph.links[l];
+					var source = link.source, 
+						target = link.target;
+					if (typeof source === "object") {
+						source = findNodeInGraph(source, uiFullGraph);
+					}	
+					if (typeof target === "object") {
+						target = findNodeInGraph(target, uiFullGraph);
+					}	
+					if ((source === sourceIndex) && (target === targetIndex)) {
+						return l;
+					}
+				}
+				return -1;
 			}
 
 			// Add a link to the UI.
@@ -2214,10 +2250,11 @@ var LuxUi = (function() {
 				for (var i=0; i<uiGraph.nodes.length; i++) {
 					var node = uiGraph.nodes[i];
 					if (node === leaf) {
+						console.log("yes");
 						return true;
 					}
 				}
-
+				console.log("no");
 				return false;
 			}
 
@@ -2386,6 +2423,7 @@ var LuxUi = (function() {
 							throw "Node not found in resetLeavesOnGroup()";
 						}	
 						group.leaves[l] = index;	
+						console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
 					}
 				}
 			}
@@ -2442,20 +2480,30 @@ var LuxUi = (function() {
 			// existing machine-groups. If it does, we add it to the group.
 			//
 			function addNodeToMatchingMachineGroups(node) {
+				console.log("addNodeToMatchingMachineGroups");
 				var hostname = getHostnameOnNode(node);
 				// If the d3 node has no hostname (e.g. it's a topic) then nothing further
 				// to be done.
 				if (!hostname) {
+					console.log("No HOSTNAME on NODE " + node.name);
 					return;
 				}
+
+				var found = false;
 
 				// Look for matching nodes. Remove any dummy nodes if we add a real one
 				for (var i=0; i<uiGraph.groups.length; i++) {
 					var group = uiGraph.groups[i];
 					if (hostname === group.hostname) {
+						console.log("ADDING NODE " + node.name + " TO GROUP " + group.hostname);
 						addNodeToGroupOnUiGraph(node, group);
 						removeDummyNodesFromGroup(group);
+						found = true;
 					}
+				}
+
+				if (!found) {
+					console.log("NODE " + node.name + " WITH HOSTNAME " + hostname + " NOT FOUND IN ANY GROUPS");
 				}
 			}
 
@@ -2574,7 +2622,11 @@ var LuxUi = (function() {
 					var uiNode = uiFullGraphNode.uiNodes[i];
 					if ((latestMessageHashTopicUiNodeName === uiNode.name) || (!hashTopic)) {
 						uiNode.data = uiFullGraphNode.data;
-						uiNode.viewer.update(uiNode);
+						if (uiNode.viewer) {
+							uiNode.viewer.update(uiNode);
+						} else {
+							console.log("Viewer not ready for " + uiNode.name);
+						}
 					}
 				}
 				
