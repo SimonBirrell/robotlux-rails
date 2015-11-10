@@ -48,75 +48,51 @@ describe("hash topic", function() {
 	});
 
 	it("detects hashable topics", function() {
-		console.log("******************** Nodes *************************");
-		console.log(uiTest.uiGraph.nodes[1]);
-		console.log(uiTest.uiGraph.nodes[2]);
-		console.log("****************************************************");
 		expect(HashTopicManager.isAHashableTopic(uiTest.uiGraph.nodes[1])).toEqual(false);
 		expect(HashTopicManager.isAHashableTopic(uiTest.uiGraph.nodes[2])).toEqual(true);
 	});
 
-	it("converts to single node in a box", function() {
+	it("converts to single node with no box", function() {
 		expect(uiTest.uiFullGraph.nodes.length).toEqual(3);
 		expect(uiTest.uiGraph.nodes.length).toEqual(3);
-		expect(uiTest.uiGraph.groups.length).toEqual(1);
-		expect(uiTest.uiGraph.groups[0].leaves[0].name).toEqual(' /some_hash_topic');
+		expect(uiTest.uiGraph.groups.length).toEqual(0);
 		// No messages yet, so we don't know what name of first node will be.
 		// For the time being, use the topic name.
 		var topic = uiTest.uiGraph.nodes[2];
-		expect(topic.hashSubTopics[0].subTopicKey).toEqual(' /some_hash_topic');
-		// Should be a pointer back to the group on the topic
-		expect(uiTest.uiGraph.groups[0]).toEqual(topic.subTopicGroup);
-
+		expect(topic.name).toEqual(' /some_hash_topic');
 	});
 
 	it("saves messages received to subtopics", function() {
 		// Create update and send to graph
 		var update = emptyTopic;
 		update.nodes[0].data = jointStateMessage;
+		console.log("****************** sending update ********************");
 		uiTest.uiGraphUpdFn(update);
 
-		// Check that node on uiGraph contains a hash of messages
-		var topic = uiTest.uiGraph.nodes[2];
-		expect(topic.hashSubTopics.length).toEqual(2);
+		// Check that subtopics are created
+		var uiTopic1 = findNodeWithName("joint_one"),
+			uiTopic3 = findNodeWithName("joint_three");
+		expect(uiTopic1).not.toBeNull();	
+		expect(uiTopic3).not.toBeNull();	
+
+		// Check group
 		expect(uiTest.uiGraph.groups.length).toEqual(1);
 
-		var jointTopicNodeOne = topic.hashSubTopics[0],
-			jointTopicNodeThree = topic.hashSubTopics[1],
-			group = uiTest.uiGraph.groups[0];
 
-		// Check that group contains the two topics
-		expect(group.leaves.length).toEqual(2);
-		expect(group.leaves[0]).toEqual(jointTopicNodeOne);
-		expect(group.leaves[1]).toEqual(jointTopicNodeThree);
-
-		// Check Joint One is a subtopic (the original topic)	
-		expect(jointTopicNodeOne.subTopicKey).toEqual('joint_one');
-		expect(jointTopicNodeOne.subTopicIndex).toEqual(0);
-		expect(jointTopicNodeOne.data.message.name[0]).toEqual('joint_one');
-
-		// Check Joint Three is a subtopic
-		expect(jointTopicNodeThree.subTopicKey).toEqual('joint_three');
-		expect(jointTopicNodeThree.subTopicIndex).toEqual(1);
-		expect(jointTopicNodeThree.data.message.name[1]).toEqual('joint_three');
-
-		// Now update the graph
-		LuxUi.uiGraphUpdate();
-
-		// Topic viewers should be present on both sub topics
-		jointTopicNodeOne.viewer.rotateViewLeft();
-		jointTopicNodeThree.viewer.rotateViewLeft();
-
-		// There should be an (invisible) link between the two subtopics to keep them together
-		var links = uiTest.uiGraph.links;
-		console.log("******************");
-		console.log("******************");
-		console.log(links);
-		console.log("******************");
-		console.log("******************");
-		expect(links.length).toEqual(2);
 
 	});
+
+	function findNodeWithName(name) {
+		var uiGraph = LuxUi.getUiGraph();
+		for (var i=0; i<uiGraph.nodes.length; i++) {
+			var uiNode = uiGraph.nodes[i];
+			console.log(uiNode);
+			if (uiNode.name === name) {
+				return uiNode;
+			}
+		}
+		return null;
+	}
 
 });
 

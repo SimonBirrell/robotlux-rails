@@ -85,17 +85,17 @@ var HashTopicManager = (function() {
 
 		// Go through all received sub topic names and see if there's a uiNode for each one
 		// Create one if not
-		var uiNodeNames = getLatestMessageHashTopicUiNodeNames(uiFullGraphNode);
+		var uiNodeNames = getLatestMessageHashTopicUiNodeNames(uiFullGraphNode),
+			updateRequired = false;
 		for (var i=0; i<uiNodeNames.length; i++) {
 			var uiNodeName = uiNodeNames[i],
 				uiNode = getUiNodeOnUiFullGraphNodeWithName(uiFullGraphNode, uiNodeName);
 			if (!uiNode) {
-				var updateRequired = createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName);
-				return updateRequired;
+				updateRequired = updateRequired || createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName);
 			}
 		}
 
-		return false;
+		return updateRequired;
 	}
 	module.seeIfUpdateRequiresNewUiNodes = seeIfUpdateRequiresNewUiNodes;
 
@@ -131,7 +131,6 @@ var HashTopicManager = (function() {
 			return;
 		}
 
-			//return;
 		if (!uiFullGraphNode.hashTopicGroup) {
 			// Create group - how will the indexes work if topic is incomplete????
 			var group = {
@@ -140,6 +139,8 @@ var HashTopicManager = (function() {
 				gtype: "hashTopic",
 			}
 			LuxUi.addGroupToUi(group);
+		} else {
+			uiFullGraphNode.hashTopicGroup.leaves = uiFullGraphNode.uiNodes;
 		}
 	}
 
@@ -156,7 +157,7 @@ var HashTopicManager = (function() {
 
 
 	// LEGACY CODE
-
+/*
 	// Generate any additional nodes necessary to display this hash topic
 	var getAdditionalNodes = function(node) {
 		return [];
@@ -180,13 +181,6 @@ var HashTopicManager = (function() {
 			leaves: [indexInGraph(node, graph)]
 		};
 
-		/*
-		for (var i=0; i<additionalNodes.length; i++) {
-			var additionalNode = additionalNodes[i];
-			group.leaves.append(indexInGraph(additionalNode, graph));
-			additionalNode.subTopicGroup = group;
-		}
-		*/
 		
 		node.subTopicGroup = group;
 
@@ -389,6 +383,7 @@ var HashTopicManager = (function() {
 		console.log(indexInGraph(node2, graph));
 		//graph.links.push(newLink);
 	}
+	*/
 
 	return module;
 })();
