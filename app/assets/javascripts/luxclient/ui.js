@@ -319,7 +319,7 @@ var LuxUi = (function() {
 		            .attr("rx", 8).attr("ry", 8)
 		            .attr("class", function(d) {
 		            	if (d.gtype === "hashTopic") {
-		            		return "group-hash-topic";
+		            		return "group group-hash-topic";
 		            	}
 		            	return "group";
 		            })
@@ -332,6 +332,7 @@ var LuxUi = (function() {
 
 		        // When mouse is over a group, tell the DragDropManager that it's available
 		        // as a drop target
+		        // TODO: Can't drag onto a hash topic
 		        newGroups.on('mouseover',function(d,i){
 					DragDropManager.droppable = d; 
 				});
@@ -431,7 +432,6 @@ var LuxUi = (function() {
 
 				// Hash-style topics and groups
 				// New feature - incomplete code!
-				//createHashTopics();
 				//HashTopicManager.addStrutsToHashTopics(uiGraph);
 
 
@@ -2636,6 +2636,7 @@ var LuxUi = (function() {
 
 		}
 
+/*
 		// Hash Topics Code ==========================================================
 		// 
 		// TODO: complete this!
@@ -2667,7 +2668,7 @@ var LuxUi = (function() {
 			}
 			//HashTopicManager.addStrutsToHashTopics(uiGraph);
 		}
-		
+*/		
     return module;
 })();
 
