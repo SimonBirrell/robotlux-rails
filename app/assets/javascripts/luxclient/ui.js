@@ -377,7 +377,7 @@ var LuxUi = (function() {
 
 				// New nodes - add contents of group
 				nodeEnter.append("circle")
-			        .attr("class", function(d) { return "node-" + d.rtype; })
+			        .attr("class", function(d) { return "node-backdrop node-" + d.rtype; })
 			        .on("dblclick", nextNodeSize)
 			        ;
 
@@ -678,7 +678,7 @@ var LuxUi = (function() {
 				        d.keepForceLayoutHeated = false;
 			        });
 
-				nodeSelection.selectAll("circle")
+				nodeSelection.selectAll(".node-backdrop")
 					.classed("focus", function(d) {
 						//console.log("Checking focus on " +d.name);
 						//console.log(d.focus);
@@ -2423,7 +2423,7 @@ var LuxUi = (function() {
 							throw "Node not found in resetLeavesOnGroup()";
 						}	
 						group.leaves[l] = index;	
-						console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
+						//console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
 					}
 				}
 			}

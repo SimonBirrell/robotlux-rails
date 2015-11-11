@@ -15,7 +15,11 @@ var TopicViewer = (function() {
     		CircleRadius = null,
             Renderer = null;
 
-        var VIEW_TYPES = ['genericTopicView', 'two3DGraphsTopicView', 'test3DTopicView','diffRobotControlTopicView'];
+        var VIEW_TYPES = [  'genericTopicView', 
+                            'two3DGraphsTopicView', 
+                            'test3DTopicView',
+                            'diffRobotControlTopicView', 
+                            'jointStateHashTopicView'];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
 
@@ -27,7 +31,7 @@ var TopicViewer = (function() {
             "sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
             //"sensor_msgs/foo" : ['test3DTopicView'],            
             
-            "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView'],
+            "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView', 'jointStateHashTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],
         };
 
@@ -650,7 +654,6 @@ var TopicViewer = (function() {
                                 .selectAll(".topic-canvas-" + viewType)
                                     .data(nodeTopicsWithCurrentViewType(uiGraph, viewType), topicName);
 
-            console.log(topicCanvases);
             // Create new canvases for this viewType
             topicCanvases.enter() 
                 .append("canvas")
@@ -1256,6 +1259,254 @@ var TopicViewer = (function() {
                 LuxUiToProtocol.sendRosTopicMessage(node.rosInstanceId, node.name, messageForServer);
                 node.lastMessageSent = now;
             }
+        }
+
+        // ==================== Joint States ======================
+
+        // TopicView constructor.
+        //  var topicView = TopicViewer.jointStateHashTopicView(spec)
+        //  where spec is a hash of options for the creation of the topicView
+        // 
+        module.jointStateHashTopicView = function(spec, my) {
+            var spec = spec || {},
+                viewType = "jointStateHashTopicView",
+                my = my || {};
+            my.viewType = my.viewType || viewType;
+            var that = topicView(spec, my);
+
+            // Called whenever the UI graph is changed
+            //  node - the node on uiGraph
+            //
+            var update = function(node) {
+                var id = "#" + nodeNameToDomId(node.name),
+                    nodeD3 = Svg.selectAll('#' + id).data(node);
+
+                console.log(nodeD3);    
+
+            };
+            that.update = update;
+
+            // Called by browser on each animation frame
+            //
+            var animateAndRender = function() {
+            };
+            that.animateAndRender = animateAndRender;
+
+
+            return that;
+        }
+
+            function filterJointStateHashTopicViews(d) {
+                // Join with the text list of large, visible GenericTopicViews
+                if ((d.rtype==='topic')&&
+                    (d.viewer.currentView)&&
+                    (d.viewer.currentView.viewType==="jointStateHashTopicView")&&
+                    (d.data)&&
+                    (d.data.message)) {
+                    return [d]; 
+                }
+
+                return [];
+            }
+
+        // "Class method" called once whenever graph is updated and force.start() called
+        // Updates all visible jointStateHashTopicView
+        //  selection - d3 selection of all nodes
+        //  uiGraph - pointer to uiGraph
+        //
+        module.jointStateHashTopicView.updateViews = function(selection, uiGraph) {
+            enteringJointStateTopicViews(selection);
+            updateJointStateTopicViews(selection);
+         }
+
+        function enteringJointStateTopicViews(selection) {
+            // Join
+            var jointStateHashTopicViews = 
+                    selection.selectAll(".joint-state-hash-topic-view")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});                        
+
+            // Enter
+            var newJointStates = jointStateHashTopicViews
+                    .enter()
+                    .append("g")
+                        .attr("class", "joint-state-hash-topic-view");
+
+            // Position Indicator                        
+            newJointStates        
+                    .append("circle")
+                        .attr("class", "joint-state-hash-topic-view-position-backdrop");
+            newJointStates        
+                    .append("path")
+                        .attr("class", "joint-state-hash-topic-view-position-indicator");
+                       
+            // Velocity Indicator                       
+            newJointStates        
+                    .append("circle")
+                        .attr("class", "joint-state-hash-topic-view-velocity-backdrop");
+            newJointStates        
+                    .append("path")
+                        .attr("class", "joint-state-hash-topic-view-velocity-indicator");
+
+            // Efoort Indicator
+            newJointStates        
+                    .append("circle")
+                        .attr("class", "joint-state-hash-topic-view-effort-backdrop");
+            newJointStates        
+                    .append("path")
+                        .attr("class", "joint-state-hash-topic-view-effort-indicator");
+
+        }
+
+        function updateJointStateTopicViews(selection) {
+            function jointStatePositionDialRadius(d) {
+                return CircleRadius * (d.size + 1) * 0.6;
+            }
+
+            function jointStateVelocityDialRadius(d) {
+                return CircleRadius * (d.size + 1) * 0.4;
+            }
+
+            function jointStateEffortDialRadius(d) {
+                return CircleRadius * (d.size + 1) * 0.2;
+            }
+
+            function jointStateValue(d, parameter) {
+                if (parameter === "position") {
+                    return Math.PI * 7/3;
+                } else if (parameter === "velocity") {
+                    return Math.PI * 2/3;
+                } else {
+                    return Math.PI * -1/3;
+                }
+
+                if ((d.data)&&
+                    (d.data.message)&&
+                    (d.data.message[parameter])) {
+                    return d.data.message[parameter][0];
+                }
+                return 0;
+            }
+
+            function drawIndicator(d, radius, parameter) {
+                var dialRadiusString = radius.toString(),
+                    startX = 0,
+                    startY = 0,
+                    topDialY = -radius, 
+                    position = 2*Math.PI - ((jointStateValue(d, parameter) + 2*Math.PI) % (4*Math.PI)),
+                    indicatorX = Math.sin(position) * radius,
+                    indicatorY = -Math.cos(position) * radius,
+                    longArc = (Math.abs(position) > Math.PI) ? "1" : "0",
+                    sweepFlag = (position >= 0) ? "1" : "0";
+
+                    return "M"+ startX.toString() + "," + startY.toString() +
+                                " v" + topDialY.toString() +
+                                " A" + dialRadiusString + "," + dialRadiusString +
+                                    " 0 " + longArc + "," + sweepFlag + " " +
+                                    indicatorX + "," + indicatorY +
+                                " z";
+            }
+
+            // Update
+            var jointStateHashTopicViewPositionBackdrops = 
+                    selection.selectAll(".joint-state-hash-topic-view-position-backdrop")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+            var jointStateHashTopicViewPositionIndicators = 
+                    selection.selectAll(".joint-state-hash-topic-view-position-indicator")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+            var jointStateHashTopicViewVelocityBackdrops = 
+                    selection.selectAll(".joint-state-hash-topic-view-velocity-backdrop")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+            var jointStateHashTopicViewVelocityIndicators = 
+                    selection.selectAll(".joint-state-hash-topic-view-velocity-indicator")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+            var jointStateHashTopicViewEffortBackdrops = 
+                    selection.selectAll(".joint-state-hash-topic-view-effort-backdrop")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+            var jointStateHashTopicViewEffortIndicators = 
+                    selection.selectAll(".joint-state-hash-topic-view-effort-indicator")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+            jointStateHashTopicViewPositionBackdrops
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("r", jointStatePositionDialRadius);
+            jointStateHashTopicViewPositionIndicators
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("d", function(d) { return drawIndicator(d, jointStatePositionDialRadius(d), "position");});
+
+            jointStateHashTopicViewVelocityBackdrops
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("r", jointStateVelocityDialRadius);
+            jointStateHashTopicViewVelocityIndicators
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("d", function(d) { return drawIndicator(d, jointStateVelocityDialRadius(d), "velocity");});
+
+            jointStateHashTopicViewEffortBackdrops
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("r", jointStateEffortDialRadius);
+            jointStateHashTopicViewEffortIndicators
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("d", function(d) { return drawIndicator(d, jointStateEffortDialRadius(d), "effort");});
+
+        }
+
+        //  Each topicView type has a tick() method that is called from the D3/Cole tick()
+        //  functions. This too is a class method equivalent.
+        //
+        module.jointStateHashTopicView.tick = function() {
+
+        }
+
+        // ==================== SVG Topic View Template ======================
+
+        // TopicView constructor.
+        //  var topicView = TopicViewer.FOOTopicView(spec)
+        //  where spec is a hash of options for the creation of the topicView
+        // 
+        module.FOOTopicView = function(spec, my) {
+            var spec = spec || {},
+                viewType = "FOOTopicView",
+                my = my || {};
+            my.viewType = my.viewType || viewType;
+            var that = topicView(spec, my);
+
+            // Called for each instance whenever the UI graph is changed
+            //  node - the node on uiGraph
+            //
+            var update = function(node) {
+            };
+            that.update = update;
+
+            // Called by browser for each instance on each animation frame
+            //
+            var animateAndRender = function() {
+            };
+            that.animateAndRender = animateAndRender;
+
+            return that;
+        }
+
+        // "Class method" called once whenever graph is updated and force.start() called
+        // Updates all visible FOOTopicViews
+        //  selection - d3 selection of all nodes
+        //  uiGraph - pointer to uiGraph
+        //
+        module.FOOTopicView.updateViews = function(selection, uiGraph) {
+
+        }
+
+        //  Each topicView type has a tick() method that is called from the D3/Cole tick()
+        //  functions. This too is a class method equivalent.
+        //
+        module.FOOTopicView.tick = function() {
+
         }
 
         // ==================== ImuSimpleTopicView ================ 
