@@ -821,6 +821,7 @@ var LuxUi = (function() {
 			function topicNeedsSwitchIcons(d) {
 				return (((d.nodeFormat==='large')||(d.nodeFormat==='medium'))
 						&&(d.rtype==='topic')
+						&&(d.viewer)
 						&&(d.viewer.numberOfViews > 1)
 						);
 			}
@@ -1597,8 +1598,10 @@ var LuxUi = (function() {
 			function addNodeToAllGraphs(node, rosInstanceId) {
 				if (findNodeByNameOnGraph(node.name, uiFullGraph) === -1) {
 					setUpNewNode(node, rosInstanceId);
+					addRosInstanceIdToTopic(node, rosInstanceId);
 					uiFullGraph.nodes.push(node);
-					addNodeToUi(node);
+					var uiNode = addNodeToUi(node);
+					setUpNewRosTopic(uiNode, rosInstanceId);
 				} else {
 					console.log("NODE ALREADY EXISTS");
 					console.log(getHostnameOnNode(node));
@@ -1615,6 +1618,7 @@ var LuxUi = (function() {
 				addToNameSpaceTree(node);
 
 				var uiNode = copyNodeToIncompleteGraph(node);
+				setUpNewRosTopic(uiNode);
 
 				if (overwriteName) {
 					uiNode.name = overwriteName;
@@ -1846,26 +1850,6 @@ var LuxUi = (function() {
 				return -1;
 			}
 		
-			// Find the indexes of an array of nodes on a given graph
-			//
-			/*
-			function convertNodesToIndexes(nodes, graph) {
-				var indexes = [];
-
-				for (var i=0; i<nodes.length; i++) {
-					var node = nodes[i];
-					for (var j=0; j<graph.nodes.length; j++) {
-						if (node === graph.nodes[j]) {
-							indexes.push(j);
-							break;
-						}
-					}
-				}
-
-				return indexes;
-			}
-*/
-
 			// Set up a new node to be displayed.
 			//	- set various parameters such as size and rosInstanceId
 			//	- Create a TopicViewer if it's a topic
@@ -1875,15 +1859,28 @@ var LuxUi = (function() {
 				node.width = node.height = circleRadius;
 				node.uiNodes = [];
 				setNodeFormatFromSize(node);
-				if (node.rtype==='topic') {
-					node.viewer = new TopicViewer.TopicViewer(node);
-					if (rosInstanceId) {
-						node.rosInstanceId = rosInstanceId;
-					}
-				}
+				//setUpNewRosTopic(node, rosInstanceId);
 			}
 			module.setUpNewNode = setUpNewNode;
 			// Can be called from hashTopicManager (incomplete)
+
+			function setUpNewRosTopic(node, rosInstanceId) {
+				if (node.rtype==='topic') {
+					node.viewer = new TopicViewer.TopicViewer(node);
+					/*
+					if (rosInstanceId) {
+						node.rosInstanceId = rosInstanceId;
+					}
+					*/
+				}		
+				addRosInstanceIdToTopic(node, rosInstanceId);		
+			}
+
+			function addRosInstanceIdToTopic(node, rosInstanceId) {
+				if ((node.rtype==='topic') && (rosInstanceId)) {
+					node.rosInstanceId = rosInstanceId;
+				}								
+			}
 
 			// Remove named node from uiFullGraph
 			//	nameNodeToDelete - name of node to remove
@@ -2532,10 +2529,10 @@ var LuxUi = (function() {
 				newNode = {
 					name: original.name,
 					rtype: original.rtype,
+					parentNode: original,
 					size: original.size,
 					psize: original.psize,
 					nodeFormat: original.nodeFormat,
-					viewer: original.viewer,
 					x: original.x,
 					y: original.y,
 					px: original.x,
@@ -2560,6 +2557,7 @@ var LuxUi = (function() {
 
 				return newNode;
 			}
+			module.copyOfNode = copyOfNode;
 
 			// This is probably not necessary
 			// TODO: Check and eliminate

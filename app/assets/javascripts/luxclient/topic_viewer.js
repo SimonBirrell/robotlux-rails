@@ -179,6 +179,7 @@ var TopicViewer = (function() {
         //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
+                console.log("-");
                 this.currentView.update(node);
             } else {
                 setUpViews(this);  
@@ -241,6 +242,10 @@ var TopicViewer = (function() {
         function topicNameToId(name, i) {
             name = name.replace(/\//g, '--');
             return 'topic-display-' + name.substring(2) + "-" + i.toString();
+        }
+
+        function nameToDomId(name) {
+            return name.trim().replace(/\//g, '--');
         }
 
         // Convert the most recent ROS message in a topic into an array of text 
@@ -334,6 +339,38 @@ var TopicViewer = (function() {
             return kd.X.isDown();
         }
 
+        // Return true if DOWN key is pressed for Position
+        function keyPressedForPositionDown(node) {
+            return node.focus && kd.Q.isDown();
+        }
+
+        // Return true if RIGHT key is pressed for Position
+        function keyPressedForPositionUp(node) {
+            return node.focus && kd.W.isDown();
+        }
+
+        // Return true if DOWN key is pressed for Velocity
+        function keyPressedForVelocityDown(node) {
+            return node.focus && kd.E.isDown();
+        }
+
+        // Return true if RIGHT key is pressed for Velocity
+        function keyPressedForVelocityUp(node) {
+            return node.focus && kd.R.isDown();
+        }
+
+        // Return true if DOWN key is pressed for Effort
+        function keyPressedForEffortDown(node) {
+            return node.focus && kd.T.isDown();
+        }
+
+        // Return true if RIGHT key is pressed for Effort
+        function keyPressedForEffortUp(node) {
+            return node.focus && kd.Y.isDown();
+        }
+
+
+
         // Copy ROS message to a target node
         //  updateNode - 
         // TODO: Make this a full copy
@@ -341,6 +378,41 @@ var TopicViewer = (function() {
             targetNode.data = updateNode.data;
         }
 
+        // Clone (most) JavaScript objects
+        //
+        function clone(obj) {
+            var copy;
+
+            // Handle the 3 simple types, and null or undefined
+            if (null == obj || "object" != typeof obj) return obj;
+
+            // Handle Date
+            if (obj instanceof Date) {
+                copy = new Date();
+                copy.setTime(obj.getTime());
+                return copy;
+            }
+
+            // Handle Array
+            if (obj instanceof Array) {
+                copy = [];
+                for (var i = 0, len = obj.length; i < len; i++) {
+                    copy[i] = clone(obj[i]);
+                }
+                return copy;
+            }
+
+            // Handle Object
+            if (obj instanceof Object) {
+                copy = {};
+                for (var attr in obj) {
+                    if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+                }
+                return copy;
+            }
+
+            throw new Error("Unable to copy obj! Its type isn't supported.");
+        }
 
         // ===================================================== 
         //
@@ -530,6 +602,7 @@ var TopicViewer = (function() {
 
                 function init() {
                     console.log("3D init()");
+                    console.log(canvas);
                     // "that" is the TopicView "instance"
                     that.scene = new THREE.Scene();
 
@@ -565,6 +638,14 @@ var TopicViewer = (function() {
             //
             var render3D = function() {
                 if (that.renderer) {
+                    /*
+                    console.log("RENDER 3D==================");
+                    console.log(that.rendererWidth);
+                    console.log(that.rendererHeight);
+                    console.log(that.scene);
+                    console.log(that.camera);
+                    console.log("RENDER 3D==================");
+                    */
                     that.renderer.setSize( that.rendererWidth, that.rendererHeight );
                     that.renderer.render( that.scene, that.camera );
                 }
@@ -1121,6 +1202,7 @@ var TopicViewer = (function() {
                 adjustLinearVelocityIfKeyPressed(keyPressedForNodeDown, that.backwardArrow, -1);                                            
                 adjustAngularVelocityIfKeyPressed(keyPressedForNodeLeft, that.leftArrow, 1);                                            
                 adjustAngularVelocityIfKeyPressed(keyPressedForNodeRight, that.rightArrow, -1); 
+
                 messageForServer = createCmdVelMessageFromVelocities(linearVelocity, angularVelocity);
                 if ((messageForServer !== that.lastMessageSent)) { 
                     sendRosMessageToTopicAtFrequency(node, messageForServer, CMD_VEL_MESSAGE_FREQUENCY);
@@ -1133,7 +1215,6 @@ var TopicViewer = (function() {
                     updateBasePosition(that.base, messageFromServer, deltaTime);
                     lastTimestamp = now;
                 } 
-
                 // Call superclass
                 that.render3D();
             };
@@ -1204,7 +1285,6 @@ var TopicViewer = (function() {
             //  d - the node
             //  i - the index of the text line 0, 1, 2...
             var textLine = function(d, index) {
-                // console.log("t");
                 if (index===0) {
                     var message = d.data.message;
                     if (message) {
@@ -1263,6 +1343,13 @@ var TopicViewer = (function() {
 
         // ==================== Joint States ======================
 
+        var PI_TIMES_2 = Math.PI * 2.0;
+
+        var JOINT_STATE_MESSAGE_FREQUENCY = 10,
+            JOINT_POSITION_VELOCITY = Math.PI,
+            JOINT_VELOCITY_VELOCITY = Math.PI,
+            JOINT_EFFORT_VELOCITY = Math.PI;
+
         // TopicView constructor.
         //  var topicView = TopicViewer.jointStateHashTopicView(spec)
         //  where spec is a hash of options for the creation of the topicView
@@ -1271,6 +1358,15 @@ var TopicViewer = (function() {
             var spec = spec || {},
                 viewType = "jointStateHashTopicView",
                 my = my || {};
+            var node = spec.node,
+                messageFromServer = spec.node.data.message, 
+                deltaTime, now,
+                messageForServer;    
+            var lastTimestamp = null;
+            var jointPosition = 0.0,
+                jointVelocity = 0.0,
+                jointEffort = 0.0;
+
             my.viewType = my.viewType || viewType;
             var that = topicView(spec, my);
 
@@ -1278,7 +1374,7 @@ var TopicViewer = (function() {
             //  node - the node on uiGraph
             //
             var update = function(node) {
-                var id = "#" + nodeNameToDomId(node.name),
+                var id = "#" + nameToDomId(node.name),
                     nodeD3 = Svg.selectAll('#' + id).data(node);
 
                 console.log(nodeD3);    
@@ -1289,25 +1385,160 @@ var TopicViewer = (function() {
             // Called by browser on each animation frame
             //
             var animateAndRender = function() {
+
+                // Time since last iteration
+                now = Date.now();
+                if (!lastTimestamp) {
+                    lastTimestamp = now - 10;
+                }
+                deltaTime = (now - lastTimestamp) /1000;
+                lastTimestamp = now;
+
+                var keyPressed = checkKeysForJointStateMessagesForServer(node);
+
+                messageForServer = createJointStateMessage(node, jointPosition, jointVelocity, jointEffort);
+
+                if (that.lastMessageSent) {
+                    if (!jointStateMessagesEqual(messageForServer, that.lastMessageSent)) { 
+                        console.log("Send JointState Message");
+                        console.log(messageForServer);
+                        sendRosMessageToTopicAtFrequency(node.parentNode, messageForServer, JOINT_STATE_MESSAGE_FREQUENCY);
+                        that.lastMessageSent = messageForServer;
+                    } else {
+                        //console.log(messageForServer.position[0].toString() + ", " + messageForServer.position[1].toString());
+                        //console.log(node);
+                    }   
+                } else {
+                    // Send first message only if key pressed
+                    if (keyPressed) {
+                        console.log("First JointState message");
+                        console.log(messageForServer);
+                        sendRosMessageToTopicAtFrequency(node.parentNode, messageForServer, JOINT_STATE_MESSAGE_FREQUENCY);
+                        that.lastMessageSent = messageForServer;                        
+                    }
+                }
             };
             that.animateAndRender = animateAndRender;
 
+            function jointStateMessagesEqual(message1, message2) {
+                return  arraysEqual(message1.name, message2.name) &&
+                        arraysEqual(message1.position, message2.position) &&
+                        arraysEqual(message1.velocity, message2.velocity) &&
+                        arraysEqual(message1.effort, message2.effort);
+            }
+
+            function arraysEqual(array1, array2) {
+                if (array1.length !== array2.length) {
+                    return false;
+                }
+
+                for (var i=0; i<array1.length; i++) {
+                    var item1 = array1[i],
+                        item2 = array2[i];
+                    if ((item1 instanceof Array) && (item2 instanceof Array)) {
+                        if (!arraysEqual(item1, item2)) {
+                            return false;
+                        } 
+                    } else {
+                        if (item1 !== item2) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            function checkKeysForJointStateMessagesForServer(node) {
+                var keyPressed = false;
+
+                if (keyPressedForPositionDown(node)) {
+                    jointPosition = jointPosition - JOINT_POSITION_VELOCITY * deltaTime;
+                    jointPosition = Math.max(jointPosition, -PI_TIMES_2);
+                    keyPressed = true;
+                } else if (keyPressedForPositionUp(node)) {
+                    jointPosition = jointPosition + JOINT_POSITION_VELOCITY * deltaTime;
+                    jointPosition = Math.min(jointPosition, PI_TIMES_2);
+                    keyPressed = true;
+                }
+                if (keyPressedForVelocityDown(node)) {
+                    jointVelocity = jointVelocity - JOINT_VELOCITY_VELOCITY * deltaTime;
+                    jointVelocity = Math.max(jointVelocity, -PI_TIMES_2);
+                    keyPressed = true;
+                } else if (keyPressedForVelocityUp(node)) {
+                    jointVelocity = jointVelocity + JOINT_VELOCITY_VELOCITY * deltaTime;
+                    jointVelocity = Math.min(jointVelocity, PI_TIMES_2);
+                    keyPressed = true;
+                }
+                if (keyPressedForEffortDown(node)) {
+                    jointEffort = jointEffort - JOINT_EFFORT_VELOCITY * deltaTime;
+                    jointEffort = Math.max(jointEffort, -PI_TIMES_2);
+                    keyPressed = true;
+                } else if (keyPressedForEffortUp(node)) {
+                    jointEffort = jointEffort + JOINT_EFFORT_VELOCITY * deltaTime;
+                    jointEffort = Math.min(jointEffort, PI_TIMES_2);
+                    keyPressed = true;
+                }
+                return keyPressed;
+            }
+
+            function createJointStateMessage(node, position, velocity, effort) {
+                var newMessage = copyMessageFromNode(node),
+                    subTopicIndex = node.subTopicIndex;
+
+                if ((position !== undefined) && (position !== null)) {
+                    newMessage.position[subTopicIndex] = position;
+                }
+                if ((position !== undefined) && (position !== null)) {
+                    newMessage.velocity[subTopicIndex] = velocity;
+                }
+                if ((position !== undefined) && (position !== null)) {
+                    newMessage.effort[subTopicIndex] = effort;
+                }
+
+                return newMessage;
+            }
+
+            function copyMessageFromNode(node) {
+                //var cloneOfMessage = clone(node.data.message);
+                var message = node.data.message;
+
+                return {
+                    name: copyArrayIfValid(message.name),
+                    position: copyArrayIfValid(message.position),
+                    velocity: copyArrayIfValid(message.velocity),
+                    //effort: copyArrayIfValid(message.effort)
+                    effort: []
+                };
+            }
+
+            function copyArrayIfValid(array) {
+                var newArray = [];
+                for (var i=0; i<array.length; i++) {
+                    var item = array[i];
+                    if ((typeof item === "undefined") || (typeof item === "null")) {
+                        return [];
+                    }
+                    newArray.push(item);
+                }
+                return newArray;
+            }
 
             return that;
         }
 
-            function filterJointStateHashTopicViews(d) {
-                // Join with the text list of large, visible GenericTopicViews
-                if ((d.rtype==='topic')&&
-                    (d.viewer.currentView)&&
-                    (d.viewer.currentView.viewType==="jointStateHashTopicView")&&
-                    (d.data)&&
-                    (d.data.message)) {
-                    return [d]; 
-                }
-
-                return [];
+        function filterJointStateHashTopicViews(d) {
+            // Join with the text list of large, visible GenericTopicViews
+            if ((d.rtype==='topic')&&
+                (d.viewer)&&
+                (d.viewer.currentView)&&
+                (d.viewer.currentView.viewType==="jointStateHashTopicView")&&
+                (d.data)&&
+                (d.data.message)) {
+                return [d]; 
             }
+
+            return [];
+        }
 
         // "Class method" called once whenever graph is updated and force.start() called
         // Updates all visible jointStateHashTopicView
@@ -1329,6 +1560,7 @@ var TopicViewer = (function() {
             var newJointStates = jointStateHashTopicViews
                     .enter()
                     .append("g")
+                        .attr("id", function(d) {return nameToDomId(d.name); })
                         .attr("class", "joint-state-hash-topic-view");
 
             // Position Indicator                        
@@ -1371,18 +1603,10 @@ var TopicViewer = (function() {
             }
 
             function jointStateValue(d, parameter) {
-                if (parameter === "position") {
-                    return Math.PI * 7/3;
-                } else if (parameter === "velocity") {
-                    return Math.PI * 2/3;
-                } else {
-                    return Math.PI * -1/3;
-                }
-
                 if ((d.data)&&
                     (d.data.message)&&
                     (d.data.message[parameter])) {
-                    return d.data.message[parameter][0];
+                    return d.data.message[parameter][d.subTopicIndex];
                 }
                 return 0;
             }

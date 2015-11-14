@@ -58,10 +58,6 @@ var HashTopicManager = (function() {
 		var mType = findHashableTopic(node);
 		if (mType) {
 			node.hashTopicOrigin = true;
-			//node.hashTopic = true;
-			//node.subTopicKey = node.name;
-			//node.hashSubTopics = [node];
-			//node.subTopicIndex = 0;
 		} else {
 			node.hashTopicOrigin = false;
 		}
@@ -91,20 +87,45 @@ var HashTopicManager = (function() {
 			var uiNodeName = uiNodeNames[i],
 				uiNode = getUiNodeOnUiFullGraphNodeWithName(uiFullGraphNode, uiNodeName);
 			if (!uiNode) {
-				updateRequired = updateRequired || createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName);
+				var updateThisNode = createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName, i);
+				updateRequired = updateRequired || updateThisNode;
+				uiNode = getUiNodeOnUiFullGraphNodeWithName(uiFullGraphNode, uiNodeName);
 			}
+			// Copy ROS message to all uiNodes
+			copyRosMessageToUiNode(uiNode, uiFullGraphNode.data);
 		}
 
 		return updateRequired;
 	}
 	module.seeIfUpdateRequiresNewUiNodes = seeIfUpdateRequiresNewUiNodes;
 
+	function getHashableMessageType(name) {
+		for (var i=0; i<hashableMessageTypes.length; i++) {
+			var hashableMessageType = hashableMessageTypes[i];
+			if (hashableMessageType.name === name) {
+				return hashableMessageType;
+			}
+		}	
+		return null;
+	}
+
+	function copyRosMessageToUiNode(uiNode, data) {
+		var subMessage = data.message,
+			messageType = data.type;
+
+		uiNode.data = uiNode.data || {};
+		uiNode.data.message = subMessage;
+		uiNode.data.type = messageType;
+	}
+
 	// We need a new uiNode for display. It could be the existing (first) one
 	// or one that we create
 	//	uiFullGraphNode - the "parent" of the uiNodes for this hash topic
 	//	uiNodeName - name of node to create
+	// 	index - index into arrays for subtopic on compound message
+	// Return true if a uiNode has been added to the display (requiring a webcola update)
 	//
-	function createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName) {
+	function createUiNodeOnUiFullGraph(uiFullGraphNode, uiNodeName, index) {
 		// See if there's an "empty" uiNode to assign (generally, the first one)
 		for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
 			var uiNode = uiFullGraphNode.uiNodes[i];
@@ -112,6 +133,8 @@ var HashTopicManager = (function() {
 				console.log("ASSIGNING NODE " + uiNodeName + " TO " + uiNode.name);
 				uiNode.hashSubTopicName = uiNodeName;
 				uiNode.name = uiNodeName;
+				uiNode.subTopicIndex = index;
+				console.log(uiNode);
 				return false;
 			}
 		}
@@ -119,7 +142,11 @@ var HashTopicManager = (function() {
 		// Create a new node
 		console.log("CREATING EXTRA NODE " + uiNodeName);
 		uiNode = LuxUi.addNodeToUi(uiFullGraphNode, uiNodeName);
+		uiNode.rosInstanceId = uiFullGraphNode.uiNodes[0].rosInstanceId;
+
 		uiNode.hashSubTopicName = uiNodeName;
+		uiNode.subTopicIndex = index;
+		console.log(uiNode);
 		putGroupOnAllUiNodes(uiFullGraphNode);
 
 		return true;
