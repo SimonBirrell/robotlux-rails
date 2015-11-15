@@ -179,7 +179,26 @@ var TopicViewer = (function() {
         //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
-                console.log("-");
+                console.log("- " + node.name);
+                if (node.name===" /joint_states") {
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                    console.log("****************************************************");
+                }
                 this.currentView.update(node);
             } else {
                 setUpViews(this);  
@@ -1375,7 +1394,7 @@ var TopicViewer = (function() {
             //
             var update = function(node) {
                 var id = "#" + nameToDomId(node.name),
-                    nodeD3 = Svg.selectAll('#' + id).data(node);
+                    nodeD3 = Svg.selectAll(id).data(node);
 
                 console.log(nodeD3);    
 
@@ -1492,7 +1511,7 @@ var TopicViewer = (function() {
                     newMessage.velocity[subTopicIndex] = velocity;
                 }
                 if ((position !== undefined) && (position !== null)) {
-                    newMessage.effort[subTopicIndex] = effort;
+                   // newMessage.effort[subTopicIndex] = effort;
                 }
 
                 return newMessage;
@@ -1563,27 +1582,31 @@ var TopicViewer = (function() {
                         .attr("id", function(d) {return nameToDomId(d.name); })
                         .attr("class", "joint-state-hash-topic-view");
 
+            var newJointStatesWithPosition = newJointStates;
+            var newJointStatesWithVelocity = newJointStates;
+            var newJointStatesWithEffort = newJointStates;
+
             // Position Indicator                        
-            newJointStates        
+            newJointStatesWithPosition        
                     .append("circle")
                         .attr("class", "joint-state-hash-topic-view-position-backdrop");
-            newJointStates        
+            newJointStatesWithPosition        
                     .append("path")
                         .attr("class", "joint-state-hash-topic-view-position-indicator");
                        
             // Velocity Indicator                       
-            newJointStates        
+            newJointStatesWithVelocity        
                     .append("circle")
                         .attr("class", "joint-state-hash-topic-view-velocity-backdrop");
-            newJointStates        
+            newJointStatesWithVelocity        
                     .append("path")
                         .attr("class", "joint-state-hash-topic-view-velocity-indicator");
 
-            // Efoort Indicator
-            newJointStates        
+            // Effort Indicator
+            newJointStatesWithEffort        
                     .append("circle")
                         .attr("class", "joint-state-hash-topic-view-effort-backdrop");
-            newJointStates        
+            newJointStatesWithEffort        
                     .append("path")
                         .attr("class", "joint-state-hash-topic-view-effort-indicator");
 

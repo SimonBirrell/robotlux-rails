@@ -1087,6 +1087,9 @@ var LuxUi = (function() {
 			//	updateNode - reference to node object on update
 			//
 			function updateNodeOnAllGraphs(updateNode) {
+					if (updateNode.name === " /joint_states") {
+						console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + updateNode.name);
+					}
 				for (var j=0; j<uiFullGraph.nodes.length; j++) {
 					var uiFullGraphNode = uiFullGraph.nodes[j];
 					if (uiFullGraphNode.name === updateNode.name) {
@@ -2603,31 +2606,24 @@ var LuxUi = (function() {
 
 			// TODO Clean up. hashTopic code unfinished.
 			function updateNodeOnUiGraph(uiFullGraphNode) {
+				var updateRequired = false;
 				
-				if (HashTopicManager.seeIfUpdateRequiresNewUiNodes(uiFullGraphNode)) {
-					uiGraphUpdate();
-				}
-
-				var hashTopic = HashTopicManager.isAHashableTopic(uiFullGraphNode),
-					latestMessageHashTopicUiNodeName = "";
-
-				if (hashTopic) {
-					//latestMessageHashTopicUiNodeName = HashTopicManager.getLatestMessageHashTopicUiNodeName(uiFullGraphNode);
-				}
-
+				updateRequired = HashTopicManager.seeIfUpdateRequiresNewUiNodes(uiFullGraphNode);
+				
 				// uiFullGraphNodes carry a list of pointers to uiNodes
 				for (var i=0; i<uiFullGraphNode.uiNodes.length; i++) {
 					var uiNode = uiFullGraphNode.uiNodes[i];
-					if ((latestMessageHashTopicUiNodeName === uiNode.name) || (!hashTopic)) {
-						uiNode.data = uiFullGraphNode.data;
-						if (uiNode.viewer) {
-							uiNode.viewer.update(uiNode);
-						} else {
-							console.log("Viewer not ready for " + uiNode.name);
-						}
+					uiNode.data = uiFullGraphNode.data;
+					if (uiNode.viewer) {
+						uiNode.viewer.update(uiNode);
+					} else {
+						console.log("Viewer not ready for " + uiNode.name);
 					}
 				}
 				
+				if (updateRequired) {
+					uiGraphUpdate();
+				}
 			}
 
 			// End of legacy code ====================================================								
