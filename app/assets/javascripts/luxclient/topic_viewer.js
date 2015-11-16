@@ -179,7 +179,7 @@ var TopicViewer = (function() {
         //
         module.TopicViewer.prototype.update = function(node) {
             if (this.currentView) {
-                console.log("- " + node.name);
+                //console.log("- " + node.name);
                 if (node.name===" /joint_states") {
                     console.log("****************************************************");
                     console.log("****************************************************");
@@ -450,7 +450,7 @@ var TopicViewer = (function() {
         //  3. Each topicView type has an updateViews() method that renders all the topicViews
         //  of that type in the uiGraph whenever the graph changes. This is sort of like a class method.
         //
-        //  4. Each topicView type has a tick() method that is called from the D3/Cole tick()
+        //  4. Each topicView type has a tick() method that is called from the D3/Cola tick()
         //  functions. This too is a class method equivalent.
         //
         //  5. Each topicView has an animateAndRender() method that is called each
@@ -549,7 +549,8 @@ var TopicViewer = (function() {
                     // Join with the text list of large, visible GenericTopicViews
                     if ((d.nodeFormat==='large')&&
                             (d.rtype==='topic')&&
-                            ((d.viewer.currentView.viewType==="genericTopicView") || (d.viewer.currentView.viewType==="diffRobotControlTopicView"))
+                            ((d.viewer.currentView.viewType==="genericTopicView") || 
+                             (d.viewer.currentView.viewType==="diffRobotControlTopicView")) 
                             ) {
                         var list = [];
                         // This will display the ROS message as a list of text lines
@@ -1396,8 +1397,7 @@ var TopicViewer = (function() {
                 var id = "#" + nameToDomId(node.name),
                     nodeD3 = Svg.selectAll(id).data(node);
 
-                console.log(nodeD3);    
-
+                updateJointStateTopicViews(nodeD3);
             };
             that.update = update;
 
@@ -1511,7 +1511,7 @@ var TopicViewer = (function() {
                     newMessage.velocity[subTopicIndex] = velocity;
                 }
                 if ((position !== undefined) && (position !== null)) {
-                   // newMessage.effort[subTopicIndex] = effort;
+                    newMessage.effort[subTopicIndex] = 0; // effort;
                 }
 
                 return newMessage;
@@ -1526,7 +1526,7 @@ var TopicViewer = (function() {
                     position: copyArrayIfValid(message.position),
                     velocity: copyArrayIfValid(message.velocity),
                     //effort: copyArrayIfValid(message.effort)
-                    effort: []
+                    effort: [0,0]
                 };
             }
 
@@ -1542,6 +1542,18 @@ var TopicViewer = (function() {
                 return newArray;
             }
 
+            // Return the text to d3 for a text line on the topic
+            // We only use 2 text lines for this view
+            //  d - the node
+            //  i - the index of the text line 0, 1, 2...
+            var textLine = function(d, index) {
+                if (index===0) {
+                    return "Keys: QW (pos) ER (vel) TY (eff)";
+                } 
+                return "";
+            };
+            that.textLine = textLine;
+
             return that;
         }
 
@@ -1554,6 +1566,33 @@ var TopicViewer = (function() {
                 (d.data)&&
                 (d.data.message)) {
                 return [d]; 
+            }
+
+            return [];
+        }
+
+        function filterJointStateHashTopicViewsWithPosition(d) {
+            return filterJointStateHashTopicViewsWithParameter(d, "position");
+        }
+
+        function filterJointStateHashTopicViewsWithPositionLarge(d) {
+            console.log("Checking for large");
+            return filterJointStateHashTopicViewsWithParameter(d, "position") && (d.nodeFormat === 'large');
+        }
+
+        function filterJointStateHashTopicViewsWithVelocity(d) {
+            return filterJointStateHashTopicViewsWithParameter(d, "velocity");
+        }
+
+        function filterJointStateHashTopicViewsWithEffort(d) {
+            return filterJointStateHashTopicViewsWithParameter(d, "effort");
+        }
+
+        function filterJointStateHashTopicViewsWithParameter(d, parameter) {
+            var result = filterJointStateHashTopicViews(d);
+
+            if ((result.length > 0) && (d.data.message[parameter]) && (d.data.message[parameter].length > 0)) {
+                return result;
             }
 
             return [];
@@ -1580,36 +1619,63 @@ var TopicViewer = (function() {
                     .enter()
                     .append("g")
                         .attr("id", function(d) {return nameToDomId(d.name); })
-                        .attr("class", "joint-state-hash-topic-view");
+                        .attr("class", "joint-state-hash-topic-view");                        
 
-            var newJointStatesWithPosition = newJointStates;
-            var newJointStatesWithVelocity = newJointStates;
-            var newJointStatesWithEffort = newJointStates;
+            var newJointStatesWithPosition = newJointStates
+                                            .selectAll(".joint-state-hash-topic-view-position-backdrop")
+                                            .data(filterJointStateHashTopicViewsWithPosition)
+                                            .enter();
+            var newJointStatesWithVelocity = newJointStates
+                                            .selectAll(".joint-state-hash-topic-view-velocity-backdrop")
+                                            .data(filterJointStateHashTopicViewsWithVelocity)
+                                            .enter();
+            var newJointStatesWithEffort = newJointStates
+                                            .selectAll(".joint-state-hash-topic-view-effort-backdrop")
+                                            .data(filterJointStateHashTopicViewsWithEffort)
+                                            .enter();
 
-            // Position Indicator                        
-            newJointStatesWithPosition        
-                    .append("circle")
-                        .attr("class", "joint-state-hash-topic-view-position-backdrop");
-            newJointStatesWithPosition        
-                    .append("path")
-                        .attr("class", "joint-state-hash-topic-view-position-indicator");
-                       
-            // Velocity Indicator                       
-            newJointStatesWithVelocity        
-                    .append("circle")
-                        .attr("class", "joint-state-hash-topic-view-velocity-backdrop");
-            newJointStatesWithVelocity        
-                    .append("path")
-                        .attr("class", "joint-state-hash-topic-view-velocity-indicator");
+            function appendKey(selection, key, direction, baseCSSClass) {
+                var key = selection
+                            .append("text")
+                            .attr("class", baseCSSClass + "-key-" + direction + " key-indicator")
+                            .text(key);
+                var keyNode = key.node();
+                if (keyNode) {
+                    var bbox = key.node().getBBox();  
+                    selection.append("rect")
+                                .attr("class", baseCSSClass + "-key-" + direction + "-box key-box")
+                                .attr("x", bbox.x - (bbox.width / 2))
+                                .attr("y", bbox.y - (bbox.width * 0.2))
+                                .attr("width", bbox.width * 2.0)
+                                .attr("height", bbox.height * 1.2);
+                }                
+            }                                
 
-            // Effort Indicator
-            newJointStatesWithEffort        
-                    .append("circle")
-                        .attr("class", "joint-state-hash-topic-view-effort-backdrop");
-            newJointStatesWithEffort        
-                    .append("path")
-                        .attr("class", "joint-state-hash-topic-view-effort-indicator");
+            function appendIndicator(selection, parameter, label, keyMinus, keyPlus) {
+                var baseCSSClass = "joint-state-hash-topic-view-" + parameter;
 
+                selection.append("circle")
+                            .attr("class", baseCSSClass + "-backdrop");
+                selection.append("path")
+                            .attr("class", baseCSSClass + "-indicator");
+                selection.append("text")
+                            .attr("class", baseCSSClass + "-indicator-label-top joint-state-hash-topic-view-label topic-view-label-shadow")
+                            .text(label);
+                selection.append("text")
+                            .attr("class", baseCSSClass + "-indicator-label-top joint-state-hash-topic-view-label topic-view-label")
+                            .text(label);
+                selection.append("text")
+                            .attr("class", baseCSSClass + "-indicator-label-bottom joint-state-hash-topic-view-label topic-view-label-shadow");
+                selection.append("text")
+                            .attr("class", baseCSSClass + "-indicator-label-bottom joint-state-hash-topic-view-label topic-view-label");
+
+                appendKey(selection, keyMinus, 'minus', baseCSSClass);            
+                appendKey(selection, keyPlus, 'plus', baseCSSClass);                                   
+            }
+
+            appendIndicator(newJointStatesWithPosition, 'position', 'Position', 'Q', 'W');
+            appendIndicator(newJointStatesWithVelocity, 'velocity', 'Velocity', 'E', 'R');
+            appendIndicator(newJointStatesWithEffort, 'effort', 'Effort', 'T', 'Y');
         }
 
         function updateJointStateTopicViews(selection) {
@@ -1623,6 +1689,30 @@ var TopicViewer = (function() {
 
             function jointStateEffortDialRadius(d) {
                 return CircleRadius * (d.size + 1) * 0.2;
+            }
+
+            function topPositionLabelY(d) {
+                return - CircleRadius * (d.size + 1) * 0.5;
+            }
+
+            function bottomPositionLabelY(d) {
+                return CircleRadius * (d.size + 1) * 0.5;
+            }
+
+            function topVelocityLabelY(d) {
+                return - CircleRadius * (d.size + 1) * 0.3;
+            }
+
+            function bottomVelocityLabelY(d) {
+                return CircleRadius * (d.size + 1) * 0.3;
+            }
+
+            function topEffortLabelY(d) {
+                return - CircleRadius * (d.size + 1) * 0.3;
+            }
+
+            function bottomEffortLabelY(d) {
+                return CircleRadius * (d.size + 1) * 0.3;
             }
 
             function jointStateValue(d, parameter) {
@@ -1639,7 +1729,14 @@ var TopicViewer = (function() {
                     startX = 0,
                     startY = 0,
                     topDialY = -radius, 
-                    position = 2*Math.PI - ((jointStateValue(d, parameter) + 2*Math.PI) % (4*Math.PI)),
+                    theta = jointStateValue(d, parameter);
+
+                // No values yet, don't draw path
+                if (typeof theta !== 'number') {
+                    return "";    
+                }
+
+                var position = 2*Math.PI - ((theta + 2*Math.PI) % (4*Math.PI)),
                     indicatorX = Math.sin(position) * radius,
                     indicatorY = -Math.cos(position) * radius,
                     longArc = (Math.abs(position) > Math.PI) ? "1" : "0",
@@ -1653,55 +1750,85 @@ var TopicViewer = (function() {
                                 " z";
             }
 
+            function updateKey(selection, direction, xFn, sign, baseCSSClass) {
+                selection.selectAll(baseCSSClass + "-key-" + direction)
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("x", xFn)
+                        .style("visibility", function(d) {
+                            return d.nodeFormat === "large" ? "visible" : "hidden";
+                        })
+                        .attr("opacity", function(d) {
+                            return d.nodeFormat === "large" ? 1.0 : 0.0;
+                        });
+
+                selection.selectAll(baseCSSClass + "-key-" + direction + "-box")
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("x", function(d) {return xFn(d) - (this.getBBox().width/2); })
+                        .style("visibility", function(d) {
+                            return d.nodeFormat === "large" ? "visible" : "hidden";
+                        })
+                        .attr("opacity", function(d) {
+                            return d.nodeFormat === "large" ? 1.0 : 0.0;
+                        });
+            }
+
+            function updateIndicator(selection, parameter, radiusFn, topLabelY, bottomLabelY) {
+                var baseCSSClass = ".joint-state-hash-topic-view-" + parameter;
+
+                var jointStateHashTopicViewPositionBackdrops = 
+                        selection.selectAll(baseCSSClass + "-backdrop")
+                            .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+                var jointStateHashTopicViewPositionIndicators = 
+                        selection.selectAll(baseCSSClass + "-indicator")
+                            .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+                jointStateHashTopicViewPositionBackdrops
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("r", radiusFn);
+
+                jointStateHashTopicViewPositionIndicators
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("d", function(d) { return drawIndicator(d, jointStatePositionDialRadius(d), "position");});
+
+                selection.selectAll(baseCSSClass + "-indicator-label-top")
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("y", topLabelY)
+                        .style("visibility", function(d) {
+                            return (["large","medium"].includes(d.nodeFormat)) ? "visible" : "hidden";
+                        })
+                        .attr("opacity", function(d) {
+                            return (["large","medium"].includes(d.nodeFormat)) ? 1.0 : 0.0;
+                        });
+                
+                selection.selectAll(baseCSSClass + "-indicator-label-bottom")
+                        .text(function(d) {
+                            var value = ((d.data) && (d.data.message) && (d.data.message[parameter])) ? d.data.message[parameter].toString() : "-";
+                            return value
+                        })
+                        .transition()
+                        .duration(SHRINK_DURATION)                    
+                        .attr("y", bottomLabelY)
+                        .style("visibility", function(d) {
+                            return (["large","medium"].includes(d.nodeFormat)) ? "visible" : "hidden";
+                        })
+                        .attr("opacity", function(d) {
+                            return (["large","medium"].includes(d.nodeFormat)) ? 1.0 : 0.0;
+                        });
+
+                updateKey(selection, 'minus', topLabelY, -1, baseCSSClass);
+                updateKey(selection, 'plus', bottomLabelY, +1, baseCSSClass);
+            }
+
             // Update
-            var jointStateHashTopicViewPositionBackdrops = 
-                    selection.selectAll(".joint-state-hash-topic-view-position-backdrop")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-            var jointStateHashTopicViewPositionIndicators = 
-                    selection.selectAll(".joint-state-hash-topic-view-position-indicator")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-
-            var jointStateHashTopicViewVelocityBackdrops = 
-                    selection.selectAll(".joint-state-hash-topic-view-velocity-backdrop")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-            var jointStateHashTopicViewVelocityIndicators = 
-                    selection.selectAll(".joint-state-hash-topic-view-velocity-indicator")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-
-            var jointStateHashTopicViewEffortBackdrops = 
-                    selection.selectAll(".joint-state-hash-topic-view-effort-backdrop")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-            var jointStateHashTopicViewEffortIndicators = 
-                    selection.selectAll(".joint-state-hash-topic-view-effort-indicator")
-                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
-
-            jointStateHashTopicViewPositionBackdrops
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("r", jointStatePositionDialRadius);
-            jointStateHashTopicViewPositionIndicators
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("d", function(d) { return drawIndicator(d, jointStatePositionDialRadius(d), "position");});
-
-            jointStateHashTopicViewVelocityBackdrops
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("r", jointStateVelocityDialRadius);
-            jointStateHashTopicViewVelocityIndicators
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("d", function(d) { return drawIndicator(d, jointStateVelocityDialRadius(d), "velocity");});
-
-            jointStateHashTopicViewEffortBackdrops
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("r", jointStateEffortDialRadius);
-            jointStateHashTopicViewEffortIndicators
-                    .transition()
-                    .duration(SHRINK_DURATION)                    
-                    .attr("d", function(d) { return drawIndicator(d, jointStateEffortDialRadius(d), "effort");});
-
+            updateIndicator(selection, 'position', jointStatePositionDialRadius, topPositionLabelY, bottomPositionLabelY);
+            updateIndicator(selection, 'velocity', jointStateVelocityDialRadius, topVelocityLabelY, bottomVelocityLabelY);
+            updateIndicator(selection, 'effort', jointStateEffortDialRadius, topEffortLabelY, bottomEffortLabelY);
         }
 
         //  Each topicView type has a tick() method that is called from the D3/Cole tick()

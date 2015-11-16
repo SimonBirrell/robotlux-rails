@@ -195,4 +195,46 @@ marker#basic {
   fill: #D2AFB8;
 }
 
+.joint-state-hash-topic-view-label {
+  text-anchor: middle;
+  alignment-baseline: middle;
+  font-size: 14px;
+}
+
+.joint-state-hash-topic-view-position-indicator-label-top {
+  stroke-width: 1.0;
+}
+
+.topic-view-label-shadow {
+  fill: white;
+  stroke: white;
+  stroke-width: 2.0;
+}
+
+.topic-view-label {
+  fill: black;
+  stroke: black;
+  stroke-width: 0.5;
+}
+
+.key-indicator {
+  text-anchor: middle;
+  alignment-baseline: middle;
+  font-size: 12px;  
+  stroke: black;
+  stroke-width: 1.0;
+  border: 1px;
+}
+
+.key-indicator {
+  stroke-width: 0.5;
+}
+
+.key-box {
+  fill: #ccc;
+  fill-opacity: 0.3;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+
 
