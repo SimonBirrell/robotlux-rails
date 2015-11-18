@@ -360,32 +360,32 @@ var TopicViewer = (function() {
 
         // Return true if DOWN key is pressed for Position
         function keyPressedForPositionDown(node) {
-            return node.focus && kd.Q.isDown();
+            return node.focus && kd.W.isDown();
         }
 
         // Return true if RIGHT key is pressed for Position
         function keyPressedForPositionUp(node) {
-            return node.focus && kd.W.isDown();
+            return node.focus && kd.Q.isDown();
         }
 
         // Return true if DOWN key is pressed for Velocity
         function keyPressedForVelocityDown(node) {
-            return node.focus && kd.E.isDown();
+            return node.focus && kd.R.isDown();
         }
 
         // Return true if RIGHT key is pressed for Velocity
         function keyPressedForVelocityUp(node) {
-            return node.focus && kd.R.isDown();
+            return node.focus && kd.E.isDown();
         }
 
         // Return true if DOWN key is pressed for Effort
         function keyPressedForEffortDown(node) {
-            return node.focus && kd.T.isDown();
+            return node.focus && kd.Y.isDown();
         }
 
         // Return true if RIGHT key is pressed for Effort
         function keyPressedForEffortUp(node) {
-            return node.focus && kd.Y.isDown();
+            return node.focus && kd.T.isDown();
         }
 
 
@@ -1395,9 +1395,15 @@ var TopicViewer = (function() {
             //
             var update = function(node) {
                 var id = "#" + nameToDomId(node.name),
-                    nodeD3 = Svg.selectAll(id).data(node);
+                    nodeD3 = Svg.selectAll(id).data([node]);
 
-                updateJointStateTopicViews(nodeD3);
+                console.log("Update " + node.name + " - " + id);
+                console.log(nodeD3);
+
+                //updateJointStateTopicViews(nodeD3);
+                updateIndicatorDialPositionAndNumber2(nodeD3, 'position');
+                updateIndicatorDialPositionAndNumber2(nodeD3, 'velocity');
+                updateIndicatorDialPositionAndNumber2(nodeD3, 'effort');
             };
             that.update = update;
 
@@ -1419,8 +1425,6 @@ var TopicViewer = (function() {
 
                 if (that.lastMessageSent) {
                     if (!jointStateMessagesEqual(messageForServer, that.lastMessageSent)) { 
-                        console.log("Send JointState Message");
-                        console.log(messageForServer);
                         sendRosMessageToTopicAtFrequency(node.parentNode, messageForServer, JOINT_STATE_MESSAGE_FREQUENCY);
                         that.lastMessageSent = messageForServer;
                     } else {
@@ -1678,101 +1682,223 @@ var TopicViewer = (function() {
             appendIndicator(newJointStatesWithEffort, 'effort', 'Effort', 'T', 'Y');
         }
 
+        function jointStatePositionDialRadius(d) {
+            return CircleRadius * (d.size + 1) * 0.6;
+        }
+
+        function jointStateVelocityDialRadius(d) {
+            return CircleRadius * (d.size + 1) * 0.4;
+        }
+
+        function jointStateEffortDialRadius(d) {
+            return CircleRadius * (d.size + 1) * 0.2;
+        }
+
+        function jointStateDialSizeToRadius(size, parameter) {
+            if (parameter==='position') {
+                return CircleRadius * (size + 1) * 0.6;
+            } else if (parameter==='velocity') {
+                return CircleRadius * (size + 1) * 0.4;
+            } else {
+                return CircleRadius * (size + 1) * 0.2;
+            }
+        }
+
+        function jointStateDialParameterToRadius(d, parameter) {
+            if (parameter==='position') {
+                return jointStatePositionDialRadius(d);
+            } else if (parameter==='velocity') {
+                return jointStateVelocityDialRadius(d);
+            } else {
+                return jointStateEffortDialRadius(d);
+            }
+        }
+
+        function topPositionLabelY(d) {
+            return - CircleRadius * (d.size + 1) * 0.5;
+        }
+
+        function bottomPositionLabelY(d) {
+            return CircleRadius * (d.size + 1) * 0.5;
+        }
+
+        function topVelocityLabelY(d) {
+            return - CircleRadius * (d.size + 1) * 0.3;
+        }
+
+        function bottomVelocityLabelY(d) {
+            return CircleRadius * (d.size + 1) * 0.3;
+        }
+
+        function topEffortLabelY(d) {
+            return - CircleRadius * (d.size + 1) * 0.3;
+        }
+
+        function bottomEffortLabelY(d) {
+            return CircleRadius * (d.size + 1) * 0.3;
+        }
+
+        function jointStateValue(d, parameter) {
+            //return 2*Math.PI - Math.random(0, 4*Math.PI);
+
+            if ((d.data)&&
+                (d.data.message)&&
+                (d.data.message[parameter])) {
+                return d.data.message[parameter][d.subTopicIndex];
+            }
+            return 0;
+        }
+
+        function drawIndicator(d, radius, parameter) {
+            var dialRadiusString = radius.toString(),
+                startX = 0,
+                startY = 0,
+                topDialY = -radius, 
+                theta = jointStateValue(d, parameter);
+
+            // No values yet, don't draw path
+            if (typeof theta !== 'number') {
+                return "";    
+            }
+
+            var position = 2*Math.PI - ((theta + 2*Math.PI) % (4*Math.PI)),
+                indicatorX = Math.sin(position) * radius,
+                indicatorY = -Math.cos(position) * radius,
+                longArc = (Math.abs(position) > Math.PI) ? "1" : "0",
+                sweepFlag = (position >= 0) ? "1" : "0";
+
+                return "M"+ startX.toString() + "," + startY.toString() +
+                            " v" + topDialY.toString() +
+                            " A" + dialRadiusString + "," + dialRadiusString +
+                                " 0 " + longArc + "," + sweepFlag + " " +
+                                indicatorX + "," + indicatorY +
+                            " z";
+        }
+
+        function indicatorTween(parameter) {
+            return function(d, i, a) {
+                console.log("Tween " + d.name + " - " + d.psize.toString() + ", " + d.size.toString());
+                var startRadius = jointStateDialSizeToRadius(d.psize, parameter),
+                    targetRadius = jointStateDialSizeToRadius(d.size, parameter);
+                return function(t) {
+                console.log(d.name + " - " + t.toString());
+                var radius = startRadius + t*(targetRadius - startRadius);
+                    var dialRadiusString = radius.toString(),
+                        startX = 0,
+                        startY = 0,
+                        topDialY = -radius, 
+                        theta = jointStateValue(d, parameter);
+
+                    // No values yet, don't draw path
+                    if (typeof theta !== 'number') {
+                        return "";    
+                    }
+
+                    var position = 2*Math.PI - ((theta + 2*Math.PI) % (4*Math.PI)),
+                        indicatorX = Math.sin(position) * radius,
+                        indicatorY = -Math.cos(position) * radius,
+                        longArc = (Math.abs(position) > Math.PI) ? "1" : "0",
+                        sweepFlag = (position >= 0) ? "1" : "0";
+
+                        return "M"+ startX.toString() + "," + startY.toString() +
+                                    " v" + topDialY.toString() +
+                                    " A" + dialRadiusString + "," + dialRadiusString +
+                                        " 0 " + longArc + "," + sweepFlag + " " +
+                                        indicatorX + "," + indicatorY +
+                                    " z";
+                }
+            }
+        }
+
+        function updateKey(selection, direction, xFn, sign, baseCSSClass) {
+            selection.selectAll(baseCSSClass + "-key-" + direction)
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("x", xFn)
+                    .style("visibility", function(d) {
+                        return d.nodeFormat === "large" ? "visible" : "hidden";
+                    })
+                    .attr("opacity", function(d) {
+                        return d.nodeFormat === "large" ? 1.0 : 0.0;
+                    });
+
+            selection.selectAll(baseCSSClass + "-key-" + direction + "-box")
+                    .transition()
+                    .duration(SHRINK_DURATION)                    
+                    .attr("x", function(d) {return xFn(d) - (this.getBBox().width/2); })
+                    .style("visibility", function(d) {
+                        return d.nodeFormat === "large" ? "visible" : "hidden";
+                    })
+                    .attr("opacity", function(d) {
+                        return d.nodeFormat === "large" ? 1.0 : 0.0;
+                    });
+        }
+
+        function updateIndicatorDialPositions(selection, baseCSSClass, parameter) {
+            var jointStateHashTopicViewPositionIndicators = 
+                    selection.selectAll(baseCSSClass + "-indicator")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+            jointStateHashTopicViewPositionIndicators
+                    .transition()
+                    .duration(SHRINK_DURATION) 
+                    .attrTween("d", indicatorTween(parameter))
+                    /*                   
+                    .attr("d", function(d) { 
+                        return drawIndicator(d, jointStatePositionDialRadius(d), "position");
+                    })
+*/
+                    ;
+        }
+
+        function updateIndicatorDialPositions2(selection, baseCSSClass, parameter) {
+            var jointStateHashTopicViewPositionIndicators = 
+                    selection.selectAll(baseCSSClass + "-indicator")
+                        .data(filterJointStateHashTopicViews, function(d) {return d.name});
+
+            jointStateHashTopicViewPositionIndicators
+                    .attr("d", function(d) { 
+                        console.log("updateIndicatorDialPositions2 on " + d.name + " for " + parameter);
+                        //return drawIndicator(d, jointStatePositionDialRadius(d), "position");
+                        return drawIndicator(d, jointStateDialParameterToRadius(d, parameter), parameter);
+                    });
+        }
+
+        function updateIndicatorNumber(selection, baseCSSClass, parameter) {
+            selection.selectAll(baseCSSClass + "-indicator-label-bottom")
+                    .text(function(d) {
+                        var value;
+                        if ((d.data) && (d.data.message) && (d.data.message[parameter]) && (typeof d.subTopicIndex === 'number')) {
+                            value = d.data.message[parameter];
+                            value = value[d.subTopicIndex].toString();
+                        } else {
+                            value = "-";
+                        }
+                        if (value !== "0") {
+                            console.log("************************************************");
+                            console.log(value);
+                            console.log("************************************************");
+                        }
+                        //value = twoDecimalPlaces(Math.random());
+                        return value;
+                    });                
+        }
+
+        function updateIndicatorDialPositionAndNumber(selection, parameter) {
+            var baseCSSClass = ".joint-state-hash-topic-view-" + parameter;
+
+            updateIndicatorDialPositions(selection, baseCSSClass);
+            updateIndicatorNumber(selection, baseCSSClass, parameter);
+        }
+
+        function updateIndicatorDialPositionAndNumber2(selection, parameter) {
+            var baseCSSClass = ".joint-state-hash-topic-view-" + parameter;
+
+            updateIndicatorDialPositions2(selection, baseCSSClass, parameter);
+            updateIndicatorNumber(selection, baseCSSClass, parameter);
+        }
+
         function updateJointStateTopicViews(selection) {
-            function jointStatePositionDialRadius(d) {
-                return CircleRadius * (d.size + 1) * 0.6;
-            }
-
-            function jointStateVelocityDialRadius(d) {
-                return CircleRadius * (d.size + 1) * 0.4;
-            }
-
-            function jointStateEffortDialRadius(d) {
-                return CircleRadius * (d.size + 1) * 0.2;
-            }
-
-            function topPositionLabelY(d) {
-                return - CircleRadius * (d.size + 1) * 0.5;
-            }
-
-            function bottomPositionLabelY(d) {
-                return CircleRadius * (d.size + 1) * 0.5;
-            }
-
-            function topVelocityLabelY(d) {
-                return - CircleRadius * (d.size + 1) * 0.3;
-            }
-
-            function bottomVelocityLabelY(d) {
-                return CircleRadius * (d.size + 1) * 0.3;
-            }
-
-            function topEffortLabelY(d) {
-                return - CircleRadius * (d.size + 1) * 0.3;
-            }
-
-            function bottomEffortLabelY(d) {
-                return CircleRadius * (d.size + 1) * 0.3;
-            }
-
-            function jointStateValue(d, parameter) {
-                if ((d.data)&&
-                    (d.data.message)&&
-                    (d.data.message[parameter])) {
-                    return d.data.message[parameter][d.subTopicIndex];
-                }
-                return 0;
-            }
-
-            function drawIndicator(d, radius, parameter) {
-                var dialRadiusString = radius.toString(),
-                    startX = 0,
-                    startY = 0,
-                    topDialY = -radius, 
-                    theta = jointStateValue(d, parameter);
-
-                // No values yet, don't draw path
-                if (typeof theta !== 'number') {
-                    return "";    
-                }
-
-                var position = 2*Math.PI - ((theta + 2*Math.PI) % (4*Math.PI)),
-                    indicatorX = Math.sin(position) * radius,
-                    indicatorY = -Math.cos(position) * radius,
-                    longArc = (Math.abs(position) > Math.PI) ? "1" : "0",
-                    sweepFlag = (position >= 0) ? "1" : "0";
-
-                    return "M"+ startX.toString() + "," + startY.toString() +
-                                " v" + topDialY.toString() +
-                                " A" + dialRadiusString + "," + dialRadiusString +
-                                    " 0 " + longArc + "," + sweepFlag + " " +
-                                    indicatorX + "," + indicatorY +
-                                " z";
-            }
-
-            function updateKey(selection, direction, xFn, sign, baseCSSClass) {
-                selection.selectAll(baseCSSClass + "-key-" + direction)
-                        .transition()
-                        .duration(SHRINK_DURATION)                    
-                        .attr("x", xFn)
-                        .style("visibility", function(d) {
-                            return d.nodeFormat === "large" ? "visible" : "hidden";
-                        })
-                        .attr("opacity", function(d) {
-                            return d.nodeFormat === "large" ? 1.0 : 0.0;
-                        });
-
-                selection.selectAll(baseCSSClass + "-key-" + direction + "-box")
-                        .transition()
-                        .duration(SHRINK_DURATION)                    
-                        .attr("x", function(d) {return xFn(d) - (this.getBBox().width/2); })
-                        .style("visibility", function(d) {
-                            return d.nodeFormat === "large" ? "visible" : "hidden";
-                        })
-                        .attr("opacity", function(d) {
-                            return d.nodeFormat === "large" ? 1.0 : 0.0;
-                        });
-            }
 
             function updateIndicator(selection, parameter, radiusFn, topLabelY, bottomLabelY) {
                 var baseCSSClass = ".joint-state-hash-topic-view-" + parameter;
@@ -1781,19 +1907,12 @@ var TopicViewer = (function() {
                         selection.selectAll(baseCSSClass + "-backdrop")
                             .data(filterJointStateHashTopicViews, function(d) {return d.name});
 
-                var jointStateHashTopicViewPositionIndicators = 
-                        selection.selectAll(baseCSSClass + "-indicator")
-                            .data(filterJointStateHashTopicViews, function(d) {return d.name});
-
                 jointStateHashTopicViewPositionBackdrops
                         .transition()
                         .duration(SHRINK_DURATION)                    
                         .attr("r", radiusFn);
 
-                jointStateHashTopicViewPositionIndicators
-                        .transition()
-                        .duration(SHRINK_DURATION)                    
-                        .attr("d", function(d) { return drawIndicator(d, jointStatePositionDialRadius(d), "position");});
+                updateIndicatorDialPositions(selection, baseCSSClass, parameter);    
 
                 selection.selectAll(baseCSSClass + "-indicator-label-top")
                         .transition()
@@ -1805,12 +1924,10 @@ var TopicViewer = (function() {
                         .attr("opacity", function(d) {
                             return (["large","medium"].includes(d.nodeFormat)) ? 1.0 : 0.0;
                         });
-                
+
+                updateIndicatorNumber(selection, baseCSSClass, parameter);
+
                 selection.selectAll(baseCSSClass + "-indicator-label-bottom")
-                        .text(function(d) {
-                            var value = ((d.data) && (d.data.message) && (d.data.message[parameter])) ? d.data.message[parameter].toString() : "-";
-                            return value
-                        })
                         .transition()
                         .duration(SHRINK_DURATION)                    
                         .attr("y", bottomLabelY)
@@ -1824,6 +1941,9 @@ var TopicViewer = (function() {
                 updateKey(selection, 'minus', topLabelY, -1, baseCSSClass);
                 updateKey(selection, 'plus', bottomLabelY, +1, baseCSSClass);
             }
+
+            selection.selectAll(".joint-state-hash-topic-view")
+                        .attr("id", function(d) {return nameToDomId(d.name); });
 
             // Update
             updateIndicator(selection, 'position', jointStatePositionDialRadius, topPositionLabelY, bottomPositionLabelY);

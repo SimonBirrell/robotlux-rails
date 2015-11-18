@@ -676,6 +676,7 @@ var LuxUi = (function() {
 			        })
 			        .each("end", function(d) {
 				        d.keepForceLayoutHeated = false;
+				        d.psize = d.size;
 			        });
 
 				nodeSelection.selectAll(".node-backdrop")
@@ -1089,6 +1090,7 @@ var LuxUi = (function() {
 			function updateNodeOnAllGraphs(updateNode) {
 					if (updateNode.name === " /joint_states") {
 						console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + updateNode.name);
+						console.log(updateNode.data.message.position);
 					}
 				for (var j=0; j<uiFullGraph.nodes.length; j++) {
 					var uiFullGraphNode = uiFullGraph.nodes[j];
