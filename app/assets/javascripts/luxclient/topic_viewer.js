@@ -1397,10 +1397,7 @@ var TopicViewer = (function() {
                 var id = "#" + nameToDomId(node.name),
                     nodeD3 = Svg.selectAll(id).data([node]);
 
-                console.log("Update " + node.name + " - " + id);
-                console.log(nodeD3);
-
-                //updateJointStateTopicViews(nodeD3);
+                // Update size and label of indicators
                 updateIndicatorDialPositionAndNumber2(nodeD3, 'position');
                 updateIndicatorDialPositionAndNumber2(nodeD3, 'velocity');
                 updateIndicatorDialPositionAndNumber2(nodeD3, 'effort');
@@ -1777,11 +1774,9 @@ var TopicViewer = (function() {
 
         function indicatorTween(parameter) {
             return function(d, i, a) {
-                console.log("Tween " + d.name + " - " + d.psize.toString() + ", " + d.size.toString());
                 var startRadius = jointStateDialSizeToRadius(d.psize, parameter),
                     targetRadius = jointStateDialSizeToRadius(d.size, parameter);
                 return function(t) {
-                console.log(d.name + " - " + t.toString());
                 var radius = startRadius + t*(targetRadius - startRadius);
                     var dialRadiusString = radius.toString(),
                         startX = 0,
@@ -1842,13 +1837,7 @@ var TopicViewer = (function() {
             jointStateHashTopicViewPositionIndicators
                     .transition()
                     .duration(SHRINK_DURATION) 
-                    .attrTween("d", indicatorTween(parameter))
-                    /*                   
-                    .attr("d", function(d) { 
-                        return drawIndicator(d, jointStatePositionDialRadius(d), "position");
-                    })
-*/
-                    ;
+                    .attrTween("d", indicatorTween(parameter));
         }
 
         function updateIndicatorDialPositions2(selection, baseCSSClass, parameter) {
@@ -1858,8 +1847,6 @@ var TopicViewer = (function() {
 
             jointStateHashTopicViewPositionIndicators
                     .attr("d", function(d) { 
-                        console.log("updateIndicatorDialPositions2 on " + d.name + " for " + parameter);
-                        //return drawIndicator(d, jointStatePositionDialRadius(d), "position");
                         return drawIndicator(d, jointStateDialParameterToRadius(d, parameter), parameter);
                     });
         }
@@ -1874,12 +1861,6 @@ var TopicViewer = (function() {
                         } else {
                             value = "-";
                         }
-                        if (value !== "0") {
-                            console.log("************************************************");
-                            console.log(value);
-                            console.log("************************************************");
-                        }
-                        //value = twoDecimalPlaces(Math.random());
                         return value;
                     });                
         }

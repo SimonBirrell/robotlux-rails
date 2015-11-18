@@ -1088,10 +1088,6 @@ var LuxUi = (function() {
 			//	updateNode - reference to node object on update
 			//
 			function updateNodeOnAllGraphs(updateNode) {
-					if (updateNode.name === " /joint_states") {
-						console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + updateNode.name);
-						console.log(updateNode.data.message.position);
-					}
 				for (var j=0; j<uiFullGraph.nodes.length; j++) {
 					var uiFullGraphNode = uiFullGraph.nodes[j];
 					if (uiFullGraphNode.name === updateNode.name) {
