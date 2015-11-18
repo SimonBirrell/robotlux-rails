@@ -142,7 +142,7 @@ marker#basic {
   stroke-opacity: .6;
 }
 
-.group {
+.group-machine {
   stroke: #fff;
   stroke-width: 1.5px;
   cursor: move;
@@ -249,9 +249,22 @@ marker#basic {
   fill: #A67906;  
 }
 
+.group-label {
+  fill: black;
+  stroke-width: 1.0;  
+  text-anchor: middle;
+  alignment-baseline: middle;
+}
 
+.group-label-machine {
+  fill: rgb(248, 203, 142);
+  stroke: rgb(248, 203, 142);  
+}
 
-
+.group-label-hash-topic {
+  fill: #888;
+  stroke: #888; 
+}
 
 
 

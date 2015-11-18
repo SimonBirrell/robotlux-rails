@@ -294,11 +294,15 @@ var LuxUi = (function() {
 			// Position d3 groups on screen 
 			//
 			function positionGroup(groupSelection) {
-					groupSelection
+					groupSelection.selectAll("rect")
 						 .attr("x", function (d) { return d.bounds.x; })
 		                 .attr("y", function (d) { return d.bounds.y; })
 		                 .attr("width", function (d) { return d.bounds.width(); })
 		                 .attr("height", function (d) { return d.bounds.height(); });
+
+		            groupSelection.selectAll(".group-label")
+						 .attr("x", function (d) { return d.bounds.x + d.bounds.width()/2; })
+		                 .attr("y", function (d) { return d.bounds.y + d.bounds.height() + 14; });
 			}
 
 			////////////////// End of tick functions ////////////////////////////////////
@@ -315,21 +319,35 @@ var LuxUi = (function() {
 		        // At the moment we only have on type of group, which represents a 
 		        // machine.
 		        var newGroups = groupEnter  
-					.append("rect")
-		            .attr("rx", 8).attr("ry", 8)
-		            .attr("class", function(d) {
-		            	if (d.gtype === "hashTopic") {
-		            		return "group group-hash-topic";
-		            	}
-		            	return "group";
-		            })
-		            .attr("id", function(d) {
-		            	if (d.gtype === "hashTopic") {
-		            		return "";
-		            	}
-		            	return "machine_" + d.hostname;
-		            });
+		        	.append("g")
+		        		.attr("class", "group");
 
+		       	// Draw rectangle
+				newGroups		        		
+					.append("rect")
+		            	.attr("rx", 8).attr("ry", 8)
+		            	.attr("class", function(d) {
+		            		if (d.gtype === "hashTopic") {
+		            			return "group-hash-topic";
+		            		}
+		            		return "group-machine";
+		            	})
+		            	.attr("id", function(d) {
+		            		if (d.gtype === "hashTopic") {
+		            			return "";
+		            		}
+		            		return "machine_" + d.hostname;
+		            	});
+
+		        // Add group label
+				newGroups		        		
+					.append("text")
+						.attr("class", function(d) {
+							var labelGroup = (d.gtype === "hashTopic") ? "group-label-hash-topic" : "group-label-machine";
+							return "group-label " + labelGroup;
+						})
+						.text(function(d) {return d.title;});
+		            	
 		        // When mouse is over a group, tell the DragDropManager that it's available
 		        // as a drop target
 		        // TODO: Can't drag onto a hash topic

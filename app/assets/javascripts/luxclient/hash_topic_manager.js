@@ -162,7 +162,7 @@ var HashTopicManager = (function() {
 			// Create group - how will the indexes work if topic is incomplete????
 			var group = {
 				leaves: uiFullGraphNode.uiNodes,
-				title: "foo",
+				title: uiFullGraphNode.name,
 				gtype: "hashTopic",
 			}
 			LuxUi.addGroupToUi(group);
