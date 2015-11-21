@@ -266,6 +266,43 @@ marker#basic {
   stroke: #888; 
 }
 
+#mainMenu {
+  padding-top: 0px;
+}
 
+.connection-lost{
+  background-color: #dca7a7;
+  color: #a94442;
+}
 
+@keyframes blink {
+  0% {
+    opacity: 1.0;
+  }
+  50% {
+    opacity: 0.0;
+  }
+  100% {
+    opacity: 1.0;
+  }
+}
+@-webkit-keyframes blink {
+  0% {
+    opacity: 1.0;
+  }
+  50% {
+    opacity: 0.0;
+  }
+  100% {
+    opacity: 1.0;
+  }
+}
 
+.blink {
+  animation: blink 1s step-start 0s infinite;
+  -webkit-animation: blink 1s step-start 0s infinite;
+}
+
+.hidden-by-default {
+  display: none;
+}

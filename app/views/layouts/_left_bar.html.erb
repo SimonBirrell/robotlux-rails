@@ -7,28 +7,68 @@
 </div>
 <!-- admin-logo -->
 <% if user_signed_in? %>
+<br>
+<br>
+<hr>
+<div id="connection-panel">
+	<div id="connection-panel-danger" class="row grid hidden-by-default">
+		<div class="col-md-1"></div>
+		<div class="col-md-10">
+			<div class="alert alert-danger">
+				<p>
+				Lost connection with the server. Will try to reconnect automatically in 9 seconds...
+			</p>
+				<p align="center">
+					<a href="#fakelink" class="btn btn-warning btn-wide">Retry now<a>
+				</p>	
+			</div>	
+		</div>	
+	</div>	
+	<div id="connection-panel-warning" class="row grid hidden-by-default">
+		<div class="col-md-1"></div>
+		<div class="col-md-10">
+			<div class="alert alert-warning">
+				Connecting...
+			</div>	
+		</div>	
+	</div>	
+	<div id="connection-panel-success" class="row grid hidden-by-default">
+		<div class="col-md-1"></div>
+		<div class="col-md-10">
+			<div class="alert alert-success">
+				Connected to server.
+			</div>	
+		</div>	
+	</div>	
+</div>	
+<div class="row grid">
+	<div class="col-md-1"></div>
+	<div class="col-md-10">
+		<div class="panel panel-piluku">
+			<h4 class="text-info">Rethink Robotics</h3>
+			<h5 class="text-info">ROS Instances</h3>
+			<div class="form-group check-radio">
+				<ul id="ros-instances-list" class="list-unstyled">
+					<!--
+			 		<li class="ms-hover">
+						<input type="checkbox" id="c10" checked="">
+						<label for="c10"><span></span><strong>Pi Robot</strong></label>
+					</li>
+			 		<li class="ms-hover">
+						<input type="checkbox" id="c11">
+						<label for="c11"><span></span>Fake Turtlebot</label>
+					</li>
+			 		<li class="connection-lost">
+						<input type="checkbox" id="c12">
+						<label for="c12" ><span></span><label class="connection-lost blink">Wonky agent</label></label>
+					</li>
+				-->
+				</ul>	
+			</div>
+		</div>	
+	</div>	
+</div>	
+
 <ul class="list-unstyled menu-parent menu-machines" id="mainMenu">
-	<li class='current'>
-		<a href="/demo" class="current waves-effect waves-light">
-			<i class="icon ti-home"></i>
-			<span class="text ">Dashboard</span>
-		</a>
-	</li>
-	<li class="submenu">
-		<a class="waves-effect waves-light" href="#layouts">
-			<i class="icon ti-layout"></i>
-			<span class="text">Unique Layouts</span>
-			<i class="chevron ti-angle-right"></i>
-		</a>
-		<ul class="list-unstyled">
-			<li><a href="collapsed-sidebar.html">Collapsed Sidebar</a></li>
-			<li><a href="left-sidebar-version2.html">Menu with header</a></li>
-			<li><a href="horizontal-menu.html">Horizontal Menu</a></li>					
-			<li><a href="right-sidebar.html">Right Sidebar</a></li>
-			<li><a href="boxed-layout.html">Boxed Layout</a></li>
-			<li><a href="static-sidebar.html">Static Sidebar</a></li>
-		</ul>
-	</li>
-		
 </ul>
 <% end %>

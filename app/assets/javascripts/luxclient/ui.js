@@ -274,11 +274,13 @@ var LuxUi = (function() {
 					.attr("dummy", function(d) {
 						// Get width from domElement where it has been
 						// subject to a transition
-						var widthOnDomElement = d3.select(this).attr("width") || 0;
+						var widthOnDomElement = parseInt(d3.select(this).attr("width")) || 0;
 						// Set size on data to allow bounding box to transition smoothly
 						// d points to node on uiGraph
-						d.width = widthOnDomElement;
-						d.height = widthOnDomElement;
+						// TODO Add padding here based on size of labels
+						// TODO This will mean adjusting the canvas position too
+						d.width = widthOnDomElement; //+ 25;
+						d.height = widthOnDomElement; //+ 25;
 						// We can keep the force layout animation going
 						// longer than usual by setting this flag.
 						if (d.keepForceLayoutHeated) {

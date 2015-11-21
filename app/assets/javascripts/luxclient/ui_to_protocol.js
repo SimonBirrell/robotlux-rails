@@ -19,6 +19,10 @@ var LuxUiToProtocol = (function() {
         uiGraphUpd = null,  
         uiGraphClear = null;
 
+    var connectionStatus = "disconnected";    
+
+    var rosInstances = [];
+
     // Called from the main orchestration script to define which server protocol to use.
     //  communicationsProtocol - a protocol object that should be saved for later use
     //
@@ -38,6 +42,7 @@ var LuxUiToProtocol = (function() {
         if (!serverComm) {
           throw "No communications protocol defined";
         } 
+        ConnectionPanel.connecting();
         serverComm.open(module.interpretMessage);
     }   
     
@@ -52,6 +57,10 @@ var LuxUiToProtocol = (function() {
     //  message - A string of a JSON-formatted message.
     //
     module.interpretMessage = function(message) {
+        if (connectionStatus !== 'connected') {
+          ConnectionPanel.connectionOk();
+          connectionStatus = "connected";
+        }      
         if (!uiGraphAdd || !uiGraphDel || !uiGraphUpd || !uiGraphClear) {
             throw("Message being interpreted before ui_to_protol.open() called.");
         }
@@ -89,7 +98,11 @@ var LuxUiToProtocol = (function() {
             var graphSegmentToDelete = deleteFromServerGraph(listNodesToDelete);
             //console.log(graphSegmentToDelete);
             uiGraphDel(graphSegmentToDelete);
-        }   
+        } else if (mtype==='rosInstancesUpdate') {
+            rosInstanceUpdates(mbody);
+            console.log("rosInstancesUpdate");
+            console.log(mbody);
+        }  
     } 
 
     // ======== Functions called from UI layer =========================================
@@ -156,6 +169,39 @@ var LuxUiToProtocol = (function() {
     // TODO: The browser should maintain a list of connected ROS instances
     function hostnameToFullMachineId(hostname) {
       return "org_id 0 ros_instance_base "+ hostname;
+    }
+
+    // ================ ROS Instances =============================================
+
+    function rosInstanceUpdates(updates) {
+      if (updates instanceof Array) {
+        for (var i=0; i<updates.length; i++) {
+          var update = updates[i];
+          rosInstanceUpdate(update);
+        }      
+      } else {
+        console.log("WARNING: Unexpected mbody for rosInstancesUpdate");
+      }
+    }
+
+
+    function rosInstanceUpdate(update) {
+      if ('add' in update) {
+        console.log("Adding rosInstance: " + update.add.rosInstanceId);
+        update.add.checked = false;
+        rosInstances.push(update.add);
+      } else if ('del' in update) {
+        console.log("Deleting rosInstance: " + update.del);
+        var i = rosInstances.length;
+        while (i--) {
+          var rosInstance = rosInstances[i];
+          if (rosInstance.rosInstanceId === update.del) {
+            rosInstances.splice(i, 1);
+            console.log("deleted");
+          }
+        }
+      }
+      RosInstancesPanel.updateInstances(rosInstances);
     }
 
     // ================ Server Graph ==============================================

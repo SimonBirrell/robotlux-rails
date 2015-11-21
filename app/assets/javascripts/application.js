@@ -17,6 +17,8 @@
 //= require d3/d3
 //= require cola/cola.js
 //= require luxclient/lux_config.js
+//= require luxclient/uiStyle/connection_panel.js
+//= require luxclient/uiStyle/ros_instances_panel.js
 //= require luxclient/protocol_websockets.js
 //= require luxclient/hash_topic_manager.js
 //= require luxclient/ui.js
