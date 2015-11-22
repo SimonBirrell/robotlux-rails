@@ -29,15 +29,25 @@ ImageView.prototype.animateAndRender = function() {
 };
 
 ImageView.prototype.update = function(node) {
-  var topicDisplayTextId = '#' + injected.topicNameToId(node.name, 0);
-  $(topicDisplayTextId).html(
-    '<img src="data:image/jpeg;base64,' + node.data.message.data + '"/>'
-  );
-  debugger
-  'hat'
+  window.image = window.image || new Image();
+  window.image.onload = function() {
+    var context = this.canvas.getContext('2d');
+    context.drawImage(window.image, 0, 0);
+  }.bind(this);
+  window.image.onerror = function(error) {
+    console.log("Can't decode image data for image");
+    console.log(error);
+  };
+
+  var imageData = node.data.message.data;
+  window.image.src = "data:image/png;base64," + imageData;
 };
 
 ImageView.prototype.setScene = function(canvas, renderWidth, renderHeight) {
+  this.canvas = canvas;
+  $(this.canvas).attr('opacity', 1);
+  this.renderWidth = renderWidth;
+  this.renderHeight = renderHeight;
 };
 
 ImageView.prototype.setTopicWindowSize = function() {
