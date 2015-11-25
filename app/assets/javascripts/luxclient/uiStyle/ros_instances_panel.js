@@ -72,7 +72,8 @@ var RosInstancesPanel = (function() {
         rosInstanceMenuItemsLabel
             .append("strong")
             .attr("class", "connection-new blink")
-            .text(function(d) {return d.rosInstanceId; })
+            //.text(function(d) {return d.rosInstanceId; })
+            .text(function(d) {return d.rosInstanceHumanId; })
             .transition()
             .duration(blinkOnEnterDuration)
             .each('end', function(d) {
