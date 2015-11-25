@@ -59,6 +59,13 @@ var LuxUi = (function() {
 
     	var PilePoints = [];
 
+    	module.getPiles = function() {
+    		console.log("NameSpaceTree");
+    		console.log(NameSpaceTree);
+    		console.log("PilePoints");
+    		console.log(PilePoints);
+    	}
+
     	// Get/Set whether to hide debug nodes and orphaned topics
     	//
         module.getFilterDebugNodes = function() {
@@ -457,7 +464,7 @@ var LuxUi = (function() {
 
 				// Data joins			
 				var group = svg.selectAll(".group")
-		          .data(uiGraph.groups);
+		          .data(uiGraph.groups, function(d) {return d.rosInstanceId + " " + d.title;});
 			    var link = svg.selectAll(".linkPath")
 			      .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
 				var node = svg.selectAll(".node")
@@ -502,7 +509,8 @@ var LuxUi = (function() {
 				});	
 
 				// Package tree added to menu
-				MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
+				MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiFullGraph, DragDropManager, ProtocolToUiLayer);
+				//MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
 				console.log("Finished update2 --------------------------");
 			}
 			module.uiGraphUpdate = uiGraphUpdate;
@@ -1042,7 +1050,7 @@ var LuxUi = (function() {
 			// these concepts into d3 nodes, links and groups.
 			//
 			function uiGraphAdd(update, rosInstanceId) {
-				console.log("========= uiGraphAdd =========");
+				console.log("========= uiGraphAdd to " + rosInstanceId + " =========");
 
 				// Stop force-constrained graph during update. May not be necessary.
 				force.stop();
@@ -1058,14 +1066,14 @@ var LuxUi = (function() {
 				for (var i=0; i<update.links.length; i++) {
 					var link = update.links[i];
 					console.log("ADDING LINK " + link.sourceName + " > " + link.targetName);
-					addLinkToAllGraphs(link);
+					addLinkToAllGraphs(link, rosInstanceId);
 				}
 
 				// Add Machines
 				for (var i=0; i<update.machines.length; i++) {
 					var machine = update.machines[i];
 					console.log("ADDING MACHINE " + machine.name);
-					addMachineToAllGraphs(machine);
+					addMachineToAllGraphs(machine, rosInstanceId);
 				}
 				
 				// See if any links can be moved directly to the UI
@@ -1084,7 +1092,7 @@ var LuxUi = (function() {
 			// The equivalent items are deleted from the various graphs and the 
 			// display is updated.
 			//
-			function uiGraphDel(update) {
+			function uiGraphDel(update, rosInstanceId) {
 				for (var i=0; i<update.nodes.length; i++) {
 					var nameNodeToDelete = update.nodes[i];
 					triggerNodeDeath(nameNodeToDelete);
@@ -1096,7 +1104,7 @@ var LuxUi = (function() {
 			// This is called by the protocol layer whenever ROS entities are changed.
 			// This is largely intended for receiving ROS message updates to topics.
 			//
-			function uiGraphUpd(update) {
+			function uiGraphUpd(update, rosInstanceId) {
 				console.log(".");
 				for (var i=0; i<update.nodes.length; i++) {
 					var updateNode = update.nodes[i];
@@ -1309,7 +1317,7 @@ var LuxUi = (function() {
 					nodeToTransformIntoPile = null;
 
 				modifyAndConsolidateLinksToPointToSummaryNode(pileLevel);
-				var nodeToTransformIntoPile = removeMatchingNodesAndGetSummaryNode2(pileLevel);
+				var nodeToTransformIntoPile = removeMatchingNodesAndGetSummaryNode(pileLevel);
 				if (nodeToTransformIntoPile) {
 					transformNodeIntoPile(nodeToTransformIntoPile, consolidatedNodeName);
 					connectNewLinksToPile(nodeToTransformIntoPile, consolidatedNodeName);
@@ -1330,6 +1338,7 @@ var LuxUi = (function() {
 
 			// For a given link (defined by index) and pileLevel, 
 			// TODO dodgy logic?
+			//
 			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel) {
 
 				var link = uiGraph.links[index],
@@ -1386,7 +1395,7 @@ var LuxUi = (function() {
 			// Eliminate the individual nodes in a pilelevel and replace them with a summary node
 			// whose positioning data is taken from the node defined by targetNodeName
 			//
-			function removeMatchingNodesAndGetSummaryNode2(pileLevel, targetNodeName) {
+			function removeMatchingNodesAndGetSummaryNode(pileLevel, targetNodeName) {
 				// Remove any matching nodes except the first	
 				var pilePointsFound = 0,
 					index = uiGraph.nodes.length,
@@ -1416,6 +1425,7 @@ var LuxUi = (function() {
 					x: nodeToTransformIntoPile.x,
 					y: nodeToTransformIntoPile.y,
 					focus: nodeToTransformIntoPile.focus,
+					parentNode: nodeToTransformIntoPile.parentNode
 				};
 
 				// Copy data from old node to the summary node
@@ -1433,6 +1443,17 @@ var LuxUi = (function() {
 
 				// ... and add the single summary node in their place
 				uiGraph.nodes.push(summaryNode);
+
+				// Switch uiNode pointer on parent to summaryNode
+				var parentNode = nodeToTransformIntoPile.parentNode;
+				for (var i=0; i<parentNode.uiNodes.length; i++) {
+					var uiNode = parentNode.uiNodes[i];
+					if (uiNode === nodeToTransformIntoPile) {
+						parentNode.uiNodes[i] = summaryNode;
+						break;
+					}
+				}
+
 				return summaryNode;
 			}
 
@@ -1496,7 +1517,9 @@ var LuxUi = (function() {
 							module.removePileUpLevel(level + '/');
 						}
 					} else {
-						throw "Node level '" + level + "' missing from NameSpaceTree";
+						// TODO: Make compatible with hash topics
+						console.log("WARNING: Node level '" + level + "' missing from NameSpaceTree");
+						//throw "Node level '" + level + "' missing from NameSpaceTree";
 					}
 				}		
 			}
@@ -1606,6 +1629,56 @@ var LuxUi = (function() {
 				};
 			}
 
+			// Functions to do with RosInstances
+
+			function eraseRosInstance(rosInstanceId) {
+				console.log("****** Erasing " + rosInstanceId + " from UI ********");
+
+				// Remove nodes from uiFullGraph & uiGraph
+				var i = uiFullGraph.nodes.length;
+				while (i--) {
+					var fullNode = uiFullGraph.nodes[i];
+					if (fullNode.rosInstanceId === rosInstanceId) {
+						removeNodeFromAllGraphs(fullNode);
+					}
+				}
+
+				// Remove nodes from uiFullGraph & uiGraph
+				var i = uiFullGraph.links.length;
+				while (i--) {
+					var fullLink = uiFullGraph.links[i];
+					removeLinkFromAllGraphs(fullLink);
+				}
+
+				// Remove nodes from uiFullGraph & uiGraph
+				var i = uiFullGraph.machines.length;
+				while (i--) {
+					var machine = uiFullGraph.machines[i];
+					if (machine.rosInstanceId === rosInstanceId) {
+						removeMachineFromAllGraphs(machine);
+					}
+				}
+
+				// Remove nodes from uiGraphIncomplete
+				var i = uiGraphIncomplete.nodes.length;
+				while (i--) {
+					var incompleteNode = uiGraphIncomplete.nodes[i];
+					if (incompleteNode.rosInstanceId === rosInstanceId) {
+						uiGraphIncomplete.nodes.splice(i, 1);
+					}
+				}
+
+				// Remove links from uiGraphIncomplete
+				var i = uiGraphIncomplete.links.length;
+				while (i--) {
+					var incompleteLink = uiGraphIncomplete.links[i];
+					uiGraphIncomplete.links.splice(i, 1);
+				}
+
+				uiGraphUpdate();
+			}
+			module.eraseRosInstance = eraseRosInstance;
+
 			// Functions to manipulate NODES on the data graphs ====================
 			//
 
@@ -1627,6 +1700,21 @@ var LuxUi = (function() {
 					console.log("NODE ALREADY EXISTS");
 					console.log(getHostnameOnNode(node));
 				}			
+			}
+
+			// Remove a node rom uiFullGraph and delete any uiNodes that correspond to it on
+			// uiGraph.
+			//	node - node on uiFullGraph
+			//
+			function removeNodeFromAllGraphs(node) {
+				var i = uiFullGraph.nodes.length;
+				while (i--) {
+					var uiFullGraphNode = uiFullGraph.nodes[i];
+					if (uiFullGraphNode === node) {
+						removeUiNodesFromUiGraph(node.uiNodes);
+						uiFullGraph.nodes.splice(i, 1);
+					}
+				}
 			}
 
 			// Copy a ROS node or topic to the UI. The nodes are first buffered in
@@ -1653,6 +1741,16 @@ var LuxUi = (function() {
 				return uiNode;
 			}
 			module.addNodeToUi = addNodeToUi;
+
+			// Remove an array of nodes from uiGraph.
+			//	arrayNodes - an array of nodes on uiGraph
+			//
+			function removeUiNodesFromUiGraph(arrayNodes) {
+				var i = arrayNodes.length;
+				while (i--) {
+					removeNodeAndAssociatedLinksFromUiGraph(arrayNodes[i]);
+				}
+			}
 
 			// Remove a node from uiGraph and the display.
 			// 	nodeToDelete - reference to the node object on uiGraph
@@ -1733,7 +1831,9 @@ var LuxUi = (function() {
 			function removeNodeAndAssociatedLinksFromUiGraph(targetNode) {
 				removeNodeFromAnyGroups(targetNode);
 				deleteLinksFromGraphConnectedToNode(targetNode, uiGraph);
+				removeGroupIfLastNodeOfGroup(targetNode);
 				removeNode(targetNode);	
+				removeNodeFromParent(targetNode);
 			}
 
 			// Remove node from uiGraph
@@ -1741,7 +1841,23 @@ var LuxUi = (function() {
 			// Returns TRUE if found and deleted else FALSE
 			//
 			function removeNode(targetNode) {
+				removeFromNameSpaceTree(targetNode.name);
 				removeNodeFromGraph(targetNode, uiGraph);
+			}
+
+			// There's a reference to the uiNode on the parent node in uiFullGraph
+			// This function removes that reference (when the uiNode is deleted)
+			//	targetNode - reference to node on uiGraph	
+			//
+			function removeNodeFromParent(targetNode) {
+				var arrayNodes = targetNode.parentNode.uiNodes;
+				var i = arrayNodes.length;
+				while (i--) {
+					var node = arrayNodes[i];
+					if (targetNode===node) {
+						arrayNodes.splice(i, 1);
+					}
+				}
 			}
 
 			// Remove node from a graph.
@@ -1758,6 +1874,21 @@ var LuxUi = (function() {
 					} 
 				}
 				return false;
+			}
+
+			// Removes Hash Topic group if this is the last node of the group
+			//	targetNode - reference to node on uiGraph
+			//
+			function removeGroupIfLastNodeOfGroup(targetNode) {
+				console.log("============================================== removeGroupIfLastNodeOfGroup ===========================================");
+				console.log(targetNode);
+				var parent = targetNode.parentNode;
+				if ((parent)&&(parent.hashTopicOrigin)&&(parent.uiNodes.length===1)) {
+					var groupIndex = targetNode.group;
+					console.log("Found group");
+					console.log(uiGraph.groups[groupIndex]);
+					removeGroupFromUi(uiGraph.groups[groupIndex]);
+				}
 			}
 
 			// Remove node from graph and delete links and groups that point to it
@@ -1876,11 +2007,11 @@ var LuxUi = (function() {
 			//	- Create a TopicViewer if it's a topic
 			//
 			var setUpNewNode = function(node, rosInstanceId) {
+				node.rosInstanceId = rosInstanceId;
 				node.size = node.psize = 0;
 				node.width = node.height = circleRadius;
 				node.uiNodes = [];
 				setNodeFormatFromSize(node);
-				//setUpNewRosTopic(node, rosInstanceId);
 			}
 			module.setUpNewNode = setUpNewNode;
 			// Can be called from hashTopicManager (incomplete)
@@ -1929,9 +2060,10 @@ var LuxUi = (function() {
 			// Add a link from an update to the various graphs we maintain.
 			//	link - reference to the original link object in update
 			//
-			function addLinkToAllGraphs(link) {
+			function addLinkToAllGraphs(link, rosInstanceId) {
 				if (findLinkOnUiFullGraphFromIndexes(link.source, link.target) === -1) {
 					console.log("LINK IS NEW");
+					link.rosInstanceId = rosInstanceId;
 					link['value'] = 15;
 					uiFullGraph.links.push(link);	
 					
@@ -1943,6 +2075,23 @@ var LuxUi = (function() {
 					console.log("LINK ALREADY EXISTS");
 				}
 			}
+
+			// Remove a link from FullGraph and from uiGraph
+			//	link - reference to link on uiFullGraph
+			//
+			function removeLinkFromAllGraphs(link) {
+				var name = link.name,
+					rosInstanceId = link.rosInstanceId;
+				for (var i=0; i<uiFullGraph.links.length; i++) {
+					var fullLink = uiFullGraph.links[i];
+					if ((fullLink.name === name) && (fullLink.rosInstanceId === rosInstanceId)) {
+						// TODO delete UI links
+						uiFullGraph.links.splice(i, 1);
+						return;
+					}
+				}
+			}
+
 
 			function findLinkOnUiFullGraphFromIndexes(sourceIndex, targetIndex) {
 				for (var l=0; l<uiFullGraph.links.length; l++) {
@@ -2198,13 +2347,28 @@ var LuxUi = (function() {
 			//	group - group to be added to display
 			//
 			function addGroupToUi(group) {
-				console.log("*************************** addGroupToUi ");
-				console.log(group);
-
 				var uiGroup = copyGroupToIncompleteGraph(group);
 				moveGroupIfReady(uiGroup);
+
+				return uiGroup;
 			}
 			module.addGroupToUi = addGroupToUi;
+
+			// Completely remove group and amy dummy nodes from uiGraph
+			//	targetGroup - reference to group to delete
+			//
+			function removeGroupFromUi(targetGroup) {
+				var dummyNode = removeDummyNodesFromGroup(targetGroup);
+				removeNodeFromUi(dummyNode);
+				for (var i=0; i<uiGraph.groups.length; i++) {
+					var group = uiGraph.groups[i];
+					console.log(group);
+					if (group === targetGroup) {
+						uiGraph.groups.splice(i, 1);
+						return;
+					}
+				}
+			}
 
 			// Copy a group to the incomplete graph
 			// Groups will sit here until all their leaves are displayable
@@ -2231,6 +2395,7 @@ var LuxUi = (function() {
 								title: group.title,
 								gtype: group.gtype,
 								padding: circleRadius,
+								rosInstanceId: group.rosInstanceId
 							   };
 				if (group.hostname) {
 					uiGroup.hostname = group.hostname;
@@ -2319,7 +2484,7 @@ var LuxUi = (function() {
 			//	title - the name of the group TODO: Add a label to the display
 			//	groupType - right now, we only have "machine" as a groupType
 			//
-			function createNewGroup(existingNodes, title, groupType) {
+			function createNewGroup(existingNodes, title, groupType, rosInstanceId) {
 				//var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
 
 				var newGroup = {
@@ -2327,7 +2492,8 @@ var LuxUi = (function() {
 								leaves: existingNodes,
 								title: title,
 								gtype: groupType,
-								padding: circleRadius
+								padding: circleRadius,
+								rosInstanceId: rosInstanceId
 							   };
 				if (groupType==="machine") {
 					newGroup.hostname = title;
@@ -2393,6 +2559,7 @@ var LuxUi = (function() {
 					var leaf = group.leaves[i];
 					if (leaf.rtype === "dummy") {
 						group.leaves.splice(i, 1);
+						return leaf;
 					}
 				}
 			}
@@ -2405,8 +2572,9 @@ var LuxUi = (function() {
 
 				var nodeIndex = findNodeByNameOnGraph(node.name, uiGraph);
 				if (nodeIndex<0) {
-					console.log(node);
-					throw("Can't remove non-existant node.")
+					console.log("Can't remove non-existant node: " + node.name);
+					return;
+					//throw("Can't remove non-existant node: " + node.name);
 				}
 
 				// A node could theoretically be in multiple groups
@@ -2459,16 +2627,32 @@ var LuxUi = (function() {
 			// Add a machine to all the graphs we maintain.
 			//	machine - reference to the original machine object in uiFullGraph
 			//
-			function addMachineToAllGraphs(machine) {
+			function addMachineToAllGraphs(machine, rosInstanceId) {
+				machine.rosInstanceId = rosInstanceId;
 				uiFullGraph.machines.push(machine);
 				insertMachineIntoUI(machine);
+			}
+
+			// Delete a machine and remove any associated uiGraph groups
+			//	targetMachine - reference to machine on uiFullGraph
+			//
+			function removeMachineFromAllGraphs(targetMachine) {
+				console.log("***** removeMachineFromAllGraphs *****");
+				removeGroupFromUi(targetMachine.group);
+				for (var i=0; i<uiFullGraph.machines.length; i++) {
+					var machine = uiFullGraph.machines[i];
+					if (machine === targetMachine) {
+						uiFullGraph.machines.splice(i, 1);
+						return;
+					}
+				}
 			}
 
 			// Add a machine to uiGraph and display it.
 			//	machine - reference to machine object
 			//
 			function insertMachineIntoUI(machine) {
-				uiGraph.machines.push(machine);
+				//uiGraph.machines.push(machine);
 				createGroupForMachine(machine);
 			}
 
@@ -2489,9 +2673,10 @@ var LuxUi = (function() {
 				}
 
 				// Create the group and add it to uiGraph
-				var group = createNewGroup(existingNodes, machineName, "machine");
-				//uiGraph.groups.push(group);
-				addGroupToUi(group);
+				var group = createNewGroup(existingNodes, machineName, "machine", machine.rosInstanceId);
+				var uiGroup = addGroupToUi(group);
+				uiGroup.rosInstanceId = machine.rosInstanceId;
+				machine.group = uiGroup;
 			}
 
 			// In this case we add a ROS node to the graph and check if it matches any
@@ -2534,8 +2719,10 @@ var LuxUi = (function() {
 
 			// Make a copy of the node in uiFullGraph for storing in uiGraph and 
 			// uiGraphIncomplete
-			// We keep a pristine copy of the server graph in uiFullGraph,
-			// untainted by what happens on the UI
+			//
+			// The nodes on uiFullGraph represent the ROS entities
+			// The nodes on uiGraph represent the graphical elements
+			// There is an N-N relationship between the two
 			//
 			// TODO Refactor and simplify. This is inherited from the previous implementation
 			// Many of these attributes will be undefined on uiFullGraph
@@ -2647,40 +2834,7 @@ var LuxUi = (function() {
 			// End of legacy code ====================================================								
 
 		}
-
-/*
-		// Hash Topics Code ==========================================================
-		// 
-		// TODO: complete this!
-		//
-		function createHashTopics() {
-			var node, additionalNodes, hashTopicGroup;
-			
-			for (var i=0; i<uiGraph.nodes.length; i++) {
-				node = uiGraph.nodes[i];
-				if (HashTopicManager.isAHashableTopic(node)) {
-					
-					for (var s=0; s<node.hashSubTopics.length; s++) {
-						var name = node.hashSubTopics[s].name;
-						//console.log("Searching for subtopic " + s.toString() + " " + name);
-						for (var t=0; t<uiGraph.nodes.length; t++) {
-							var targetNode = uiGraph.nodes[t];
-							//console.log(">> " + targetNode.name);
-							if ((targetNode.name) && (targetNode.name === name)) {
-								//console.log("LINKED " + s.toString() + " " + name);
-								node.hashSubTopics[s] = targetNode;
-								break;
-							}
-						}
-					}
-					
-					hashTopicGroup = HashTopicManager.createGroup(node, additionalNodes, uiGraph);
-					uiGraph.groups.push(hashTopicGroup);
-				}
-			}
-			//HashTopicManager.addStrutsToHashTopics(uiGraph);
-		}
-*/		
+		
     return module;
 })();
 

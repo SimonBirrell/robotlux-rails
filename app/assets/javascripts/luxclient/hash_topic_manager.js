@@ -164,7 +164,10 @@ var HashTopicManager = (function() {
 				leaves: uiFullGraphNode.uiNodes,
 				title: uiFullGraphNode.name,
 				gtype: "hashTopic",
+				rosInstanceId: uiFullGraphNode.rosInstanceId
 			}
+			console.log("=================== G R O U P ======================================");
+			console.log(group);
 			LuxUi.addGroupToUi(group);
 		} else {
 			uiFullGraphNode.hashTopicGroup.leaves = uiFullGraphNode.uiNodes;

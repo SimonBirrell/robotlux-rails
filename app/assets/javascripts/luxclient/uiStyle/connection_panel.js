@@ -22,10 +22,16 @@ var ConnectionPanel = (function() {
     	$('#connection-panel-danger').show();
     };
 
-    module.connectionLost = function() {
+    module.connectionLost = function(secondsToReconnect, reconnectCallback) {
     	status = "connectionLost";
     	clearPanel();
-    	$('#connection-panel-danger').show();
+        module.connectionLostUpdateReconnectSeconds(secondsToReconnect);
+        $('#connection-panel-reconnect-retry').click(reconnectCallback);
+    	$('#connection-panel-danger').show();  
+    };
+
+    module.connectionLostUpdateReconnectSeconds = function(secondsToReconnect) {
+        $('#connection-panel-reconnect-seconds').text(secondsToReconnect);
     };
 
     module.connectionOk = function() {

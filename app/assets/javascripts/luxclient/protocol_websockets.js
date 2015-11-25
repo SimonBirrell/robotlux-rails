@@ -6,7 +6,9 @@ var LuxProtocolWebsockets = (function() {
     "use strict";
      
     var module = {}; 
-    var ws = false;
+    var ws = false; 
+    var connectionDroppedCallback = null;
+    var statusConnection = null;
     
     // Open a websocket to the node.js server
     //
@@ -14,7 +16,9 @@ var LuxProtocolWebsockets = (function() {
     //  TODO: Maintain a list of connected ROS instances for user selection
     //  TODO: Make the browser attempt reconnects if connection drops
     //
-    module.open = function(interpretMessage) {
+    module.open = function(interpretMessage, connectionDropped, connectionEstablised) {
+        connectionDroppedCallback = connectionDropped;
+
         if ("WebSocket" in window)  {
             // Get the actual websocket URL from the config
             ws = new WebSocket(LuxConfig.socketsServer);
@@ -23,6 +27,9 @@ var LuxProtocolWebsockets = (function() {
             ws.onopen = function() {
                 // Web Socket is connected, send data using send()
                 console.log("Websocket connected to server...");
+                statusConnection = 'connected';
+
+                connectionEstablised();
 
                 // This is the first message we send to kick things off
                 module.sendMessage({mtype: 'browserConnect',
@@ -36,15 +43,20 @@ var LuxProtocolWebsockets = (function() {
 
                 // Choose a ROS instance.
                 // HARDWIRED DEMO CODE
+                /*
                 module.sendMessage({mtype: 'subscribeRosInstance',
                                     mbody: {rosInstance: 'org_id 0 ros_instance_base'}});
-
+                */
                 console.log("Message is sent...");
             }
             
             // Receive a message from the server
             ws.onmessage = function (event) 
             { 
+                if (statusConnection !== 'connected') {
+                    statusConnection = 'connected';
+                    connectionEstablised();
+                }
                //console.log("Message is received...");
                var receivedMessage = event.data;
                //console.log(receivedMessage);
@@ -54,8 +66,13 @@ var LuxProtocolWebsockets = (function() {
             // Close the websocket
             ws.onclose = function()
             { 
-               // websocket is closed.
-               console.log("Connection is closed..."); 
+                // websocket is closed.
+                console.log("Connection is closed..."); 
+                statusConnection = 'disconnected';
+
+                if (connectionDroppedCallback) {
+                    connectionDroppedCallback();
+                }
             };
 
         } else {
@@ -68,7 +85,13 @@ var LuxProtocolWebsockets = (function() {
     //
     module.sendMessage = function(message) {
         if (ws) {
-            ws.send(JSON.stringify(message));
+            ws.send(JSON.stringify(message), function ack(error) {
+                // if error is not defined, the send has been completed,
+                // otherwise the error object will indicate what failed.
+                if (error) {
+                    console.log("*****WEBSOCKET ERROR*****");
+                }
+            }); 
         } else {
             console.log("Tried LuxProtocolWebsocket.sendMessage() but websocket not connected yet.")
         }

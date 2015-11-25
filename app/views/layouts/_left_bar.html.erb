@@ -16,10 +16,10 @@
 		<div class="col-md-10">
 			<div class="alert alert-danger">
 				<p>
-				Lost connection with the server. Will try to reconnect automatically in 9 seconds...
+				Lost connection with the server. Will try to reconnect automatically in <span id="connection-panel-reconnect-seconds">9</span> seconds...
 			</p>
 				<p align="center">
-					<a href="#fakelink" class="btn btn-warning btn-wide">Retry now<a>
+					<a href="#fakelink" id="connection-panel-reconnect-retry" class="btn btn-warning btn-wide">Retry now<a>
 				</p>	
 			</div>	
 		</div>	
@@ -45,24 +45,10 @@
 	<div class="col-md-1"></div>
 	<div class="col-md-10">
 		<div class="panel panel-piluku">
-			<h4 class="text-info">Rethink Robotics</h3>
+			<h4 id="connection-org" class="text-info">RobotLux Demo Org</h3>
 			<h5 class="text-info">ROS Instances</h3>
 			<div class="form-group check-radio">
 				<ul id="ros-instances-list" class="list-unstyled">
-					<!--
-			 		<li class="ms-hover">
-						<input type="checkbox" id="c10" checked="">
-						<label for="c10"><span></span><strong>Pi Robot</strong></label>
-					</li>
-			 		<li class="ms-hover">
-						<input type="checkbox" id="c11">
-						<label for="c11"><span></span>Fake Turtlebot</label>
-					</li>
-			 		<li class="connection-lost">
-						<input type="checkbox" id="c12">
-						<label for="c12" ><span></span><label class="connection-lost blink">Wonky agent</label></label>
-					</li>
-				-->
 				</ul>	
 			</div>
 		</div>	

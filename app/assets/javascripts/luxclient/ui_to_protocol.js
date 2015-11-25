@@ -21,6 +21,9 @@ var LuxUiToProtocol = (function() {
 
     var connectionStatus = "disconnected";    
 
+    var reconnectCountdown = 10000,
+        reconnectStarted = false;
+
     var rosInstances = [];
 
     // Called from the main orchestration script to define which server protocol to use.
@@ -39,11 +42,12 @@ var LuxUiToProtocol = (function() {
         uiGraphDel = uiGraphDelFn;
         uiGraphUpd = uiGraphUpdFn;
         uiGraphClear = uiGraphClearFn;
+        reconnectStarted = false;
         if (!serverComm) {
           throw "No communications protocol defined";
         } 
         ConnectionPanel.connecting();
-        serverComm.open(module.interpretMessage);
+        serverComm.open(module.interpretMessage, module.connectionDropped, module.connectionEstablised);
     }   
     
     // Called by the UI layer to close contact with the server.
@@ -84,26 +88,69 @@ var LuxUiToProtocol = (function() {
             //console.log("============= rosInstanceGraphAdd ============");
             //console.log(mbody);
             var update = mbody.graph;
+            rosInstanceId = mbody.rosInstance;
             mergeServerGraph(update);
             uiGraphAdd(module.mbodyToUiGraph(update), rosInstanceId);
         } else if (mtype==='rosInstanceGraphUpd') {
             //console.log("============= rosInstanceGraphUpd ============");
             var update = mbody.graph;
+            rosInstanceId = mbody.rosInstance;
             var nodesToUpdate = updateServerGraph(update);
-            uiGraphUpd(module.mbodyToUiGraph(nodesToUpdate));
+            uiGraphUpd(module.mbodyToUiGraph(nodesToUpdate), rosInstanceId);
         } else if (mtype==='rosInstanceGraphDel') {
-            //console.log("============= rosInstanceGraphDel ============");
+            rosInstanceId = mbody.rosInstance;
+            console.log("============= rosInstanceGraphDel from " + rosInstanceId + " ============");
             var listNodesToDelete = mbody.graph;
+
             //console.log(listNodesToDelete);
             var graphSegmentToDelete = deleteFromServerGraph(listNodesToDelete);
             //console.log(graphSegmentToDelete);
-            uiGraphDel(graphSegmentToDelete);
+            uiGraphDel(graphSegmentToDelete, rosInstanceId);
         } else if (mtype==='rosInstancesUpdate') {
             rosInstanceUpdates(mbody);
             console.log("rosInstancesUpdate");
             console.log(mbody);
+        } else if (mtype==='unsubscribedRosInstance') {
+            console.log("unsubscribedRosInstance");
+            console.log(mbody);
+            LuxUi.eraseRosInstance(mbody.rosInstance);
         }  
     } 
+
+    module.connectionEstablised = function() {
+      ConnectionPanel.connectionOk();
+    };
+
+    module.connectionDropped = function() {
+      console.log("Connection dropped");
+      reconnectCountdown = 5 + Math.floor(Math.random() * 3);
+      ConnectionPanel.connectionLost(reconnectCountdown, tryToReconnect);
+      setTimeout(updateReconnectCountdown, 1000);
+    }
+
+    function updateReconnectCountdown() {
+      if (!reconnectStarted) {
+        reconnectCountdown--;
+        ConnectionPanel.connectionLostUpdateReconnectSeconds(reconnectCountdown);
+        if (reconnectCountdown === 0) {
+          console.log("Attempt reconnect");
+          tryToReconnect();
+        } else {
+          setTimeout(updateReconnectCountdown, 1000);
+        }
+      }
+    }
+
+    function tryToReconnect() {
+      reconnectStarted = true;
+      console.log("Trying to reconnect...");
+      setTimeout(function() {
+        console.log("")
+        LuxUi.close();
+        LuxUi.uiGraphUpdate();
+        //LuxUi.open(LuxUiToProtocol);
+      }, 100);
+    }
 
     // ======== Functions called from UI layer =========================================
 
@@ -188,7 +235,7 @@ var LuxUiToProtocol = (function() {
     function rosInstanceUpdate(update) {
       if ('add' in update) {
         console.log("Adding rosInstance: " + update.add.rosInstanceId);
-        update.add.checked = false;
+        update.add.display = false;
         rosInstances.push(update.add);
       } else if ('del' in update) {
         console.log("Deleting rosInstance: " + update.del);
@@ -201,8 +248,22 @@ var LuxUiToProtocol = (function() {
           }
         }
       }
-      RosInstancesPanel.updateInstances(rosInstances);
+      RosInstancesPanel.updateInstances(rosInstances, displayRosInstance, hideRosInstance);
     }
+
+    function displayRosInstance(rosInstance) {
+      console.log("display ROS instance " + rosInstance.rosInstanceId);
+      serverComm.sendMessage({mtype: 'subscribeRosInstance',
+                          mbody: {rosInstance: rosInstance.rosInstanceId}});
+
+    }
+
+    function hideRosInstance(rosInstance) {
+      console.log("hide ROS instance " + rosInstance.rosInstanceId);      
+      serverComm.sendMessage({mtype: 'unsubscribeRosInstance',
+                          mbody: {rosInstance: rosInstance.rosInstanceId}});
+    }
+
 
     // ================ Server Graph ==============================================
 

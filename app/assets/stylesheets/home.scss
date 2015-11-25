@@ -270,9 +270,19 @@ marker#basic {
   padding-top: 0px;
 }
 
-.connection-lost{
+.connection-lost {
   background-color: #dca7a7;
   color: #a94442;
+}
+
+.connection-new {
+  background-color: #D6EDC8;
+  color: #4E8345;
+}
+
+.connection-ok {
+  background-color: #ffffff;
+  color: #aaaaaa;
 }
 
 @keyframes blink {
