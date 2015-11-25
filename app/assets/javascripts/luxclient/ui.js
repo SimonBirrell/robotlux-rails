@@ -1263,11 +1263,9 @@ var LuxUi = (function() {
 				//	level - " /foo/bar/" will unfold a pile that contains " /foo/bar/one" 
 				// and " /foo/bar/two"
 			module.removePileUpLevel = function(level) {
-				console.log("Searching for level " + level);
 				var i = PilePoints.length;
 				while (i--) {
 					if (PilePoints[i][0] === level) {
-						console.log("Removing pile up level " + level);
 						PilePoints.splice(i, 1);
 					}
 				}
@@ -1279,13 +1277,10 @@ var LuxUi = (function() {
 				// folded levels.
 				//
 			function collapsePiles() {
-				console.log("Nodes before collapsing piles " + uiGraph.nodes.length);
 				for (var p=0; p<PilePoints.length; p++) {
 					var pilePoint = PilePoints[p];
-					console.log("Checking pilepoint " + pilePoint);
 					collapseNodesThatBelongToThisPilePoint(pilePoint);
 				}
-				console.log("Nodes after collapsing piles " + uiGraph.nodes.length);
 			}
 
 			// A PilePoint contains a pileLevel, e.g. " /foo/bar/" and a targetNodeName
@@ -1373,7 +1368,6 @@ var LuxUi = (function() {
 					}
 					// If a similar link already exists, then don't need to add it
 					if (!itsADuplicate) {
-						console.log("modifyAndConsolidateLinksToPointToSummaryNode " + newLink.sourceName + " > "+ newLink.targetName);
 						uiGraph.links.push(newLink);
 					}
 				}
@@ -1600,7 +1594,6 @@ var LuxUi = (function() {
 				for (var i=0; i<uiFullGraph.nodes.length; i++) {
 					var node = uiFullGraph.nodes[i];
 					if (matchesLevel(node.name, levelToUnfold)) {
-						console.log("Adding node to UI " + node.name);
 						node.x = startX;
 						node.y = startY;
 						addNodeToUi(node);
@@ -1632,7 +1625,7 @@ var LuxUi = (function() {
 			// Functions to do with RosInstances
 
 			function eraseRosInstance(rosInstanceId) {
-				console.log("****** Erasing " + rosInstanceId + " from UI ********");
+				console.log("Erasing " + rosInstanceId + " from UI.");
 
 				// Remove nodes from uiFullGraph & uiGraph
 				var i = uiFullGraph.nodes.length;
@@ -1762,7 +1755,6 @@ var LuxUi = (function() {
 				while (i--) {
 					var node = uiGraph.nodes[i];
 					if (node === nodeToDelete) {
-						console.log("Removing node " + node.name + " from UI");
 						uiGraph.nodes.splice(i, 1);
 					}
 				}
@@ -1880,13 +1872,9 @@ var LuxUi = (function() {
 			//	targetNode - reference to node on uiGraph
 			//
 			function removeGroupIfLastNodeOfGroup(targetNode) {
-				console.log("============================================== removeGroupIfLastNodeOfGroup ===========================================");
-				console.log(targetNode);
 				var parent = targetNode.parentNode;
 				if ((parent)&&(parent.hashTopicOrigin)&&(parent.uiNodes.length===1)) {
 					var groupIndex = targetNode.group;
-					console.log("Found group");
-					console.log(uiGraph.groups[groupIndex]);
 					removeGroupFromUi(uiGraph.groups[groupIndex]);
 				}
 			}
@@ -2429,15 +2417,12 @@ var LuxUi = (function() {
 				}
 
 				// If it's an object reference, see if node is on uiGraph
-				console.log("checking if leaf " + leaf.name + " is on uiGraph");
 				for (var i=0; i<uiGraph.nodes.length; i++) {
 					var node = uiGraph.nodes[i];
 					if (node === leaf) {
-						console.log("yes");
 						return true;
 					}
 				}
-				console.log("no");
 				return false;
 			}
 
@@ -2473,8 +2458,6 @@ var LuxUi = (function() {
 			//
 			function moveGroupIfReady(uiGroup) {
 				if (groupIsReadyForDisplay(uiGroup)) {
-					console.log("Moving group to uiGraph");
-					console.log(uiGroup);
 					moveGroupFromIncompleteToUiGraph(uiGroup);
 				}
 			}
@@ -2637,7 +2620,6 @@ var LuxUi = (function() {
 			//	targetMachine - reference to machine on uiFullGraph
 			//
 			function removeMachineFromAllGraphs(targetMachine) {
-				console.log("***** removeMachineFromAllGraphs *****");
 				removeGroupFromUi(targetMachine.group);
 				for (var i=0; i<uiFullGraph.machines.length; i++) {
 					var machine = uiFullGraph.machines[i];
@@ -2683,7 +2665,6 @@ var LuxUi = (function() {
 			// existing machine-groups. If it does, we add it to the group.
 			//
 			function addNodeToMatchingMachineGroups(node) {
-				console.log("addNodeToMatchingMachineGroups");
 				var hostname = getHostnameOnNode(node);
 				// If the d3 node has no hostname (e.g. it's a topic) then nothing further
 				// to be done.
@@ -2783,9 +2764,6 @@ var LuxUi = (function() {
 			//
 			function removeOrphanedTopics() {
 				if (FilterOrphanedTopics) {
-					//console.log("removeOrphanedTopics");
-					//console.log(uiGraph.nodes.length);
-					//console.log(uiGraph.links);
 					var i = uiGraph.nodes.length;
 					while (i--) {
   						if (uiGraph.nodes[i]['rtype']==='topic') {
@@ -2799,9 +2777,6 @@ var LuxUi = (function() {
       							}
     						}
     						if (!found) {
-    							//console.log("DELETING " + nodeName);
-    							//console.log("Links: ");
-    							//console.log(uiGraph.links.length);
     							deleteNodeFromGraph(uiGraph, nodeName);
     						}
   						}

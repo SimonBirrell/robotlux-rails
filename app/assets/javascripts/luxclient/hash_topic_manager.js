@@ -159,10 +159,14 @@ var HashTopicManager = (function() {
 		}
 
 		if (!uiFullGraphNode.hashTopicGroup) {
+			// Trimmed name ' /jointStates' -> '/jointStates'
+			// TODO: May need to do full multi-level label
+			var trimmedName = uiFullGraphNode.name.substring(2);
+
 			// Create group - how will the indexes work if topic is incomplete????
 			var group = {
 				leaves: uiFullGraphNode.uiNodes,
-				title: uiFullGraphNode.name,
+				title: trimmedName,
 				gtype: "hashTopic",
 				rosInstanceId: uiFullGraphNode.rosInstanceId
 			}
