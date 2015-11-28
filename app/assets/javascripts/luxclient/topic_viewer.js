@@ -19,7 +19,9 @@ var TopicViewer = (function() {
                             'two3DGraphsTopicView', 
                             'test3DTopicView',
                             'diffRobotControlTopicView', 
-                            'jointStateHashTopicView'];
+                            'jointStateHashTopicView',
+                            'floorPoseTopicView'
+                            ];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
 
@@ -33,6 +35,7 @@ var TopicViewer = (function() {
             
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView', 'jointStateHashTopicView'],
             "sensor_msgs/Imu" : ['imuSimpleTopicView'],
+            "nav_msgs/Odometry" : ['floorPoseTopicView']
         };
 
     	// "Class methods" called from UI.
@@ -1938,6 +1941,277 @@ var TopicViewer = (function() {
         module.jointStateHashTopicView.tick = function() {
 
         }
+
+        // ==================== Floor Pose Viewer ============================
+
+        // Gneral-purpose viewer for showing the pose of floor-based robots.
+        // Shows an arrow where a pose was defined at a moment in time. Old arrows 
+        // decay. Camera moves smoothly to keep arrows in view.
+        // Intended for odometry messges and similar.
+
+        module.floorPoseTopicView = function(spec, my) {
+            var viewType = "floorPoseTopicView";
+            var my = my || {};
+            my.viewType = my.viewType || viewType;
+            var that = module.threeDTopicView(spec, my);
+
+            var MAX_ODOMETRY_POINTS = 200;
+            var TIME_BETWEEN_MARKERS = 0.2;
+
+            var lastTimestamp = null, deltaTime;
+            var fieldOfView = Math.PI /6.0;
+            var vectorX = 1.0, vectorY = 1.0, vectorZ = 1.0;
+            var cameraVelocityX = 0.2, cameraVelocityY = 0.2, cameraVelocityZ = 0.2;
+            var lastMessageTimestamp = null;
+            var topicScene = null;
+            var odometryPoints = new Array;
+            var lastPose;
+
+            // Called by threeDTopicView superclass
+            //  scene - THREE.js scene
+            //  camera - THREE.js camera
+            //
+            var buildScene = function(scene, camera) {
+                var grid, light;
+
+                light = new THREE.PointLight( 0xffffff, 5, 600 );
+                light.position.x = 30;
+                light.position.y = 30;
+                light.position.z = -10;
+                scene.add(light);
+
+                // Camera
+                that.camera = camera;
+                that.camera.rotation.x = - Math.PI / 15;
+                that.camera.position.set(0.0, 20.0, 0.0);
+
+                // Floor grid
+                var grid = new THREE.GridHelper (75, 1);
+                scene.add(grid);
+
+                topicScene = scene;
+
+            }
+            that.buildScene = buildScene;
+
+            // Called for each instance whenever mesage is received (?)
+            //  node - the node on uiGraph
+            //
+            var update = function(node) {
+                var messageFromServer = node.data.message,
+                    pose = messageFromServer.pose.pose;
+
+                if (topicScene) {
+
+                    if ((!lastMessageTimestamp)||(((Date.now() - lastMessageTimestamp)/1000) > TIME_BETWEEN_MARKERS)) {
+
+                        if (!that.marker) {
+                            that.marker = createMarkerAtPose(pose);
+                            topicScene.add(that.marker);
+                        }
+                        moveMarkerToPose(that.marker, pose);
+
+                        /*
+                        if (!that.centreMarker) {
+                            that.centreMarker = createMarkerAtPose(pose);
+                            topicScene.add(that.centreMarker);                            
+                        }
+                        if (that.boundingSphere) {
+                            that.centreMarker.position.x = that.boundingSphere.centre.x;
+                            that.centreMarker.position.y = that.boundingSphere.centre.y;
+                            that.centreMarker.position.z = that.boundingSphere.centre.z;
+                        }
+                        */
+
+                        // Lines
+                        if (lastPose) {
+                            var line = createLineToPose(pose, lastPose);
+                            topicScene.add(line);
+                            odometryPoints.push({line: line, pose: pose});
+                            if (odometryPoints.length > MAX_ODOMETRY_POINTS) {
+                                var oldLine = odometryPoints[0].line;
+                                topicScene.remove(oldLine);
+                                odometryPoints.shift();
+                            }
+                        }    
+                        lastPose = pose;
+                    }
+                }
+            };
+            that.update = update;
+
+            var lineMaterial;
+
+            function createLineToPose(pose, lastPose) {
+                var lineMaterial = (lineMaterial) ? lineMaterial : new THREE.LineBasicMaterial({ color: 0xff0000 });
+                var geometry = new THREE.Geometry(); 
+                geometry.vertices.push( 
+                    new THREE.Vector3(-lastPose.position.y, lastPose.position.z, -lastPose.position.x), 
+                    new THREE.Vector3(-pose.position.y, pose.position.z, -pose.position.x)
+                    ); 
+                var line = new THREE.Line( geometry, lineMaterial ); 
+                return line;
+            }
+
+            function createMarkerAtPose(pose) {
+                var mesh;
+
+                mesh = createCubeAtPose(pose);
+
+                return mesh;
+            }
+
+            function createCubeAtPose(pose) {
+                var geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
+                var material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+                var mesh = new THREE.Mesh( geometry, material );
+
+                mesh.position.x = -pose.position.y;
+                mesh.position.y = pose.position.z;
+                mesh.position.z = -pose.position.x;
+
+
+                var triangleGeometry = new THREE.Geometry();
+                var v1 = new THREE.Vector3(0.1, 0.15, 0.1),
+                    v2 = new THREE.Vector3(0.0, 0.15, -0.1),
+                    v3 = new THREE.Vector3(-0.1, 0.15, 0.1);
+                triangleGeometry.vertices.push(v1);
+                triangleGeometry.vertices.push(v2);
+                triangleGeometry.vertices.push(v3);
+
+                triangleGeometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+                triangleGeometry.computeFaceNormals();
+                var triangleMesh = new THREE.Mesh(triangleGeometry, new THREE.MeshNormalMaterial() );
+                mesh.add(triangleMesh);
+
+                return mesh;
+            }
+
+            function moveMarkerToPose(marker, pose) {
+                marker.position.x = -pose.position.y;
+                marker.position.y = pose.position.z;
+                marker.position.z = -pose.position.x;
+                var quaternion = pose.orientation;
+                var rotation = new THREE.Euler().setFromQuaternion(quaternion);
+                marker.rotation.x = -rotation.y;
+                marker.rotation.y = rotation.z;
+                marker.rotation.z = -rotation.x;
+            }
+
+            function moveMarkerToPosition(marker, position) {
+                marker.position.x = -position.y;
+                marker.position.y = position.z;
+                marker.position.z = -position.x;
+            }
+
+            // Called by this class
+            var animate = function() {
+            }
+            that.animate = animate;
+
+            // Called by browser on each animation frame
+            //
+            var animateAndRender = function() {
+                var node = spec.node,
+                    messageFromServer = spec.node.data.message, 
+                    now;
+
+                // Time since last iteration
+                now = Date.now();
+                if (!lastTimestamp) {
+                    lastTimestamp = now - 10;
+                }
+                deltaTime = (now - lastTimestamp) /1000;
+                lastTimestamp = now;
+
+                that.boundingSphere = getBoundingSphereForOdometryPoints();
+                moveCameraTowardsBestPositionToSeeSphere(that.boundingSphere);
+
+                // Call superclass
+                that.render3D();
+            };
+            that.animateAndRender = animateAndRender;
+
+            function getBoundingSphereForOdometryPoints() {
+                var minX = null, maxX = null, minZ = null, maxZ = null;
+
+                for (var i=0; i<odometryPoints.length; i++) {
+                    var point = odometryPoints[i].pose,
+                        x = -point.position.y,
+                        y = point.position.z,
+                        z = -point.position.x;
+                    //console.log(i.toString() + ": " + x.toString() + ", " + z.toString());
+
+                    if ((minX === null) || (x < minX)) {
+                        minX = x;
+                    }
+                    if ((maxX === null) || (x > maxX)) {
+                        maxX = x;
+                    }
+                    if ((minZ === null) || (z < minZ)) {
+                        minZ = z;
+                    }
+                    if ((maxZ === null) || (z > maxZ)) {
+                        maxZ = z;
+                    }
+                }
+
+                return boundingSphereFromSquareOnFloor(minX, maxX, minZ, maxZ);
+            }
+
+            function boundingSphereFromSquareOnFloor(minX, maxX, minZ, maxZ) {
+                var offsetX = (maxX - minX) / 2,
+                    offsetZ = (maxZ - minZ) / 2;
+
+                var centreX = offsetX + minX,
+                    centreZ = offsetZ + minZ,
+                    centre = new THREE.Vector3(centreX, 0.0, centreZ);
+
+                var radius = Math.sqrt(offsetX*offsetX + offsetZ*offsetZ);   
+
+                var boundingSphere = {
+                    centre: centre
+                };
+ 
+                boundingSphere.radius = (radius === 0) ? 2.0 : radius;
+
+                return boundingSphere;
+            }
+
+            function moveCameraTowardsBestPositionToSeeSphere(boundingSphere) {
+                var distance = boundingSphere.radius / Math.tan(fieldOfView / 2);
+
+                var targetX = boundingSphere.centre.x + distance * vectorX;
+                var targetY = boundingSphere.centre.y + distance * vectorY;
+                var targetZ = boundingSphere.centre.z + distance * vectorZ;
+
+                var deltaX = (targetX - that.camera.position.x) * cameraVelocityX * deltaTime;
+                var deltaY = (targetY - that.camera.position.y) * cameraVelocityY * deltaTime;
+                var deltaZ = (targetZ - that.camera.position.z) * cameraVelocityZ * deltaTime;
+
+                that.camera.position.x += deltaX;
+                that.camera.position.y += deltaY;
+                that.camera.position.z += deltaZ;
+
+                that.camera.lookAt(boundingSphere.centre);
+            }
+
+            return that;            
+        }
+
+        // Called each time the graph is changed
+        //  selection - selection of nodes
+        //  uiGraph - graph to join with
+        //
+        module.floorPoseTopicView.updateViews = function(selection, uiGraph) {
+            module.threeDTopicView.updateViews(selection, uiGraph, "floorPoseTopicView");
+        };
+
+        // Called in each tick() of the force layout simulation
+        //
+        module.floorPoseTopicView.tick = function() {
+            module.threeDTopicView.tick("floorPoseTopicView");
+        };
 
         // ==================== SVG Topic View Template ======================
 
