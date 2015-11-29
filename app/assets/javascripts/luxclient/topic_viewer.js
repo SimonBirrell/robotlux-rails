@@ -1966,6 +1966,7 @@ var TopicViewer = (function() {
             var topicScene = null;
             var odometryPoints = new Array;
             var lastPose;
+            var lineMaterial;
 
             // Called by threeDTopicView superclass
             //  scene - THREE.js scene
@@ -1990,7 +1991,6 @@ var TopicViewer = (function() {
                 scene.add(grid);
 
                 topicScene = scene;
-
             }
             that.buildScene = buildScene;
 
@@ -2011,18 +2011,6 @@ var TopicViewer = (function() {
                         }
                         moveMarkerToPose(that.marker, pose);
 
-                        /*
-                        if (!that.centreMarker) {
-                            that.centreMarker = createMarkerAtPose(pose);
-                            topicScene.add(that.centreMarker);                            
-                        }
-                        if (that.boundingSphere) {
-                            that.centreMarker.position.x = that.boundingSphere.centre.x;
-                            that.centreMarker.position.y = that.boundingSphere.centre.y;
-                            that.centreMarker.position.z = that.boundingSphere.centre.z;
-                        }
-                        */
-
                         // Lines
                         if (lastPose) {
                             var line = createLineToPose(pose, lastPose);
@@ -2040,8 +2028,8 @@ var TopicViewer = (function() {
             };
             that.update = update;
 
-            var lineMaterial;
-
+            // Create a line between two poses
+            //
             function createLineToPose(pose, lastPose) {
                 var lineMaterial = (lineMaterial) ? lineMaterial : new THREE.LineBasicMaterial({ color: 0xff0000 });
                 var geometry = new THREE.Geometry(); 
@@ -2053,15 +2041,11 @@ var TopicViewer = (function() {
                 return line;
             }
 
+            // Create a marker that represents current robot position.
+            // Red cube with triangle on top.
+            //  pose - current robot pose in ROS coordinates
+            //
             function createMarkerAtPose(pose) {
-                var mesh;
-
-                mesh = createCubeAtPose(pose);
-
-                return mesh;
-            }
-
-            function createCubeAtPose(pose) {
                 var geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
                 var material = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
                 var mesh = new THREE.Mesh( geometry, material );
@@ -2069,7 +2053,6 @@ var TopicViewer = (function() {
                 mesh.position.x = -pose.position.y;
                 mesh.position.y = pose.position.z;
                 mesh.position.z = -pose.position.x;
-
 
                 var triangleGeometry = new THREE.Geometry();
                 var v1 = new THREE.Vector3(0.1, 0.15, 0.1),
@@ -2087,6 +2070,10 @@ var TopicViewer = (function() {
                 return mesh;
             }
 
+            // Move marker (or any object) to position
+            //  marker - three.js object
+            //  pose - position / orientation in ROS coordinates
+            //
             function moveMarkerToPose(marker, pose) {
                 marker.position.x = -pose.position.y;
                 marker.position.y = pose.position.z;
@@ -2097,17 +2084,6 @@ var TopicViewer = (function() {
                 marker.rotation.y = rotation.z;
                 marker.rotation.z = -rotation.x;
             }
-
-            function moveMarkerToPosition(marker, position) {
-                marker.position.x = -position.y;
-                marker.position.y = position.z;
-                marker.position.z = -position.x;
-            }
-
-            // Called by this class
-            var animate = function() {
-            }
-            that.animate = animate;
 
             // Called by browser on each animation frame
             //
@@ -2131,6 +2107,9 @@ var TopicViewer = (function() {
                 that.render3D();
             };
             that.animateAndRender = animateAndRender;
+
+            // Convert a series of odometry points into a bounding sphere that contains all of them
+            // Accesses odometryPoints on this object.
 
             function getBoundingSphereForOdometryPoints() {
                 var minX = null, maxX = null, minZ = null, maxZ = null;
@@ -2159,6 +2138,12 @@ var TopicViewer = (function() {
                 return boundingSphereFromSquareOnFloor(minX, maxX, minZ, maxZ);
             }
 
+            // Convert a bounding box on the floor to a bounding sphere
+            //  minX - lowest X coordinate (three.js coordinates)
+            //  minZ - lowest Z coordinate (three.js coordinates)
+            //  maxX - highest X coordinate (three.js coordinates)
+            //  maxZ - highest Z coordinate (three.js coordinates)
+            //
             function boundingSphereFromSquareOnFloor(minX, maxX, minZ, maxZ) {
                 var offsetX = (maxX - minX) / 2,
                     offsetZ = (maxZ - minZ) / 2;
@@ -2178,6 +2163,10 @@ var TopicViewer = (function() {
                 return boundingSphere;
             }
 
+            // Move camera to take a 3/4 view of a bounding spehere
+            //  boundingSphere - sphere that defines area of interest
+            // Also accesses deltaTime
+            //
             function moveCameraTowardsBestPositionToSeeSphere(boundingSphere) {
                 var distance = boundingSphere.radius / Math.tan(fieldOfView / 2);
 
