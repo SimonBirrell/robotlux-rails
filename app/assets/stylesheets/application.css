@@ -6,6 +6,8 @@
  *= require_tree .
  *= require piluku/material.css
  *= require piluku/jquery-ui-1.10.3.custom.css
+ *= require piluku/themify-icons.css
+ *= require piluku/simple-line-icons.css.css
  *= require piluku/style.css
  *= require piluku/animated-masonry-gallery.css
  *= require piluku/rotated-gallery.css
