@@ -17,7 +17,7 @@
  *= require piluku/chartist/chartist.min.css
  *= require piluku/nvd3.css
  *= require piluku/maps-custom.css
- *= require piluku/forms.css
+ *= require piluku/forms.css.scss
  *= require piluku/mail.css
  *= require piluku/portlets.css
  *= require piluku/multi-select.css
