@@ -9,7 +9,6 @@
 /* 
 @import 'themify-icons.css';
 @import 'simple-line-icons.css';
-*/
 @import 'animate.css';
 @import 'select2.css';
 @import 'ionicons.min.css';
@@ -44,6 +43,8 @@
 @import 'bic_calendar.css';
 @import 'widgets.css';
 @import 'weather.css';
+*/
+
 .demo-icons {
   margin-top: 22px;
 }
