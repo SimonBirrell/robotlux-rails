@@ -4,8 +4,8 @@
  * the top of the compiled file, but it's generally better to create a new file per style scope.
  *= require_self
  *= require_tree .
- *= require_tree piluku
  *= require piluku/material.css
+ *= require piluku/jquery-ui-1.10.3.custom.css
  *= require piluku/style.css
  *= require piluku/animated-masonry-gallery.css
  *= require piluku/rotated-gallery.css
