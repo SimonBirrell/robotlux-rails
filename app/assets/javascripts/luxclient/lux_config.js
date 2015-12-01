@@ -1,11 +1,10 @@
-// The current config file
-// Overwritten by either lux_config_development.js or lux_config_production.js
-// dependig on how you configure the client.
+// Production configuration with node.js server on Heroku, port 80
 //
+
 var LuxConfig = (function() {
 	var module = {};
 
-	module.socketsServer = "ws://localhost:8080/";
+	module.socketsServer = "ws://luxserver.herokuapp.com/";
 
 	return module;
 })();
