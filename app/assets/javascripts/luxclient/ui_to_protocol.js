@@ -107,9 +107,9 @@ var LuxUiToProtocol = (function() {
             //console.log(graphSegmentToDelete);
             uiGraphDel(graphSegmentToDelete, rosInstanceId);
         } else if (mtype==='rosInstancesUpdate') {
-            rosInstanceUpdates(mbody);
             console.log("rosInstancesUpdate");
             console.log(mbody);
+            rosInstanceUpdates(mbody);
         } else if (mtype==='unsubscribedRosInstance') {
             console.log("unsubscribedRosInstance");
             console.log(mbody);
