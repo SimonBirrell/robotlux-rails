@@ -25,7 +25,11 @@ Rails.application.configure do
   config.serve_static_files = ENV['RAILS_SERVE_STATIC_FILES'].present?
 
   # Compress JavaScripts and CSS.
-  config.assets.js_compressor = :uglifier
+  # Use this one for release (Simon)
+  #config.assets.js_compressor = :uglifier
+  # Use this one for debugging on Heroku
+  config.assets.js_compressor = NoCompression.new
+
   # config.assets.css_compressor = :sass
 
   # Do not fallback to assets pipeline if a precompiled asset is missed.
