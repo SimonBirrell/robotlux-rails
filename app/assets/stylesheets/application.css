@@ -11,7 +11,7 @@
 
  *= require piluku/animate.css
  *= require piluku/select2.css
- *= require piluku/ionicons.min.css
+ *= require piluku/ionicons.css.scss
  *= require piluku/font-awesome.min.css
  *= require piluku/gritter/jquery.gritter.css
  *= require piluku/chartist/chartist.min.css
