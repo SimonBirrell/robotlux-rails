@@ -20,7 +20,8 @@ var TopicViewer = (function() {
                             'test3DTopicView',
                             'diffRobotControlTopicView', 
                             'jointStateHashTopicView',
-                            'floorPoseTopicView'
+                            'floorPoseTopicView',
+                            'imuSimpleTopicView'
                             ];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
@@ -34,7 +35,7 @@ var TopicViewer = (function() {
             //"sensor_msgs/foo" : ['test3DTopicView'],            
             
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView', 'jointStateHashTopicView'],
-            "sensor_msgs/Imu" : ['imuSimpleTopicView'],
+            //"sensor_msgs/Imu" : ['imuSimpleTopicView'],
             "nav_msgs/Odometry" : ['floorPoseTopicView']
         };
 
@@ -2254,8 +2255,7 @@ var TopicViewer = (function() {
         //
 
         // Not finished - Remove for ROScon 2015 demo
-        /*
-
+        
         module.imuSimpleTopicView = function(spec, my) {
             var viewType = "imuSimpleTopicView";
             var my = my || {};
@@ -2321,16 +2321,18 @@ var TopicViewer = (function() {
             return that;            
         };
 
-        module.test3DTopicView.updateViews = function(selection, uiGraph) {
+        module.imuSimpleTopicView.updateViews = function(selection, uiGraph) {
+        //module.test3DTopicView.updateViews = function(selection, uiGraph) {
             console.log("imuSimpleTopicView.updateViews");
             module.threeDTopicView.updateViews(selection, uiGraph, "imuSimpleTopicView");
         };
 
-        module.test3DTopicView.tick = function() {
+        module.imuSimpleTopicView.tick = function() {
+        //module.test3DTopicView.tick = function() {
             module.threeDTopicView.tick("imuSimpleTopicView");
         };
 
-       */ 
+        
 
     return module;
 
