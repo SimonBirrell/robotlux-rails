@@ -26,6 +26,10 @@ var TopicViewer = (function() {
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
 
+        // TODO: Pass these from UI
+        var NODE_PADDING_WIDTH = 10;
+        var NODE_PADDING_HEIGHT = 10;
+
         // These are the ROS message types and the views we have available to render them.
         // All views can also be rendered as a GenericView    
         var ViewsAvailable = {
@@ -729,8 +733,8 @@ var TopicViewer = (function() {
             var topicWidth = CircleRadius * 1.41421356237;
             var offset = (d.width/(CircleRadius*2)) * (2*CircleRadius - topicWidth) / 2;
 
-            var x = d.x + svgOffset.translate[0] - d.width/2 + offset,
-                y = d.y + svgOffset.translate[1] - d.height/2 + offset;
+            var x = d.x + svgOffset.translate[0] - d.width/2 + offset + NODE_PADDING_WIDTH,
+                y = d.y + svgOffset.translate[1] - d.height/2 + offset + NODE_PADDING_HEIGHT;
 
             return [x, y];
         }  

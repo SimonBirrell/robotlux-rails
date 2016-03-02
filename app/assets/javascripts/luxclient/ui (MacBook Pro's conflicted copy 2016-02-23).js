@@ -22,6 +22,11 @@ var LuxUi = (function() {
     						' /capability_server/bonds', ' /capability_server/events', ' /interactions/pairing',
     						' /turtlebot/status', ' /turtlebot/rapp_list', ' /turtlebot/incompatible_rapp_list',
     						' /gateway/force_update', ' /diagnostics',
+    						'/camera/depth_metric', '/camera/depth_metric_rect', '/camera/depth_points',
+    						'/camera/depth_rectify_depth', '/camera/depth_registered_hw_metric_rect', '/camera/depth_registered_metric',
+    						'/camera/depth_registered_rectify_depth', '/camera/disparity_depth', '/camera/disparity_registered_hw',
+    						'/camera/driver', '/camera/points_xyzrgb_hw_registered', '/camera/rectify_color',
+    						'/camera/rectify_ir', ' /wheel_right_joint',
     						' /cmd_vel_mux/parameter_descriptions', ' /cmd_vel_mux/parameter_updates',
     						' /sound_play/feedback', ' /sound_play/status', ' /sound_play/goal', ' /sound_play/cancel', ' /sound_play/result',
     						' /depthimage_to_laserscan/parameter_updates', ' /depthimage_to_laserscan/parameter_descriptions',
@@ -1352,10 +1357,7 @@ var LuxUi = (function() {
 				}	
 			}
 
-			// For a given link (defined by index) and pileLevel, check if it links to
-			// one of the nodes in the pile defined by pilelevel. If it does, then create
-			// a new link that links to the pile. Then check if this is a duplicate, and if not,
-			// add to the list of links.
+			// For a given link (defined by index) and pileLevel, 
 			// TODO dodgy logic?
 			//
 			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel) {
@@ -1928,14 +1930,11 @@ var LuxUi = (function() {
 			// 	indexNodeToDelete - The index of the node to remove on 'graph.nodes'
 			//
 			function deleteLeavesThatPointToNode(graph, indexNodeToDelete) {
-				var nodeToDelete = (typeof indexNodeToDelete==='number') ? graph.nodes[indexNodeToDelete] : indexNodeToDelete;
-				var index = (typeof indexNodeToDelete==='number') ? indexNodeToDelete : findNodeByNameOnGraph(indexNodeToDelete.name);
-
 				for (var g=0; g<graph.groups.length; g++) {	
 					if (graph.groups[g].leaves) {
 						var l = graph.groups[g].leaves.length;
 						while (l--) {
-							if (graph.groups[g].leaves[l]===nodeToDelete) {
+							if (graph.groups[g].leaves[l]===indexNodeToDelete) {
 								graph.groups[g].leaves.splice(l, 1);
 							}
 						}
@@ -2606,7 +2605,7 @@ var LuxUi = (function() {
 			}
 
 			// Convert the leaves on a group from references to indexes.
-			// Hopefully can remove this one day when webcole is fixed.
+			// Hopefully can remove this one day when webcola is fixed.
 			//
 			function resetLeavesOnGroup(group, graph) {
 				var index;
@@ -2615,13 +2614,14 @@ var LuxUi = (function() {
 					if (typeof leaf === "object") {
 						index = getNodeIndex(leaf, graph);
 						if (index<0) {
-							console.log(group);
-							console.log(l);
+							console.log("Leaf, group, graph in resetLeavesOnGroup()");
 							console.log(leaf);
+							console.log(group);
 							console.log(graph);
 							throw "Node not found in resetLeavesOnGroup()";
+						} else {
+							group.leaves[l] = index;	
 						}	
-						group.leaves[l] = index;	
 						//console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
 					}
 				}
