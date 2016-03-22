@@ -15,16 +15,19 @@ var LuxUi = (function() {
     						'/cpu_monitor', '/monitor', '/hd_monitor', '/rxloggerlevel', '/clock', 
     						'/rqt', '/statistics', '/luxagent','/rosout_agg','/zeroconf/zeroconf',
     						'/interactions', '/app_manager', '/bumper2pointcloud',
-    						' /joint_states', ' /tf', ' /tf_static', '/robot_state_publisher',
+    						//' /tf', 
+    						' /tf_static', '/robot_state_publisher',
     						'/capability_server','/diagnostic_aggregator', ' /diagnostics_agg', ' /diagnostics_toplevel_state',
     						' /zeroconf/new_connections', ' /zeroconf/lost_connections', '/capability_server_nodelet_manager',
     						' /gateway/gateway_info', ' /interactions/interactive_clients',
     						' /capability_server/bonds', ' /capability_server/events', ' /interactions/pairing',
     						' /turtlebot/status', ' /turtlebot/rapp_list', ' /turtlebot/incompatible_rapp_list',
     						' /gateway/force_update', ' /diagnostics',
-    						' /cmd_vel_mux/parameter_descriptions', ' /cmd_vel_mux/parameter_updates',
+    						' /cmd_vel_mux/parameter_descriptions', 
+    						' /cmd_vel_mux/parameter_updates',
     						' /sound_play/feedback', ' /sound_play/status', ' /sound_play/goal', ' /sound_play/cancel', ' /sound_play/result',
-    						' /depthimage_to_laserscan/parameter_updates', ' /depthimage_to_laserscan/parameter_descriptions',
+    						' /depthimage_to_laserscan/parameter_updates', 
+    						' /depthimage_to_laserscan/parameter_descriptions',
     						' /capability_server_events', '/master', ' /info' 
     						];
 		var SHRINK_DURATION = 1000;  
@@ -386,7 +389,7 @@ var LuxUi = (function() {
 				});
 
 				return groupEnter;
-			}
+			} 
 
 			// This function sets up d3 links that are just entering the UI.
 			// At the moment, all links represent node-topic connections
@@ -2608,7 +2611,7 @@ var LuxUi = (function() {
 			// Convert the leaves on a group from references to indexes.
 			// Hopefully can remove this one day when webcole is fixed.
 			//
-			function resetLeavesOnGroup(group, graph) {
+			function resetLeavesOnGroup(group, graph) { 
 				var index;
 				for (var l=0; l<group.leaves.length; l++) {
 					var leaf = group.leaves[l];
