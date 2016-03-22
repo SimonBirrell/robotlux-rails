@@ -30,19 +30,22 @@ var LuxUi = (function() {
     						' /depthimage_to_laserscan/parameter_descriptions',
     						' /capability_server_events', '/master', ' /info' 
     						];
-		var SHRINK_DURATION = 1000;  
-		var KILL_DURATION = 1000;  
-		var PILE_CONSOLIDATION_DURATION = 3000;
-		var	NODE_LABEL_TOP = 20,
-			NODE_LABEL_TEXT_HEIGHT = 16;
+		// var SHRINK_DURATION = 1000;  
+		// var KILL_DURATION = 1000;  
+		// var PILE_CONSOLIDATION_DURATION = 3000;
+		// var	NODE_LABEL_TOP = 20,
+		// 	NODE_LABEL_TEXT_HEIGHT = 16;
 
-		var NODE_PADDING_WIDTH = 30;
-		var NODE_PADDING_HEIGHT = 30;
+		// var NODE_PADDING_WIDTH = 30;
+		// var NODE_PADDING_HEIGHT = 30;
 
-    	var uiGraph = {nodes: [], links: [], groups: [], machines: []},
-    		uiFullGraph = uiGraph,
-    		uiGraphIncomplete;
+    	// var uiGraph = {nodes: [], links: [], groups: [], machines: []},
+    	// 	uiFullGraph = uiGraph,
+    	// 	uiGraphIncomplete;
  
+    	var uiFullGraph = RenderUi.uiGraph,
+    		uiGraphIncomplete;
+
     	var forced = null;	 
 
     	var NameSpaceTree = {};
@@ -52,7 +55,7 @@ var LuxUi = (function() {
     	// Access uiGraph outside this module
     	//
     	module.getUiGraph = function() {
-    		return uiGraph;
+    		return RenderUi.uiGraph;
     	};
 
     	// Access uiFullGraph outside this module
@@ -70,7 +73,7 @@ var LuxUi = (function() {
     	// Shut down the UI, e.g. at the end of a test
     	//
     	module.close = function() {
-			uiGraph = uiFullGraph = {nodes: [], links: [], groups: [], machines: []};
+			RenderUi.uiGraph = uiFullGraph = {nodes: [], links: [], groups: [], machines: []};
        	};
 
     	var FilterOrphanedTopics = true,
@@ -112,92 +115,94 @@ var LuxUi = (function() {
 
 			ProtocolToUiLayer = protocolToUiLayer;
 
-			// Basic parameters
-			var width = 1500,
-			    height = 1500,
-			    fullWidth = width,
-			    fullHeight = height,
-				circleRadius = 32,
-				groupPadding = (circleRadius / 2),
-				colorText = "#042029",
-				color = d3.scale.category20();
+			RenderUi.open();
+
+			// // Basic parameters
+			// var width = 1500,
+			//     height = 1500,
+			//     fullWidth = width,
+			//     fullHeight = height,
+			// 	circleRadius = 32,
+			// 	groupPadding = (circleRadius / 2),
+			// 	colorText = "#042029",
+			// 	color = d3.scale.category20();
 			
-			// The webcola adaptor replaces d3's built-in force constrained graph
-			var force = cola.d3adaptor()
-			    .linkDistance(circleRadius * 5)
-				    .handleDisconnected(false)
-			    .avoidOverlaps(true)
-				    .size([width, height]);
+			// // The webcola adaptor replaces d3's built-in force constrained graph
+			// var force = cola.d3adaptor()
+			//     .linkDistance(circleRadius * 5)
+			// 	    .handleDisconnected(false)
+			//     .avoidOverlaps(true)
+			// 	    .size([width, height]);
 								
-			// Allow the user to drag the background with the mouse    									
-			var dragColaSetup = force.drag()
-				.origin(function(d) { return d; })
-			    .on("dragstart", dragstarted)
-			    .on("drag", draggedCola)
-			    .on("dragend", dragended)
-				;
+			// // Allow the user to drag the background with the mouse    									
+			// var dragColaSetup = force.drag()
+			// 	.origin(function(d) { return d; })
+			//     .on("dragstart", dragstarted)
+			//     .on("drag", draggedCola)
+			//     .on("dragend", dragended)
+			// 	;
 
-			// The margin of the viewing area
-			var margin = {top: 200, right: 20, bottom: 20, left: 300},
-			    width = width - margin.right - margin.left,
-			    height = height - margin.top - margin.bottom;
+			// // The margin of the viewing area
+			// var margin = {top: 200, right: 20, bottom: 20, left: 300},
+			//     width = width - margin.right - margin.left,
+			//     height = height - margin.top - margin.bottom;
 
-			// Allow the user to zoom and pan with the mouse
-			var zoom = d3.behavior.zoom()
-			    .on("zoom", zoomAndPan);
+			// // Allow the user to zoom and pan with the mouse
+			// var zoom = d3.behavior.zoom()
+			//     .on("zoom", zoomAndPan);
 			
-			// Set up main visualization area
+			// // Set up main visualization area
 
-			// Have a <div> to store the canvases used by WebGL
-			// The ordering on the HTML (before the SVG) is important
-			// for who handles the clicks
-			var canvas = d3.select("#robotlux").append("div")
-				.attr("id", "canvas-layer");
+			// // Have a <div> to store the canvases used by WebGL
+			// // The ordering on the HTML (before the SVG) is important
+			// // for who handles the clicks
+			// var canvas = d3.select("#robotlux").append("div")
+			// 	.attr("id", "canvas-layer");
 
-			// The SVG <div> is where all the vector graphics will be rendered
-			// A group within it acts as a window on the complete graph 
-			var svg = d3.select("#robotlux").append("svg")
-			    .attr("width", width + margin.right + margin.left)
-			    .attr("height", height + margin.top + margin.bottom)
-				.attr("id","luxwindow-2d")
-				.call(zoom)
-				.append("g")
-			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-			;
+			// // The SVG <div> is where all the vector graphics will be rendered
+			// // A group within it acts as a window on the complete graph 
+			// var svg = d3.select("#robotlux").append("svg")
+			//     .attr("width", width + margin.right + margin.left)
+			//     .attr("height", height + margin.top + margin.bottom)
+			// 	.attr("id","luxwindow-2d")
+			// 	.call(zoom)
+			// 	.append("g")
+			//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			// ;
 
-			// This is a rectangle within the group under the SVG
-			var rect = svg.append("rect")
-			    .attr("width", width)
-			    .attr("height", height)
-			    .style("fill", "none")
-			    .style("pointer-events", "all");
+			// // This is a rectangle within the group under the SVG
+			// var rect = svg.append("rect")
+			//     .attr("width", width)
+			//     .attr("height", height)
+			//     .style("fill", "none")
+			//     .style("pointer-events", "all");
 
-			// Callback function to handle zooming
-			// TODO - not used?
-			/*
-			var zoomed = function () {
-			  svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-			}
-			*/
+			// // Callback function to handle zooming
+			// // TODO - not used?
+			// /*
+			// var zoomed = function () {
+			//   svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+			// }
+			// */
 			
-			// Set up topic viewer module with some UI parameters
-			TopicViewer.setup(d3, svg, margin, circleRadius, SHRINK_DURATION);
+			// // Set up topic viewer module with some UI parameters
+			// TopicViewer.setup(d3, svg, margin, circleRadius, SHRINK_DURATION);
 
-			// Set up the machine tree menu on the left hand side
-			// This will be populated with the list of installed ROS packages
-			// and run/launch targets
-			var machineTreeMenu = d3.select("#mainMenu");
+			// // Set up the machine tree menu on the left hand side
+			// // This will be populated with the list of installed ROS packages
+			// // and run/launch targets
+			// var machineTreeMenu = d3.select("#mainMenu");
 
-			// Drag HTML to SVG
-			// http://bl.ocks.org/thudfactor/6611441
-			var DragDropManager = {
-				dragged: null,
-				droppable: null,
-				draggedMatchesTarget: function() {
-					if (!this.droppable) return false;
-						return true;
-				}
-			}
+			// // Drag HTML to SVG
+			// // http://bl.ocks.org/thudfactor/6611441
+			// var DragDropManager = {
+			// 	dragged: null,
+			// 	droppable: null,
+			// 	draggedMatchesTarget: function() {
+			// 		if (!this.droppable) return false;
+			// 			return true;
+			// 	}
+			// }
 
 			// These two graphs handle nodes before they are actually displayed
 			//	uiFullGraph - This is a copy of all the nodes/topics/links on the server,
@@ -218,843 +223,852 @@ var LuxUi = (function() {
 			// First update
 			uiGraphUpdate();
 
-			// Start animations & renderings
-			animateAndRender();
+			RenderUi.setUpAnimation();
 
-			// This function is called from d3 during a requestAnimationFrame call to the 
-			// browser. It should be executed once per animation frame.
-			//
-			function animateAndRender() {
-            	for (var i=0; i<uiGraph.nodes.length; i++) {
-            		var node = uiGraph.nodes[i];
-            		// Animate topic views
-            		if (node.viewer) {
-            			node.viewer.animateAndRender();
-            		}
-            	}
-            	// Call Keydrown.js which handles keyboard state
-            	kd.tick();
-            	// return true to cancel animation
-            	return false;
-			}
-			// This merges animateAndRender into the requestAnimationFrame() call.
-			//
-			d3.timer(animateAndRender);
+			// // Start animations & renderings
+			// animateAndRender();
 
-			// This is the end of the "open" code. Everything else is just function
-			// definitions that use variables like svg, force, circleRadius etc.
+			// // This function is called from d3 during a requestAnimationFrame call to the 
+			// // browser. It should be executed once per animation frame.
+			// //
+			// function animateAndRender() {
+   //          	for (var i=0; i<uiGraph.nodes.length; i++) {
+   //          		var node = uiGraph.nodes[i];
+   //          		// Animate topic views
+   //          		if (node.viewer) {
+   //          			node.viewer.animateAndRender();
+   //          		}
+   //          	}
+   //          	// Call Keydrown.js which handles keyboard state
+   //          	kd.tick();
+   //          	// return true to cancel animation
+   //          	return false;
+			// }
+			// // This merges animateAndRender into the requestAnimationFrame() call.
+			// //
+			// d3.timer(animateAndRender);
 
-			////////////////////////////////////////////////////					
-			//
-			// Tick functions
-			//
-			////////////////////////////////////////////////////
+			// // This is the end of the "open" code. Everything else is just function
+			// // definitions that use variables like svg, force, circleRadius etc.
 
-			// One tick of the force layout simulation. This is generally
-			// one animation frame, but doesn't have to be.
-			//	linkSelection - d3 selection of links
-			//	nodeSelection - d3 selection of nodes
-			//  groupSelection - d3 selection of groups
-			//
-			function graphTick(linkSelection, nodeSelection, groupSelection) {
-				defineLinkPath(linkSelection);
-				copyWidthOnNodeFromTransition(nodeSelection);
-				positionGroup(groupSelection);
-		        TopicViewer.tick();
-			}
+			// ////////////////////////////////////////////////////					
+			// //
+			// // Tick functions
+			// //
+			// ////////////////////////////////////////////////////
 
-			// Links on the graph are represented by curved, dashed lines.
-			// On each animation frame, set the "d" SVG attribute that defines look
-			// for the link.
-			//
-			function defineLinkPath(linkSelection) {
-				linkSelection
-				    .attr("d", function(d) {
-				    	// TODO this may not be necessary or desirable
-				    	if ((typeof(d.target) === "undefined")||(typeof(d.source) === "undefined")) {
-				    		console.log("Reconnecting...")
-				    		connectLink(d);
-				    	}
+			// // One tick of the force layout simulation. This is generally
+			// // one animation frame, but doesn't have to be.
+			// //	linkSelection - d3 selection of links
+			// //	nodeSelection - d3 selection of nodes
+			// //  groupSelection - d3 selection of groups
+			// //
+			// function graphTick(linkSelection, nodeSelection, groupSelection) {
+			// 	defineLinkPath(linkSelection);
+			// 	copyWidthOnNodeFromTransition(nodeSelection);
+			// 	positionGroup(groupSelection);
+		 //        TopicViewer.tick();
+			// }
 
-				    	if ((typeof(d.target) !== "undefined")&&(typeof(d.source) !== "undefined")) { 
-					    	var dx = d.target.x - d.source.x,
-								dy = d.target.y - d.source.y,
-								dr = 300/1,
-								rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
-							return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
-						} else {
-							console.log(d);
-							throw "Link with no source or target";
-						}
+			// // Links on the graph are represented by curved, dashed lines.
+			// // On each animation frame, set the "d" SVG attribute that defines look
+			// // for the link.
+			// //
+			// function defineLinkPath(linkSelection) {
+			// 	linkSelection
+			// 	    .attr("d", function(d) {
+			// 	    	// TODO this may not be necessary or desirable
+			// 	    	if ((typeof(d.target) === "undefined")||(typeof(d.source) === "undefined")) {
+			// 	    		console.log("Reconnecting...")
+			// 	    		connectLink(d);
+			// 	    	}
 
-						return "";
-				    });
-			}
+			// 	    	if ((typeof(d.target) !== "undefined")&&(typeof(d.source) !== "undefined")) { 
+			// 		    	var dx = d.target.x - d.source.x,
+			// 					dy = d.target.y - d.source.y,
+			// 					dr = 300/1,
+			// 					rotation = 0; //Math.atan2(dy, dx);  //linknum is defined above
+			// 				return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " " + rotation + " 0,1 " + d.target.x + "," + d.target.y;
+			// 			} else {
+			// 				console.log(d);
+			// 				throw "Link with no source or target";
+			// 			}
 
-			// While node is scaling (because of a user click), pass the width
-			// from the DOM element (where the d3 transition has set it) back to the data
-			// node. The keepForceLayoutHeated flag on the node allows us to prolong
-			// the force constrained layout simulation for a little while longer.
-			//
-			function copyWidthOnNodeFromTransition(nodeSelection) {
-				nodeSelection
-					.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"})
-					.attr("dummy", function(d) {
-						// Get width from domElement where it has been
-						// subject to a transition
-						var widthOnDomElement = parseInt(d3.select(this).attr("width")) || 0;
-						// Set size on data to allow bounding box to transition smoothly
-						// d points to node on uiGraph
-						// TODO Add padding here based on size of labels
-						// TODO This will mean adjusting the canvas position too
-						d.width = widthOnDomElement + NODE_PADDING_WIDTH; //+ 25;
-						d.height = widthOnDomElement + NODE_PADDING_HEIGHT; //+ 25;
-						// We can keep the force layout animation going
-						// longer than usual by setting this flag.
-						if (d.keepForceLayoutHeated) {
-							setTimeout(function() {
-								force.resume();
-							},10);
-						}
+			// 			return "";
+			// 	    });
+			// }
 
-						// Dummy attribute
-						return 0});
-			}
+			// // While node is scaling (because of a user click), pass the width
+			// // from the DOM element (where the d3 transition has set it) back to the data
+			// // node. The keepForceLayoutHeated flag on the node allows us to prolong
+			// // the force constrained layout simulation for a little while longer.
+			// //
+			// function copyWidthOnNodeFromTransition(nodeSelection) {
+			// 	nodeSelection
+			// 		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"})
+			// 		.attr("dummy", function(d) {
+			// 			// Get width from domElement where it has been
+			// 			// subject to a transition
+			// 			var widthOnDomElement = parseInt(d3.select(this).attr("width")) || 0;
+			// 			// Set size on data to allow bounding box to transition smoothly
+			// 			// d points to node on uiGraph
+			// 			// TODO Add padding here based on size of labels
+			// 			// TODO This will mean adjusting the canvas position too
+			// 			d.width = widthOnDomElement + NODE_PADDING_WIDTH; //+ 25;
+			// 			d.height = widthOnDomElement + NODE_PADDING_HEIGHT; //+ 25;
+			// 			// We can keep the force layout animation going
+			// 			// longer than usual by setting this flag.
+			// 			if (d.keepForceLayoutHeated) {
+			// 				setTimeout(function() {
+			// 					force.resume();
+			// 				},10);
+			// 			}
 
-			// Position d3 groups on screen 
-			//
-			function positionGroup(groupSelection) {
-					groupSelection.selectAll("rect")
-						 .attr("x", function (d) { return d.bounds.x; })
-		                 .attr("y", function (d) { return d.bounds.y; })
-		                 .attr("width", function (d) { return d.bounds.width(); })
-		                 .attr("height", function (d) { return d.bounds.height(); });
+			// 			// Dummy attribute
+			// 			return 0});
+			// }
 
-		            groupSelection.selectAll(".group-label")
-						 .attr("x", function (d) { return d.bounds.x + d.bounds.width()/2; })
-		                 .attr("y", function (d) { return d.bounds.y + d.bounds.height() + 14; });
-			}
+			// // Position d3 groups on screen 
+			// //
+			// function positionGroup(groupSelection) {
+			// 		groupSelection.selectAll("rect")
+			// 			 .attr("x", function (d) { return d.bounds.x; })
+		 //                 .attr("y", function (d) { return d.bounds.y; })
+		 //                 .attr("width", function (d) { return d.bounds.width(); })
+		 //                 .attr("height", function (d) { return d.bounds.height(); });
 
-			////////////////// End of tick functions ////////////////////////////////////
+		 //            groupSelection.selectAll(".group-label")
+			// 			 .attr("x", function (d) { return d.bounds.x + d.bounds.width()/2; })
+		 //                 .attr("y", function (d) { return d.bounds.y + d.bounds.height() + 14; });
+			// }
 
-			///////////////// d3 functions called from uiGraphUpdate() //////////////////
+			// ////////////////// End of tick functions ////////////////////////////////////
 
-			// This function sets up the d3 groups that will appear on screen
-			//
-			function setUpEnteringGroups(groupSelection) {
-				var groupEnter = groupSelection
-		          .enter();
+			// ///////////////// d3 functions called from uiGraphUpdate() //////////////////
 
-		        // Groups that are just entering the UI.
-		        // At the moment we only have on type of group, which represents a 
-		        // machine.
-		        var newGroups = groupEnter  
-		        	.append("g")
-		        		.attr("class", "group");
+			// // This function sets up the d3 groups that will appear on screen
+			// //
+			// function setUpEnteringGroups(groupSelection) {
+			// 	var groupEnter = groupSelection
+		 //          .enter();
 
-		       	// Draw rectangle
-				newGroups		        		
-					.append("rect")
-		            	.attr("rx", 8).attr("ry", 8)
-		            	.attr("class", function(d) {
-		            		if (d.gtype === "hashTopic") {
-		            			return "group-hash-topic";
-		            		}
-		            		return "group-machine";
-		            	})
-		            	.attr("id", function(d) {
-		            		if (d.gtype === "hashTopic") {
-		            			return "";
-		            		}
-		            		return "machine_" + d.hostname;
-		            	});
+		 //        // Groups that are just entering the UI.
+		 //        // At the moment we only have on type of group, which represents a 
+		 //        // machine.
+		 //        var newGroups = groupEnter  
+		 //        	.append("g")
+		 //        		.attr("class", "group");
 
-		        // Add group label
-				newGroups		        		
-					.append("text")
-						.attr("class", function(d) {
-							var labelGroup = (d.gtype === "hashTopic") ? "group-label-hash-topic" : "group-label-machine";
-							return "group-label " + labelGroup;
-						})
-						.text(function(d) {return d.title;});
+		 //       	// Draw rectangle
+			// 	newGroups		        		
+			// 		.append("rect")
+		 //            	.attr("rx", 8).attr("ry", 8)
+		 //            	.attr("class", function(d) {
+		 //            		if (d.gtype === "hashTopic") {
+		 //            			return "group-hash-topic";
+		 //            		}
+		 //            		return "group-machine";
+		 //            	})
+		 //            	.attr("id", function(d) {
+		 //            		if (d.gtype === "hashTopic") {
+		 //            			return "";
+		 //            		}
+		 //            		return "machine_" + d.hostname;
+		 //            	});
+
+		 //        // Add group label
+			// 	newGroups		        		
+			// 		.append("text")
+			// 			.attr("class", function(d) {
+			// 				var labelGroup = (d.gtype === "hashTopic") ? "group-label-hash-topic" : "group-label-machine";
+			// 				return "group-label " + labelGroup;
+			// 			})
+			// 			.text(function(d) {return d.title;});
 		            	
-		        // When mouse is over a group, tell the DragDropManager that it's available
-		        // as a drop target
-		        // TODO: Can't drag onto a hash topic
-		        newGroups.on('mouseover',function(d,i){
-					DragDropManager.droppable = d; 
-				});
-				newGroups.on('mouseout',function(e){
-					DragDropManager.droppable = null;
-				});
+		 //        // When mouse is over a group, tell the DragDropManager that it's available
+		 //        // as a drop target
+		 //        // TODO: Can't drag onto a hash topic
+		 //        newGroups.on('mouseover',function(d,i){
+			// 		DragDropManager.droppable = d; 
+			// 	});
+			// 	newGroups.on('mouseout',function(e){
+			// 		DragDropManager.droppable = null;
+			// 	});
 
-				return groupEnter;
-			} 
+			// 	return groupEnter;
+			// } 
 
-			// This function sets up d3 links that are just entering the UI.
-			// At the moment, all links represent node-topic connections
-			// This will change with hashTopic's "invisible struts"
-			//
-			function setUpEnteringLinks(linkSelection) {
-				var linkEnter = linkSelection
-			      .enter().append("svg:path")
-			        .attr("class", "linkPath")
-			        .attr("x1", function(d) { return d.source.x; })
-			        .attr("y1", function(d) { return d.source.y; })
-			        .attr("x2", function(d) { return d.target.x; })
-			        .attr("y2", function(d) { return d.target.y; })
-				    .attr("marker-end", function(d) { return "url(#" + "basic" + ")"; })
-					.style("stroke-width", function(d) { return Math.sqrt(d.value); });
+			// // This function sets up d3 links that are just entering the UI.
+			// // At the moment, all links represent node-topic connections
+			// // This will change with hashTopic's "invisible struts"
+			// //
+			// function setUpEnteringLinks(linkSelection) {
+			// 	var linkEnter = linkSelection
+			//       .enter().append("svg:path")
+			//         .attr("class", "linkPath")
+			//         .attr("x1", function(d) { return d.source.x; })
+			//         .attr("y1", function(d) { return d.source.y; })
+			//         .attr("x2", function(d) { return d.target.x; })
+			//         .attr("y2", function(d) { return d.target.y; })
+			// 	    .attr("marker-end", function(d) { return "url(#" + "basic" + ")"; })
+			// 		.style("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-				return linkEnter;	
-			}
+			// 	return linkEnter;	
+			// }
 
-			// This function sets up d3 nodes (which can represent ROS node and topics)
-			// that are just enetering the UI.
-			//
-			function setUpEnteringNodes(nodeSelection) {
-				// New nodes - add a group
-				var nodeEnter = nodeSelection
-			      .enter().append("g")
-					.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"})
-			        .call(dragColaSetup);
+			// // This function sets up d3 nodes (which can represent ROS node and topics)
+			// // that are just enetering the UI.
+			// //
+			// function setUpEnteringNodes(nodeSelection) {
+			// 	// New nodes - add a group
+			// 	var nodeEnter = nodeSelection
+			//       .enter().append("g")
+			// 		.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"})
+			//         .call(dragColaSetup);
 
-			    // Add background circles for piles
-			    drawBackgroundCicle(nodeEnter, 20);	
-			    drawBackgroundCicle(nodeEnter, 10);	
+			//     // Add background circles for piles
+			//     drawBackgroundCicle(nodeEnter, 20);	
+			//     drawBackgroundCicle(nodeEnter, 10);	
 
-				// New nodes - add contents of group
-				nodeEnter.append("circle")
-			        .attr("class", function(d) { return "node-backdrop node-" + d.rtype; })
-			        .on("dblclick", nextNodeSize)
-			        ;
+			// 	// New nodes - add contents of group
+			// 	nodeEnter.append("circle")
+			//         .attr("class", function(d) { return "node-backdrop node-" + d.rtype; })
+			//         .on("dblclick", nextNodeSize)
+			//         ;
 
-			    //appendNodeLabels(nodeEnter);
-			    appendNodeLabels(nodeSelection);
+			//     //appendNodeLabels(nodeEnter);
+			//     appendNodeLabels(nodeSelection);
 
-			    return nodeEnter;  	
-			}
+			//     return nodeEnter;  	
+			// }
 
-			// Piles are currently represented as a pile of three circles.
-			// This function draws just one of them.
-			//
-			function drawBackgroundCicle(selection, offset) {
-			    selection.filter(function(d) {return ((d.rtype==='pileOfNodes') || (d.rtype==='pileOfTopics'))})
-			    	.append("circle")
-			        .attr("class", function(d) { return "node-" + d.rtype; })
-			    	.attr("cx", offset)
-			    	.attr("cy", -offset)
-			    	;						
-			}
+			// // Piles are currently represented as a pile of three circles.
+			// // This function draws just one of them.
+			// //
+			// function drawBackgroundCicle(selection, offset) {
+			//     selection.filter(function(d) {return ((d.rtype==='pileOfNodes') || (d.rtype==='pileOfTopics'))})
+			//     	.append("circle")
+			//         .attr("class", function(d) { return "node-" + d.rtype; })
+			//     	.attr("cx", offset)
+			//     	.attr("cy", -offset)
+			//     	;						
+			// }
 
-			// Determine the color of the d3 node based on the node type
-			//
-			function colourNode(node) {
-				var colorKeys = ['unknown', 'node', 'topic'];
-				var colorValues = [1, 2, 3];
+			// // Determine the color of the d3 node based on the node type
+			// //
+			// function colourNode(node) {
+			// 	var colorKeys = ['unknown', 'node', 'topic'];
+			// 	var colorValues = [1, 2, 3];
 				
-				var color = colorKeys.indexOf(node.rtype) || 0;
+			// 	var color = colorKeys.indexOf(node.rtype) || 0;
 				
-				return colorValues[color];
-			}
+			// 	return colorValues[color];
+			// }
 
-			// New slimmer update routine. This is called when nodes, links or groups are
-			// added or deleted from uiGraph. Force Constrained Graphs on d3 and webcola
-			// require the force.start() to be called on each addition / deletion.
-			// 
-			// TODO: force.start() definitely needs calling on each graph change. Should 
-			// check how much of the below D3 code actually needs calling.
-			//
+			// // New slimmer update routine. This is called when nodes, links or groups are
+			// // added or deleted from uiGraph. Force Constrained Graphs on d3 and webcola
+			// // require the force.start() to be called on each addition / deletion.
+			// // 
+			// // TODO: force.start() definitely needs calling on each graph change. Should 
+			// // check how much of the below D3 code actually needs calling.
+			// //
 
 			function uiGraphUpdate() {
-
-				console.log("uiGraphUpdate ---------------------------------");
-				
-				// Collapse nodes into piles where necessary
-				// TODO Make viewers regenerate on expand
 				collapsePiles();
-
-				// Set up groups
-				//createGroupsOnGraph(uiGraph);
-
-
-				// Hash-style topics and groups
-				// New feature - incomplete code!
-				//HashTopicManager.addStrutsToHashTopics(uiGraph);
-
-
-				// Data joins			
-				var group = svg.selectAll(".group")
-		          .data(uiGraph.groups, function(d) {return d.rosInstanceId + " " + d.title;});
-			    var link = svg.selectAll(".linkPath")
-			      .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
-				var node = svg.selectAll(".node")
-				  .data(uiGraph.nodes, function(d) {return d.name;});
-
-				// Groups
-				var groupEnter = setUpEnteringGroups(group);
-				group.exit().remove();
-			
-				// Links
-				var linkEnter = setUpEnteringLinks(link);
-				link.exit().remove();	
-
-				// Nodes
-				var nodeEnter = setUpEnteringNodes(node);
-				updateNodes(node);
-
-			    // Topic displays
-			    TopicViewer.topicDisplay(node, uiGraph);
-
-			    // Gracefully remove any exiting nodes
-				var exitingNodes = setupExitingNodes(node);								
-
-				// Start force layout
-				console.log("forced in update2");
-				resetLeavesOnAllGroups(uiGraph);
-				console.log("reset leaves");
-				forced = force
-					  .nodes(uiGraph.nodes)
-				      .links(uiGraph.links)
-					  .groups(uiGraph.groups)
-				      .symmetricDiffLinkLengths(circleRadius * 2)
-				      .start();
-				console.log(uiGraph);
-				console.log("finished forced in update2");
-
-				// Apply force to entering and updating elements
-				// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
-				
-				force.on("tick", function() {
-					graphTick(link, node, group);
-				});	
-
-				// Package tree added to menu
-				MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiFullGraph, DragDropManager, ProtocolToUiLayer);
-				//MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
-				console.log("Finished update2 --------------------------");
+				RenderUi.uiGraphUpdate();
+				MachineTreeMenu.updateMachineMenu(RenderUi.machineTreeMenu, uiFullGraph, RenderUi.DragDropManager, ProtocolToUiLayer);
 			}
 			module.uiGraphUpdate = uiGraphUpdate;
-			// This update routine can be called from outside the module
+
+			// function uiGraphUpdate() {
+
+			// 	console.log("uiGraphUpdate ---------------------------------");
+				
+			// 	// Collapse nodes into piles where necessary
+			// 	// TODO Make viewers regenerate on expand
+			// 	collapsePiles();
+
+			// 	// Set up groups
+			// 	//createGroupsOnGraph(uiGraph);
 
 
-			//////////////////////////////////////////////////////////////////
-			// Node and Topic labels
-			// These are the named labels under each circle. They represent the
-			// ROS namespace name of the node or topic. 
-			// So /foo/bar/baz is shown as a vertical stack of three labels:
-			// "foo", "bar" and "baz"
-			//////////////////////////////////////////////////////////////////
+			// 	// Hash-style topics and groups
+			// 	// New feature - incomplete code!
+			// 	//HashTopicManager.addStrutsToHashTopics(uiGraph);
 
-			// Add the labels under the nodes/topics plus any required click handlers
-			//	nodeEnter - the d3 selection for entering nodes
-			//
-			function appendNodeLabels(nodeEnter) {
-				var nodeLabels = nodeEnter.selectAll('.nodetopic-label') 
-				    .data(function(d) {
-				    	// Make a join with an array of text labels
-				    	var nameChunks = (d.rtype === "dummy") ? "" : prepareLabels(d.name, d);
-				    	return nameChunks;
-				    });
 
-				nodeLabels.enter()
-					    .append('text')
-					    .classed('nodetopic-label', true)
-					    .classed('nodetopic-label-active', function(d) {return (d.clickHandler !== null)})
-					    .text(function(d) {
-					    	return d.chunkName;
-					    })
-			    		.style("cursor", function(d) {
-			    			return d.clickHandler ? "pointer" : "default";
-			    		})
-				    	.on("click", function(d) {
-				    		if (d.clickHandler) {
-				    			d.clickHandler();
-				    		}
-			    		})
-                    	.attr("x", 0)
-            			;
+			// 	// Data joins			
+			// 	var group = svg.selectAll(".group")
+		 //          .data(uiGraph.groups, function(d) {return d.rosInstanceId + " " + d.title;});
+			//     var link = svg.selectAll(".linkPath")
+			//       .data(uiGraph.links, function(d) {return d.sourceName + "*" + d.targetName});
+			// 	var node = svg.selectAll(".node")
+			// 	  .data(uiGraph.nodes, function(d) {return d.name;});
 
-			}
+			// 	// Groups
+			// 	var groupEnter = setUpEnteringGroups(group);
+			// 	group.exit().remove();
+			
+			// 	// Links
+			// 	var linkEnter = setUpEnteringLinks(link);
+			// 	link.exit().remove();	
 
-			// Prepare an array of text labels that represent the ROS namespace
-			// So "/foo/bar/baz" becomes ["foo", "bar", "baz"]
-			// Adds click handlers as necessary for folding and unfolding.
-			// This array is used in the d3 join
-			// 	fullName - the ROS namespaced name
-			//	d - the d3 node. TODO Appears to be unused.
-			//
-			function prepareLabels(fullName, d) {
-				var prefix = '';
+			// 	// Nodes
+			// 	var nodeEnter = setUpEnteringNodes(node);
+			// 	updateNodes(node);
 
-				if (fullName.charAt(0)===' ') {
-					prefix = ' ';
-					fullName = fullName.substring(1);
-				}
-				if (fullName.charAt(0)==='/') {
-					prefix = prefix + '/';
-					fullName = fullName.substring(1);
-				}
+			//     // Topic displays
+			//     TopicViewer.topicDisplay(node, uiGraph);
 
-				var tokens = fullName.split("/"),
-					numberTokens = tokens.length,
-					nameChunks = [],
-					nameChunk = null,
-					clickHandler = null,
-					pileLevel = prefix;
+			//     // Gracefully remove any exiting nodes
+			// 	var exitingNodes = setupExitingNodes(node);								
 
-				for (var i=0; i<numberTokens; i++) {
-					pileLevel = pileLevel + ((i>0) ? '/' : '') + tokens[i];
-					nameChunk = {	
-									chunkName: tokens[i], 
-									pileLevel: pileLevel, 
-									clickHandler: null,
-									yIndex: i,
-									node: d
-								};
-					nameChunks.push(nameChunk);
-				}
+			// 	// Start force layout
+			// 	console.log("forced in update2");
+			// 	resetLeavesOnAllGroups(uiGraph);
+			// 	console.log("reset leaves");
+			// 	forced = force
+			// 		  .nodes(uiGraph.nodes)
+			// 	      .links(uiGraph.links)
+			// 		  .groups(uiGraph.groups)
+			// 	      .symmetricDiffLinkLengths(circleRadius * 2)
+			// 	      .start();
+			// 	console.log(uiGraph);
+			// 	console.log("finished forced in update2");
 
-				if (numberTokens>1) {
-					// Intermediate name chunks will fold up the namespace when clicked
-					for (var i=0; i<(numberTokens-1); i++) {
-						nameChunks[i].clickHandler = foldup;
-					}	
-					// If the last chunk is '...' then this unfolds the namespace
-					if (tokens[numberTokens-1] === '...') {
-						nameChunks[numberTokens-1].clickHandler = unfold;
-					}
-				}
-				return nameChunks;
-			}
+			// 	// Apply force to entering and updating elements
+			// 	// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
+				
+			// 	force.on("tick", function() {
+			// 		graphTick(link, node, group);
+			// 	});	
 
-			// Click handler for a node label that will "fold up" all child nodes
-			//	this - d3 node that has been clicked
-			//
-			function foldup() {
-				module.addPileUpLevel(this.pileLevel);
-				uiGraphUpdate();
-			}
+			// 	// Package tree added to menu
+			// 	MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiFullGraph, DragDropManager, ProtocolToUiLayer);
+			// 	//MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiGraph, DragDropManager, ProtocolToUiLayer);
+			// 	console.log("Finished update2 --------------------------");
+			// }
+			// module.uiGraphUpdate = uiGraphUpdate;
+			// // This update routine can be called from outside the module
 
-			// Click handler for a node label that will "unfold" child nodes
-			//	this - d3 node that has been clicked
-			//
-			function unfold() {
-				var summaryNode = this.node;
-				var levelToUnfold = this.pileLevel.substring(0, this.pileLevel.length-4);
-				unfoldPile(levelToUnfold, summaryNode);
-				uiGraphUpdate();
-			}
 
-			// Update the d3 selection of node labels in case they're on a node that's 
-			// being scaled up or down.
-			//
-			function updateNodeLabels(node) {
-			    var nodeLabels = node.selectAll(".nodetopic-label")
-					.text(function(d) {
-					    console.log("************* >>>>> Changed label in UPDATE <<<<< ****************");
-					    return d.chunkName;
-					})			   		
-					.transition()
-			   		.duration(SHRINK_DURATION)
-			    	.attr("y", function(d) {
-		            	var y = nodeRadius(d.node) + 
-		            			NODE_LABEL_TOP + 
-		            			d.yIndex * NODE_LABEL_TEXT_HEIGHT;
-        		    	return y;
-			    	});
-			}
+			// //////////////////////////////////////////////////////////////////
+			// // Node and Topic labels
+			// // These are the named labels under each circle. They represent the
+			// // ROS namespace name of the node or topic. 
+			// // So /foo/bar/baz is shown as a vertical stack of three labels:
+			// // "foo", "bar" and "baz"
+			// //////////////////////////////////////////////////////////////////
 
-			//////////////////////////////////////////////////////////////////
-			// End of Node and Topic labels
-			//////////////////////////////////////////////////////////////////
+			// // Add the labels under the nodes/topics plus any required click handlers
+			// //	nodeEnter - the d3 selection for entering nodes
+			// //
+			// function appendNodeLabels(nodeEnter) {
+			// 	var nodeLabels = nodeEnter.selectAll('.nodetopic-label') 
+			// 	    .data(function(d) {
+			// 	    	// Make a join with an array of text labels
+			// 	    	var nameChunks = (d.rtype === "dummy") ? "" : prepareLabels(d.name, d);
+			// 	    	return nameChunks;
+			// 	    });
 
-			/////////////////// Basic D3 Node setup ////////////////////////////////////
+			// 	nodeLabels.enter()
+			// 		    .append('text')
+			// 		    .classed('nodetopic-label', true)
+			// 		    .classed('nodetopic-label-active', function(d) {return (d.clickHandler !== null)})
+			// 		    .text(function(d) {
+			// 		    	return d.chunkName;
+			// 		    })
+			//     		.style("cursor", function(d) {
+			//     			return d.clickHandler ? "pointer" : "default";
+			//     		})
+			// 	    	.on("click", function(d) {
+			// 	    		if (d.clickHandler) {
+			// 	    			d.clickHandler();
+			// 	    		}
+			//     		})
+   //                  	.attr("x", 0)
+   //          			;
 
-			// This is called on every update to the graph
-			//	nodeSelection - the D3 selection of nodes, already joined.
-			//
-			function updateNodes(nodeSelection) {
-			    // view switch icons - only visible on medium and large topics
-			    switchIcons(nodeSelection);
+			// }
 
-				// Update existing nodes with transitions
-				setNodeClass(nodeSelection);
+			// // Prepare an array of text labels that represent the ROS namespace
+			// // So "/foo/bar/baz" becomes ["foo", "bar", "baz"]
+			// // Adds click handlers as necessary for folding and unfolding.
+			// // This array is used in the d3 join
+			// // 	fullName - the ROS namespaced name
+			// //	d - the d3 node. TODO Appears to be unused.
+			// //
+			// function prepareLabels(fullName, d) {
+			// 	var prefix = '';
 
-			    // Set up scaling of nodes for when user double-clicks
-			    scaleNodes(nodeSelection);
+			// 	if (fullName.charAt(0)===' ') {
+			// 		prefix = ' ';
+			// 		fullName = fullName.substring(1);
+			// 	}
+			// 	if (fullName.charAt(0)==='/') {
+			// 		prefix = prefix + '/';
+			// 		fullName = fullName.substring(1);
+			// 	}
 
-			    // Animate switch icons when scaling topic
-			    animateSwitchIcon(nodeSelection, "switch-left-icon", -1);
-			    animateSwitchIcon(nodeSelection, "switch-right-icon", 1);
+			// 	var tokens = fullName.split("/"),
+			// 		numberTokens = tokens.length,
+			// 		nameChunks = [],
+			// 		nameChunk = null,
+			// 		clickHandler = null,
+			// 		pileLevel = prefix;
 
-			    // Set up and animate node labels
-			    updateNodeLabels(nodeSelection);	
+			// 	for (var i=0; i<numberTokens; i++) {
+			// 		pileLevel = pileLevel + ((i>0) ? '/' : '') + tokens[i];
+			// 		nameChunk = {	
+			// 						chunkName: tokens[i], 
+			// 						pileLevel: pileLevel, 
+			// 						clickHandler: null,
+			// 						yIndex: i,
+			// 						node: d
+			// 					};
+			// 		nameChunks.push(nameChunk);
+			// 	}
 
-			    // Handle dying nodes
-			    setUpDyingNodes(nodeSelection);
+			// 	if (numberTokens>1) {
+			// 		// Intermediate name chunks will fold up the namespace when clicked
+			// 		for (var i=0; i<(numberTokens-1); i++) {
+			// 			nameChunks[i].clickHandler = foldup;
+			// 		}	
+			// 		// If the last chunk is '...' then this unfolds the namespace
+			// 		if (tokens[numberTokens-1] === '...') {
+			// 			nameChunks[numberTokens-1].clickHandler = unfold;
+			// 		}
+			// 	}
+			// 	return nameChunks;
+			// }
 
-			    // handle Kill Icons - only visible on large format ROS node
-			    killIcons(nodeSelection);
-			}
+			// // Click handler for a node label that will "fold up" all child nodes
+			// //	this - d3 node that has been clicked
+			// //
+			// function foldup() {
+			// 	module.addPileUpLevel(this.pileLevel);
+			// 	uiGraphUpdate();
+			// }
 
-			// Set the CSS class on a D3 node
-			//
-			function setNodeClass(nodeSelection) {
-				nodeSelection
-			        .attr("class", function(d) {
-			        	var nodeClass = "node";
-			        	if (d.nodeFormat) {
-			        		nodeClass = nodeClass + " node-format-" + d.nodeFormat;
-			        	}
-			        	return nodeClass;
-			        });						
-			}
+			// // Click handler for a node label that will "unfold" child nodes
+			// //	this - d3 node that has been clicked
+			// //
+			// function unfold() {
+			// 	var summaryNode = this.node;
+			// 	var levelToUnfold = this.pileLevel.substring(0, this.pileLevel.length-4);
+			// 	unfoldPile(levelToUnfold, summaryNode);
+			// 	uiGraphUpdate();
+			// }
 
-			// Set up scaling of nodes for when user double-clicks
-			//
-			function scaleNodes(nodeSelection) {
-				nodeSelection
-					.transition()
-					.duration(SHRINK_DURATION)
-			        .attr("width", function(d) {return nodeRadius(d) * 2;})
-			        .attr("height", function(d) {return nodeRadius(d) * 2;})
-			        .each("start", function(d) {
-			        	d.keepForceLayoutHeated = true;
-			        	force.resume();
-			        })
-			        .each("end", function(d) {
-				        d.keepForceLayoutHeated = false;
-				        d.psize = d.size;
-			        });
+			// // Update the d3 selection of node labels in case they're on a node that's 
+			// // being scaled up or down.
+			// //
+			// function updateNodeLabels(node) {
+			//     var nodeLabels = node.selectAll(".nodetopic-label")
+			// 		.text(function(d) {
+			// 		    console.log("************* >>>>> Changed label in UPDATE <<<<< ****************");
+			// 		    return d.chunkName;
+			// 		})			   		
+			// 		.transition()
+			//    		.duration(SHRINK_DURATION)
+			//     	.attr("y", function(d) {
+		 //            	var y = nodeRadius(d.node) + 
+		 //            			NODE_LABEL_TOP + 
+		 //            			d.yIndex * NODE_LABEL_TEXT_HEIGHT;
+   //      		    	return y;
+			//     	});
+			// }
 
-				nodeSelection.selectAll(".node-backdrop")
-					.classed("focus", function(d) {
-						//console.log("Checking focus on " +d.name);
-						//console.log(d.focus);
-						return (this.parentElement.__data__.focus === true);
+			// //////////////////////////////////////////////////////////////////
+			// // End of Node and Topic labels
+			// //////////////////////////////////////////////////////////////////
 
-						//return (d.focus===true);
-					})
-			   		.transition()
-			   		.duration(SHRINK_DURATION)
-			        .attr("r", function(d) {return nodeRadius(d);});
+			// /////////////////// Basic D3 Node setup ////////////////////////////////////
 
-			}
+			// // This is called on every update to the graph
+			// //	nodeSelection - the D3 selection of nodes, already joined.
+			// //
+			// function updateNodes(nodeSelection) {
+			//     // view switch icons - only visible on medium and large topics
+			//     switchIcons(nodeSelection);
 
-			// Handle focus on Nodes and Topics
-			// Double click on a node/topic captures focus
-			// TODO: Single click should capture focus too
-			//
-			function captureFocus(node) {
-				clearFocusOnAllNodes()
-				node.focus = true;
-			}
+			// 	// Update existing nodes with transitions
+			// 	setNodeClass(nodeSelection);
 
-			// Unfocus all nodes
-			//
-			function clearFocusOnAllNodes() {
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					uiGraph.nodes[i].focus = false;
-				}
-			}
+			//     // Set up scaling of nodes for when user double-clicks
+			//     scaleNodes(nodeSelection);
 
-			// These are ROS nodes that have been brutally murdered by the user by clicking
-			// on the kill icon.
-			// They die slowly, then remove themselves from uiGraph and uiFullGraph.
-			//
-			function setUpDyingNodes(nodeSelection) {
-			    // Handle dying nodes
-			    var dying = nodeSelection
-			    	.filter(function(d) {return (d.dying===true);});
-				dying.selectAll("circle")
-					.transition()
-					.duration(KILL_DURATION)
-					.attr("r", 0);								
-			    dying	
-			    		.classed("dying", false)	
-			    		.attr("opacity", 1.0)
-						.transition()
-						.duration(KILL_DURATION)
-						.attr("width", 0)
-						.attr("height", 0)
-						.attr("opacity", 0.0)
-						.each("start", function(d) {
-							d.keepForceLayoutHeated = true;
-						})
-			    		.each("end", function(d) {
-			    			removeNodeAndAssociatedLinksFromUiGraph(d);
-			    			deleteLinksFromFullGraphConnectedTo(d.name);
-							deleteNodeFromFullGraph(d.name);
-							// Trigger a graph update 
-							setTimeout(uiGraphUpdate, 100);
-			    		})
-						.remove();
-				return dying;						
-			}
+			//     // Animate switch icons when scaling topic
+			//     animateSwitchIcon(nodeSelection, "switch-left-icon", -1);
+			//     animateSwitchIcon(nodeSelection, "switch-right-icon", 1);
+
+			//     // Set up and animate node labels
+			//     updateNodeLabels(nodeSelection);	
+
+			//     // Handle dying nodes
+			//     setUpDyingNodes(nodeSelection);
+
+			//     // handle Kill Icons - only visible on large format ROS node
+			//     killIcons(nodeSelection);
+			// }
+
+			// // Set the CSS class on a D3 node
+			// //
+			// function setNodeClass(nodeSelection) {
+			// 	nodeSelection
+			//         .attr("class", function(d) {
+			//         	var nodeClass = "node";
+			//         	if (d.nodeFormat) {
+			//         		nodeClass = nodeClass + " node-format-" + d.nodeFormat;
+			//         	}
+			//         	return nodeClass;
+			//         });						
+			// }
+
+			// // Set up scaling of nodes for when user double-clicks
+			// //
+			// function scaleNodes(nodeSelection) {
+			// 	nodeSelection
+			// 		.transition()
+			// 		.duration(SHRINK_DURATION)
+			//         .attr("width", function(d) {return nodeRadius(d) * 2;})
+			//         .attr("height", function(d) {return nodeRadius(d) * 2;})
+			//         .each("start", function(d) {
+			//         	d.keepForceLayoutHeated = true;
+			//         	force.resume();
+			//         })
+			//         .each("end", function(d) {
+			// 	        d.keepForceLayoutHeated = false;
+			// 	        d.psize = d.size;
+			//         });
+
+			// 	nodeSelection.selectAll(".node-backdrop")
+			// 		.classed("focus", function(d) {
+			// 			//console.log("Checking focus on " +d.name);
+			// 			//console.log(d.focus);
+			// 			return (this.parentElement.__data__.focus === true);
+
+			// 			//return (d.focus===true);
+			// 		})
+			//    		.transition()
+			//    		.duration(SHRINK_DURATION)
+			//         .attr("r", function(d) {return nodeRadius(d);});
+
+			// }
+
+			// // Handle focus on Nodes and Topics
+			// // Double click on a node/topic captures focus
+			// // TODO: Single click should capture focus too
+			// //
+			// function captureFocus(node) {
+			// 	clearFocusOnAllNodes()
+			// 	node.focus = true;
+			// }
+
+			// // Unfocus all nodes
+			// //
+			// function clearFocusOnAllNodes() {
+			// 	for (var i=0; i<uiGraph.nodes.length; i++) {
+			// 		uiGraph.nodes[i].focus = false;
+			// 	}
+			// }
+
+			// // These are ROS nodes that have been brutally murdered by the user by clicking
+			// // on the kill icon.
+			// // They die slowly, then remove themselves from uiGraph and uiFullGraph.
+			// //
+			// function setUpDyingNodes(nodeSelection) {
+			//     // Handle dying nodes
+			//     var dying = nodeSelection
+			//     	.filter(function(d) {return (d.dying===true);});
+			// 	dying.selectAll("circle")
+			// 		.transition()
+			// 		.duration(KILL_DURATION)
+			// 		.attr("r", 0);								
+			//     dying	
+			//     		.classed("dying", false)	
+			//     		.attr("opacity", 1.0)
+			// 			.transition()
+			// 			.duration(KILL_DURATION)
+			// 			.attr("width", 0)
+			// 			.attr("height", 0)
+			// 			.attr("opacity", 0.0)
+			// 			.each("start", function(d) {
+			// 				d.keepForceLayoutHeated = true;
+			// 			})
+			//     		.each("end", function(d) {
+			//     			removeNodeAndAssociatedLinksFromUiGraph(d);
+			//     			deleteLinksFromFullGraphConnectedTo(d.name);
+			// 				deleteNodeFromFullGraph(d.name);
+			// 				// Trigger a graph update 
+			// 				setTimeout(uiGraphUpdate, 100);
+			//     		})
+			// 			.remove();
+			// 	return dying;						
+			// }
  
-			// These are d3 nodes that have been removed from the UI
-			//
-			function setupExitingNodes(nodeSelection) {
-			    // Gracefully remove any exiting nodes
-				var exitingNodes = nodeSelection.exit();
-				exitingNodes
-					.attr("opacity", 1.0)
-					.transition()
-					.duration(KILL_DURATION)
-					.attr("width", 0)
-					.attr("height", 0)
-					.attr("opacity", 0.0)
-					.remove();
-				exitingNodes.selectAll("circle")
-					.transition()
-					.duration(KILL_DURATION)
-					.attr("r", 0);		
+			// // These are d3 nodes that have been removed from the UI
+			// //
+			// function setupExitingNodes(nodeSelection) {
+			//     // Gracefully remove any exiting nodes
+			// 	var exitingNodes = nodeSelection.exit();
+			// 	exitingNodes
+			// 		.attr("opacity", 1.0)
+			// 		.transition()
+			// 		.duration(KILL_DURATION)
+			// 		.attr("width", 0)
+			// 		.attr("height", 0)
+			// 		.attr("opacity", 0.0)
+			// 		.remove();
+			// 	exitingNodes.selectAll("circle")
+			// 		.transition()
+			// 		.duration(KILL_DURATION)
+			// 		.attr("r", 0);		
 
-				return exitingNodes;						
-			}
+			// 	return exitingNodes;						
+			// }
 
-			/////////////////// End of Basic D3 Node setup ////////////////////////////////
+			// /////////////////// End of Basic D3 Node setup ////////////////////////////////
 			
-			///////////////////// Switch Icons ////////////////////////////////////////////
+			// ///////////////////// Switch Icons ////////////////////////////////////////////
 
-			// Add in switchIcons to all topics
-			// These are the < and > that swap between topic views
-			//	selection - the 'node' D3 selection
-			//
-			function switchIcons(selection) {
-				console.log("Setting up switchIcons ********************");
-				switchIcon(selection, "switch-left-icon", -1, "\ue64a");
-				switchIcon(selection, "switch-right-icon", +1, "\ue649");
-			}
+			// // Add in switchIcons to all topics
+			// // These are the < and > that swap between topic views
+			// //	selection - the 'node' D3 selection
+			// //
+			// function switchIcons(selection) {
+			// 	console.log("Setting up switchIcons ********************");
+			// 	switchIcon(selection, "switch-left-icon", -1, "\ue64a");
+			// 	switchIcon(selection, "switch-right-icon", +1, "\ue649");
+			// }
 
-			// Add switch icons to a D3 selection of topics
-			//	selection - the 'node' D3 selection
-			// 	klass - the CSS class of the type of switch icon to add
-			//	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
-			//  icon - Font Awesome icon code
-			//
-			function switchIcon(selection, klass, side, icon) {
-			    var switchIcons = selection.selectAll("." + klass)
-			    	.data(function(d) {
-			    		return topicNeedsSwitchIcons(d) ? [{hostname: d.data.hostname, size: d.size, width: d.width, viewer: d.viewer}] : []
-			    	});
+			// // Add switch icons to a D3 selection of topics
+			// //	selection - the 'node' D3 selection
+			// // 	klass - the CSS class of the type of switch icon to add
+			// //	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
+			// //  icon - Font Awesome icon code
+			// //
+			// function switchIcon(selection, klass, side, icon) {
+			//     var switchIcons = selection.selectAll("." + klass)
+			//     	.data(function(d) {
+			//     		return topicNeedsSwitchIcons(d) ? [{hostname: d.data.hostname, size: d.size, width: d.width, viewer: d.viewer}] : []
+			//     	});
 
-			    switchIcons.enter()
-			    	.append("text")
-			    		.attr("class", klass)
-			    		.attr("opacity", 0.0)
-			    		.on("click", function(d) {
-			    			if (side===-1) {
-				    			d.viewer.rotateViewLeft();
-			    			} else {
-				    			d.viewer.rotateViewRight();
-			    			}
-			    		})
-			    		.text(icon)
-			    		.style("font-family", "themify")
-			    		.style("cursor", "pointer")
-			   			.attr("text-anchor", "middle")
-			    		.attr("alignment-baseline", "middle")
-			    		.attr("stroke", "white")					    		
-			    		.transition()
-			    		.duration(SHRINK_DURATION)
-			    		.attr("opacity", 1.0)
-			    		;
+			//     switchIcons.enter()
+			//     	.append("text")
+			//     		.attr("class", klass)
+			//     		.attr("opacity", 0.0)
+			//     		.on("click", function(d) {
+			//     			if (side===-1) {
+			// 	    			d.viewer.rotateViewLeft();
+			//     			} else {
+			// 	    			d.viewer.rotateViewRight();
+			//     			}
+			//     		})
+			//     		.text(icon)
+			//     		.style("font-family", "themify")
+			//     		.style("cursor", "pointer")
+			//    			.attr("text-anchor", "middle")
+			//     		.attr("alignment-baseline", "middle")
+			//     		.attr("stroke", "white")					    		
+			//     		.transition()
+			//     		.duration(SHRINK_DURATION)
+			//     		.attr("opacity", 1.0)
+			//     		;
 
-			    switchIcons.exit().remove();	
-			}
+			//     switchIcons.exit().remove();	
+			// }
 
-			// Return TRUE if this D3 node needs a switch icon added.
-			// This is TRUE for topics that are "large" size
-			//
-			function topicNeedsSwitchIcons(d) {
-				return (((d.nodeFormat==='large')||(d.nodeFormat==='medium'))
-						&&(d.rtype==='topic')
-						&&(d.viewer)
-						&&(d.viewer.numberOfViews > 1)
-						);
-			}
+			// // Return TRUE if this D3 node needs a switch icon added.
+			// // This is TRUE for topics that are "large" size
+			// //
+			// function topicNeedsSwitchIcons(d) {
+			// 	return (((d.nodeFormat==='large')||(d.nodeFormat==='medium'))
+			// 			&&(d.rtype==='topic')
+			// 			&&(d.viewer)
+			// 			&&(d.viewer.numberOfViews > 1)
+			// 			);
+			// }
 
-			// Set up scaling animation on switch icons for when the topic is
-			// double-clicked
-			//	node - the D3 node selection
-			//	klass - the CSS class of these switch icons
-			//	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
-			//
-			function animateSwitchIcon(node, klass, side) {
-			    node.selectAll("." + klass)
-			   		.transition()
-			   		.duration(SHRINK_DURATION)
-			   		.attr("opacity", 1.0)
-			    	.attr("x", function(d) {return side * nodeRadius(d) - side * 20});						
-			}
+			// // Set up scaling animation on switch icons for when the topic is
+			// // double-clicked
+			// //	node - the D3 node selection
+			// //	klass - the CSS class of these switch icons
+			// //	side - which side the icon is on. -1 on the left hand side, +1 on the right hand side
+			// //
+			// function animateSwitchIcon(node, klass, side) {
+			//     node.selectAll("." + klass)
+			//    		.transition()
+			//    		.duration(SHRINK_DURATION)
+			//    		.attr("opacity", 1.0)
+			//     	.attr("x", function(d) {return side * nodeRadius(d) - side * 20});						
+			// }
 
-			///////////////////// End of Switch Icons /////////////////////////////////////
-
-
-			// Set up Kill Icons - only visible as an "X" on large format ROS nodes
-			//	nodeSelection - d3 selection of nodes
-			//
-			//	When the user clicks the kill icon, the UI-to-protocol layer is told
-			//	to send a kill message back to the server
-			//
-			function killIcons(nodeSelection) {
-
-				// Display on d3 nodes that are ROS nodes, large size
-			    var killIcons = nodeSelection.selectAll(".kill-icon")
-			    	.data(function(d) {
-			    		return ((d.nodeFormat==='large')&&(d.rtype==='node')&&(!d.shrinking)) ? [{hostname: d.data.hostname, pid: d.data.pid}] : []
-			    	});
-
-			    // Set up kill icons to be clickable and to make them scale when the node scales
-			    killIcons.enter()
-			    	.append("text")
-			    	.attr("class", "kill-icon")
-			    	.attr("opacity", 0.0)
-			    	.on("click", function(d) {
-			    		console.log("Sending kill message to UI layer with hostname " + d.hostname + " PID " + d.pid);
-			    		ProtocolToUiLayer.kill(d.hostname, d.pid);
-			    	})
-			    	.transition()
-			    	.duration(SHRINK_DURATION)
-			    	.attr("opacity", 1.0)
-			    	.attr("y", function(d) {return 4 * nodeRadius(d); });
-
-			    // Remove exitting kill icons (when node is removed)
-			    killIcons.exit().remove();	
-
-			    // Actual click icon is a boring "X"
-			    killIcons
-			    	.text("\ue646")
-			    	.style("font-family", "themify")
-			   		.attr("text-anchor", "middle")
-			    	.attr("alignment-baseline", "middle")
-			    	.attr("stroke", "white");
-			}
-
-			function nodeRadius(d) {
-				var size = d.size || 0;
-
-				return (size + 1) * circleRadius;
-			}
-
-			// Called by d3 when a user double-clicks on a node to expand it.
-			//	d - the node being clicked
-			//	i - node index (not currently used)
-			//
-			function nextNodeSize(d, i) {
-				// Don't expand dummies
-				if (d.rtype==='dummy') {
-					return;
-				}
-				// The first click will expand a node
-				d.size = d.size || 0;
-				// Save the previous size
-				d.psize = d.size;
-				// Decide whether we're getting bigger or smaller
-				d.scaling = d.scaling || "expanding";
-				if (d.scaling==="expanding") {
-					d.size += 2;
-					if (d.size>4) {
-						d.size = 2;
-						d.scaling = "shrinking";
-					}
-				} else {
-					d.size -= 2;
-					if (d.size < 0) {
-						d.size = 2;
-						d.scaling = "expanding";
-					}
-				}
-				// User has clicked on circle but uiGraph is bound to parent 
-				// group, so copy the data.
-				var parentDatum = this.parentElement.__data__;
-				parentDatum.size = d.size;
-				parentDatum.scaling = d.scaling;
-				captureFocus(parentDatum);
-				setNodeFormatFromSize(d);
-				setNodeFormatFromSize(parentDatum);
-				// This is stop the double-click triggering a zoom
-				d3.event.stopPropagation();
-				// Now update what needs updating on the layout
-				var node = svg.selectAll(".node")
-				  .data(uiGraph.nodes, function(d) {return d.name;});
-				updateNodes(node);
-			    TopicViewer.topicDisplay(node, uiGraph);
-			}
-
-			// d.size is an integer 0, 1, 2, 3 etc. that will by multiplied to define the
-			// actual radius on screen
-			// d.nodeFormat is a string "small", "medium", "large" that determines the levels
-			// of functionality the node with have
-			// this function doncvert d.size into d.nodeFormat
-			//
-			function setNodeFormatFromSize(d) {
-				var NODE_SIZE_TO_FORMAT = ['small', 'small', 'medium', 'medium', 'large', 'large'];
-				d.nodeFormat = NODE_SIZE_TO_FORMAT[d.size]; 
-			}
-
-			// A dummy node is placed inside an empty "machine" group and removed
-			// once any real node is added. Groups can't contain zero leaves and still
-			// show up on the screen.
-			//
-			function createDummyNode(name) {
-				return {	"name" : name, 
-								"rtype": "dummy", 
-								"x": 0, 
-								"y": 0, 
-								"size": 0, 
-								"width": 50, 
-								"height": 50
-						};
-			}
+			// ///////////////////// End of Switch Icons /////////////////////////////////////
 
 
-			////////////////////////////////////////////////////
-			// User interaction callbacks
-			////////////////////////////////////////////////////
+			// // Set up Kill Icons - only visible as an "X" on large format ROS nodes
+			// //	nodeSelection - d3 selection of nodes
+			// //
+			// //	When the user clicks the kill icon, the UI-to-protocol layer is told
+			// //	to send a kill message back to the server
+			// //
+			// function killIcons(nodeSelection) {
+
+			// 	// Display on d3 nodes that are ROS nodes, large size
+			//     var killIcons = nodeSelection.selectAll(".kill-icon")
+			//     	.data(function(d) {
+			//     		return ((d.nodeFormat==='large')&&(d.rtype==='node')&&(!d.shrinking)) ? [{hostname: d.data.hostname, pid: d.data.pid}] : []
+			//     	});
+
+			//     // Set up kill icons to be clickable and to make them scale when the node scales
+			//     killIcons.enter()
+			//     	.append("text")
+			//     	.attr("class", "kill-icon")
+			//     	.attr("opacity", 0.0)
+			//     	.on("click", function(d) {
+			//     		console.log("Sending kill message to UI layer with hostname " + d.hostname + " PID " + d.pid);
+			//     		ProtocolToUiLayer.kill(d.hostname, d.pid);
+			//     	})
+			//     	.transition()
+			//     	.duration(SHRINK_DURATION)
+			//     	.attr("opacity", 1.0)
+			//     	.attr("y", function(d) {return 4 * nodeRadius(d); });
+
+			//     // Remove exitting kill icons (when node is removed)
+			//     killIcons.exit().remove();	
+
+			//     // Actual click icon is a boring "X"
+			//     killIcons
+			//     	.text("\ue646")
+			//     	.style("font-family", "themify")
+			//    		.attr("text-anchor", "middle")
+			//     	.attr("alignment-baseline", "middle")
+			//     	.attr("stroke", "white");
+			// }
+
+			// function nodeRadius(d) {
+			// 	var size = d.size || 0;
+
+			// 	return (size + 1) * circleRadius;
+			// }
+
+			// // Called by d3 when a user double-clicks on a node to expand it.
+			// //	d - the node being clicked
+			// //	i - node index (not currently used)
+			// //
+			// function nextNodeSize(d, i) {
+			// 	// Don't expand dummies
+			// 	if (d.rtype==='dummy') {
+			// 		return;
+			// 	}
+			// 	// The first click will expand a node
+			// 	d.size = d.size || 0;
+			// 	// Save the previous size
+			// 	d.psize = d.size;
+			// 	// Decide whether we're getting bigger or smaller
+			// 	d.scaling = d.scaling || "expanding";
+			// 	if (d.scaling==="expanding") {
+			// 		d.size += 2;
+			// 		if (d.size>4) {
+			// 			d.size = 2;
+			// 			d.scaling = "shrinking";
+			// 		}
+			// 	} else {
+			// 		d.size -= 2;
+			// 		if (d.size < 0) {
+			// 			d.size = 2;
+			// 			d.scaling = "expanding";
+			// 		}
+			// 	}
+			// 	// User has clicked on circle but uiGraph is bound to parent 
+			// 	// group, so copy the data.
+			// 	var parentDatum = this.parentElement.__data__;
+			// 	parentDatum.size = d.size;
+			// 	parentDatum.scaling = d.scaling;
+			// 	captureFocus(parentDatum);
+			// 	setNodeFormatFromSize(d);
+			// 	setNodeFormatFromSize(parentDatum);
+			// 	// This is stop the double-click triggering a zoom
+			// 	d3.event.stopPropagation();
+			// 	// Now update what needs updating on the layout
+			// 	var node = svg.selectAll(".node")
+			// 	  .data(uiGraph.nodes, function(d) {return d.name;});
+			// 	updateNodes(node);
+			//     TopicViewer.topicDisplay(node, uiGraph);
+			// }
+
+			// // d.size is an integer 0, 1, 2, 3 etc. that will by multiplied to define the
+			// // actual radius on screen
+			// // d.nodeFormat is a string "small", "medium", "large" that determines the levels
+			// // of functionality the node with have
+			// // this function doncvert d.size into d.nodeFormat
+			// //
+			// function setNodeFormatFromSize(d) {
+			// 	var NODE_SIZE_TO_FORMAT = ['small', 'small', 'medium', 'medium', 'large', 'large'];
+			// 	d.nodeFormat = NODE_SIZE_TO_FORMAT[d.size]; 
+			// }
+
+			// // A dummy node is placed inside an empty "machine" group and removed
+			// // once any real node is added. Groups can't contain zero leaves and still
+			// // show up on the screen.
+			// //
+			// function createDummyNode(name) {
+			// 	return {	"name" : name, 
+			// 					"rtype": "dummy", 
+			// 					"x": 0, 
+			// 					"y": 0, 
+			// 					"size": 0, 
+			// 					"width": 50, 
+			// 					"height": 50
+			// 			};
+			// }
+
+
+			// ////////////////////////////////////////////////////
+			// // User interaction callbacks
+			// ////////////////////////////////////////////////////
 			
-			// Dependencies: margin, force
+			// // Dependencies: margin, force
 			
-			// Called by d3 When a user zooms or pans
-			// Change the window the user is observing onto the graph
-			// Also tell the topic viewers as they may have to move their canvases
-			//
-			function zoomAndPan() {
-			  svg.attr("transform", "translate(" + (d3.event.translate[0] + margin.left) + "," + (d3.event.translate[1] + margin.top) + ")");
-			  TopicViewer.zoomAndPan();
-			}	
+			// // Called by d3 When a user zooms or pans
+			// // Change the window the user is observing onto the graph
+			// // Also tell the topic viewers as they may have to move their canvases
+			// //
+			// function zoomAndPan() {
+			//   svg.attr("transform", "translate(" + (d3.event.translate[0] + margin.left) + "," + (d3.event.translate[1] + margin.top) + ")");
+			//   TopicViewer.zoomAndPan();
+			// }	
 			
-			// Called by d3 when a user starts to drag a node
-			// Stop event propagating through to the background (otherwise it will also do 
-			// zoom or drag)
-			// Stop the node drifting during the drag
-			//	d - the node that's being dragged
-			//
-			function dragstarted(d) {
-				d3.event.sourceEvent.stopPropagation();
-				d.fixed |= 2; // set bit 2
-	            d.px = d.x, d.py = d.y; // set velocity to zero			            
-			}
+			// // Called by d3 when a user starts to drag a node
+			// // Stop event propagating through to the background (otherwise it will also do 
+			// // zoom or drag)
+			// // Stop the node drifting during the drag
+			// //	d - the node that's being dragged
+			// //
+			// function dragstarted(d) {
+			// 	d3.event.sourceEvent.stopPropagation();
+			// 	d.fixed |= 2; // set bit 2
+	  //           d.px = d.x, d.py = d.y; // set velocity to zero			            
+			// }
 
-			// Called by d3 during the drag
-			// Set the node position from the user's cursor
-			//	d - the node that's being dragged
-			//
-			function draggedCola(d) {
-		      d.px = d3.event.x, d.py = d3.event.y;               
-			  d3.select(this).attr("transform", function(d) { return "translate(" + d3.event.x + "," + d3.event.y + ")"});
+			// // Called by d3 during the drag
+			// // Set the node position from the user's cursor
+			// //	d - the node that's being dragged
+			// //
+			// function draggedCola(d) {
+		 //      d.px = d3.event.x, d.py = d3.event.y;               
+			//   d3.select(this).attr("transform", function(d) { return "translate(" + d3.event.x + "," + d3.event.y + ")"});
 
-			  force.resume();
-			}
+			//   force.resume();
+			// }
 
-			// Called by d3 when the drag ends
-			//	d - the node that's being dragged
-			//
-			function dragended(d) {
-			  d3.select(this).classed("dragging", false);
-			}
+			// // Called by d3 when the drag ends
+			// //	d - the node that's being dragged
+			// //
+			// function dragended(d) {
+			//   d3.select(this).classed("dragging", false);
+			// }
 
 			////////////////////////////////////////////////////
 			// API for protocol layer to call
@@ -1074,7 +1088,8 @@ var LuxUi = (function() {
 				console.log("========= uiGraphAdd to " + rosInstanceId + " =========");
 
 				// Stop force-constrained graph during update. May not be necessary.
-				force.stop();
+				//force.stop();
+				RenderUi.forceStop();
 
 				console.log(update);
 
@@ -1154,37 +1169,11 @@ var LuxUi = (function() {
 			//
 			function uiGraphClear() {
 				console.log("Clearing uiGraph and uiFullGraph");
-				if (INCREMENTAL_SYSTEM) {
-					uiFullGraph.groups = [];
-					uiFullGraph.links = [];
-					uiFullGraph.nodes = [];
-					uiFullGraph.machines = [];
-					if (!uiGraph.groups) {
-						uiGraph.groups = [];
-					} else {
-						emptyArray(uiGraph.groups);
-					}
-					if (!uiGraph.links) {
-						uiGraph.links = [];
-					} else {
-						emptyArray(uiGraph.links);
-					}
-					if (!uiGraph.nodes) {
-						uiGraph.nodes = [];
-					} else {
-						emptyArray(uiGraph.nodes);
-					}
-					if (!uiGraph.machines) {
-						uiGraph.machines = [];
-					} else {
-						emptyArray(uiGraph.machines);
-					}
-				} else {
-					uiGraph.groups = uiFullGraph.groups = [];
-					uiGraph.links = uiFullGraph.links = [];
-					uiGraph.nodes = uiFullGraph.nodes = [];
-					uiGraph.machines = uiFullGraph.machines = [];
-				}
+				uiFullGraph.groups = [];
+				uiFullGraph.links = [];
+				uiFullGraph.nodes = [];
+				uiFullGraph.machines = [];
+				RenderUi.clearGraph();
 			}
 
 			// Copy data received in server update to the uiFullGraphNode
@@ -1196,14 +1185,6 @@ var LuxUi = (function() {
 				uiFullGraphNode.data.type = updateNode.data.type;
 			}
 		
-			// Remove all items in the array
-			// We don't want to overwrite the array with [] because d3 has a reference to
-			// it.
-			//
-			function emptyArray(array) {
-				array.splice(0, array.length);
-			}
-			
 			// ======================= DEBUGGING FUNCTIONS ==============================
 
 			// Useful for debugging. Send the various graphs we maintain to the browser console.
@@ -1211,7 +1192,7 @@ var LuxUi = (function() {
 			function uiGraphPrint() {
 				LuxUiToProtocol.printServerGraph();
 				printGraph(uiFullGraph, "uiFullGraph");
-				printGraph(uiGraph, "uiGraph");
+				printGraph(RenderUi.uiGraph, "uiGraph");
 			}
 
 			// print a graph to the console, giving it a title.
@@ -1229,22 +1210,6 @@ var LuxUi = (function() {
 				console.log(graph.groups);
 				console.log(graph.machines);
 				console.log(".....................................");
-			}
-
-			// Find a named node in uiGraph. Useful to call from the browser console.
-			//
-			module.findANode = function(name) {
-				var found = false;
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					if (name === uiGraph.nodes[i].name) {
-						console.log("FOUND! " + i);
-						console.log(uiGraph.nodes[i]);
-						found = true;
-					}
-				}
-				if (!found) {
-					console.log("not found");
-				}
 			}
 
 			// ======================= End of DEBUGGING FUNCTIONS =======================
@@ -1317,8 +1282,8 @@ var LuxUi = (function() {
 
 				// Check how many visible nodes belong to this level
 				// pileLevel = " /foo" will count " /foo", " /foo/bar" etc.
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					if (matchesLevel(uiGraph.nodes[i]['name'], pileLevel)) {
+				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
+					if (matchesLevel(RenderUi.uiGraph.nodes[i]['name'], pileLevel)) {
 						pilePointsFound++;
 					}
 				}
@@ -1348,7 +1313,7 @@ var LuxUi = (function() {
 			//
 			function modifyAndConsolidateLinksToPointToSummaryNode(pileLevel) {
 				// Modify and consolidate any links to point to summary node
-				var index = uiGraph.links.length;
+				var index = RenderUi.uiGraph.links.length;
 				while (index--) {
 					// Alter targets to consolidated node
 					modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel);
@@ -1363,7 +1328,7 @@ var LuxUi = (function() {
 			//
 			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel) {
 
-				var link = uiGraph.links[index],
+				var link = RenderUi.uiGraph.links[index],
 					consolidatedNodeName = pileLevel + '/...',
 					matchesLevelSource = matchesLevel(link.sourceName, pileLevel),
 					matchesLevelTarget = matchesLevel(link.targetName, pileLevel);
@@ -1377,15 +1342,15 @@ var LuxUi = (function() {
 						value: 15
 					};
 					// Remove existing link
-					uiGraph.links.splice(index, 1);
+					RenderUi.uiGraph.links.splice(index, 1);
 
 					// Detect if link is duplicate
 					var itsADuplicate = false;
 
 					// Now go through all other links and see if they duplicate this new link
-					var j = uiGraph.links.length;
+					var j = RenderUi.uiGraph.links.length;
 					while (j--) {
-						var linkCursor = uiGraph.links[j];
+						var linkCursor = RenderUi.uiGraph.links[j];
 						if ((j !== index) &&
 							(linkCursor.sourceName === newLink.sourceName) &&
 							(linkCursor.targetName === newLink.targetName)) {
@@ -1395,15 +1360,15 @@ var LuxUi = (function() {
 					}
 					// If a similar link already exists, then don't need to add it
 					if (!itsADuplicate) {
-						uiGraph.links.push(newLink);
+						RenderUi.uiGraph.links.push(newLink);
 					}
 				}
 			}
 
 			function connectNewLinksToPile(nodeToTransformIntoPile, consolidatedNodeName) {
 				var link;
-				for (var j=0; j<uiGraph.links.length; j++) {
-					link = uiGraph.links[j];
+				for (var j=0; j<RenderUi.uiGraph.links.length; j++) {
+					link = RenderUi.uiGraph.links[j];
 					if (link.sourceName === consolidatedNodeName) {
 						link.source = nodeToTransformIntoPile;
 					}
@@ -1419,7 +1384,7 @@ var LuxUi = (function() {
 			function removeMatchingNodesAndGetSummaryNode(pileLevel, targetNodeName) {
 				// Remove any matching nodes except the first	
 				var pilePointsFound = 0,
-					index = uiGraph.nodes.length,
+					index = RenderUi.uiGraph.nodes.length,
 					nodeName = null,
 					thisIsTheNodeToPreserve = null,
 					nodeToTransformIntoPile = null;
@@ -1428,13 +1393,13 @@ var LuxUi = (function() {
 				// figure out a node which can provide position data for the summary node
 				// (The node that the user selects becomes the summary)	
 				//
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					nodeName = uiGraph.nodes[i]['name'];
+				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
+					nodeName = RenderUi.uiGraph.nodes[i]['name'];
 					if (matchesLevel(nodeName, pileLevel)&&(nodeName.substring(-3)!=='...')) {
 						pilePointsFound++;
 						thisIsTheNodeToPreserve = targetNodeName ? (nodeName === targetNodeName) : (pilePointsFound === 1);
 						if (thisIsTheNodeToPreserve) {
-							nodeToTransformIntoPile = uiGraph.nodes[i];
+							nodeToTransformIntoPile = RenderUi.uiGraph.nodes[i];
 						}
 					}
 				}	
@@ -1456,14 +1421,14 @@ var LuxUi = (function() {
 
 				// Delete any nodes in this pileLevel
 				while (index--) {
-					nodeName = uiGraph.nodes[index]['name'];
+					nodeName = RenderUi.uiGraph.nodes[index]['name'];
 					if (matchesLevel(nodeName, pileLevel)) {
-						deleteNodeFromGraph(uiGraph, nodeName);
+						deleteNodeFromGraph(RenderUi.uiGraph, nodeName);
 					}
 				}
 
 				// ... and add the single summary node in their place
-				uiGraph.nodes.push(summaryNode);
+				RenderUi.uiGraph.nodes.push(summaryNode);
 
 				// Switch uiNode pointer on parent to summaryNode
 				var parentNode = nodeToTransformIntoPile.parentNode;
@@ -1778,11 +1743,11 @@ var LuxUi = (function() {
 			//
 			function removeNodeFromUi(nodeToDelete) {
 				//removeFromNameSpaceTree(node);
-				var i = uiGraph.nodes.length;
+				var i = RenderUi.uiGraph.nodes.length;
 				while (i--) {
-					var node = uiGraph.nodes[i];
+					var node = RenderUi.uiGraph.nodes[i];
 					if (node === nodeToDelete) {
-						uiGraph.nodes.splice(i, 1);
+						RenderUi.uiGraph.nodes.splice(i, 1);
 					}
 				}
 			}
@@ -1803,7 +1768,7 @@ var LuxUi = (function() {
 			//	node - reference to node object
 			//
 			function moveNodeFromIncompleteToUiGraph(node) {
-				uiGraph.nodes.push(node);
+				RenderUi.uiGraph.nodes.push(node);
 				addNodeToMatchingMachineGroups(node);
 				deleteNodeFromGraph(uiGraphIncomplete, node.name);
 			}
@@ -1849,7 +1814,7 @@ var LuxUi = (function() {
 			//
 			function removeNodeAndAssociatedLinksFromUiGraph(targetNode) {
 				removeNodeFromAnyGroups(targetNode);
-				deleteLinksFromGraphConnectedToNode(targetNode, uiGraph);
+				deleteLinksFromGraphConnectedToNode(targetNode, RenderUi.uiGraph);
 				removeGroupIfLastNodeOfGroup(targetNode);
 				removeNode(targetNode);	
 				removeNodeFromParent(targetNode);
@@ -1861,7 +1826,7 @@ var LuxUi = (function() {
 			//
 			function removeNode(targetNode) {
 				removeFromNameSpaceTree(targetNode.name);
-				removeNodeFromGraph(targetNode, uiGraph);
+				removeNodeFromGraph(targetNode, RenderUi.uiGraph);
 			}
 
 			// There's a reference to the uiNode on the parent node in uiFullGraph
@@ -1902,7 +1867,7 @@ var LuxUi = (function() {
 				var parent = targetNode.parentNode;
 				if ((parent)&&(parent.hashTopicOrigin)&&(parent.uiNodes.length===1)) {
 					var groupIndex = targetNode.group;
-					removeGroupFromUi(uiGraph.groups[groupIndex]);
+					removeGroupFromUi(RenderUi.uiGraph.groups[groupIndex]);
 				}
 			}
 
@@ -1995,18 +1960,18 @@ var LuxUi = (function() {
 				return "";
 			}
 
-			// Get the index of a node on a graph
-			//	node - reference to node object
-			//	graph - reference to uiGraph, uiFullGraph or uiGraphIncomplete
-			//
-			function getNodeIndex(node, graph) {
-				for (var i=0; i<graph.nodes.length; i++) {
-					if (node === graph.nodes[i]) {
-						return i;
-					}
-				}
-				return -1;
-			}
+			// // Get the index of a node on a graph
+			// //	node - reference to node object
+			// //	graph - reference to uiGraph, uiFullGraph or uiGraphIncomplete
+			// //
+			// function getNodeIndex(node, graph) {
+			// 	for (var i=0; i<graph.nodes.length; i++) {
+			// 		if (node === graph.nodes[i]) {
+			// 			return i;
+			// 		}
+			// 	}
+			// 	return -1;
+			// }
 
 			// Find the index of a named node
 			//	graph - reference to uiGraph, uiFullGraph or uiGraphIncomplete
@@ -2025,11 +1990,12 @@ var LuxUi = (function() {
 			//	- Create a TopicViewer if it's a topic
 			//
 			var setUpNewNode = function(node, rosInstanceId) {
-				node.rosInstanceId = rosInstanceId;
-				node.size = node.psize = 0;
-				node.width = node.height = circleRadius;
-				node.uiNodes = [];
-				setNodeFormatFromSize(node);
+				// node.rosInstanceId = rosInstanceId;
+				// node.size = node.psize = 0;
+				// node.width = node.height = circleRadius;
+				// node.uiNodes = [];
+				RenderUi.setUpNewNode(node, rosInstanceId);
+				RenderUi.setNodeFormatFromSize(node);
 			}
 			module.setUpNewNode = setUpNewNode;
 			// Can be called from hashTopicManager (incomplete)
@@ -2064,9 +2030,9 @@ var LuxUi = (function() {
 			// 	nameNodeToKill - ROS name of node/topic to kill
 			//
 			function triggerNodeDeath(nameNodeToKill) {
-				for (var j=0; j<uiGraph.nodes.length; j++) {
-					if (uiGraph.nodes[j].name === nameNodeToKill) {
-						uiGraph.nodes[j].dying = true;
+				for (var j=0; j<RenderUi.uiGraph.nodes.length; j++) {
+					if (RenderUi.uiGraph.nodes[j].name === nameNodeToKill) {
+						RenderUi.uiGraph.nodes[j].dying = true;
 						console.log("set dying on " + nameNodeToKill);
 					}	
 				}							
@@ -2153,7 +2119,7 @@ var LuxUi = (function() {
 				if (shouldNodeWithNameBeDisplayed(sourceName) &&
 					shouldNodeWithNameBeDisplayed(sourceName)) {
 					var newLink = copyLink(link);
-					uiGraph.links.push(newLink);	
+					RenderUi.uiGraph.links.push(newLink);	
 
 					return true;						
 				}
@@ -2197,8 +2163,8 @@ var LuxUi = (function() {
 			// the linkage.
 			//
 			function linkIsReadyForDisplay(link) {
-				link['source'] = findNodeInGraph(uiGraph, link['sourceName']);
-				link['target'] = findNodeInGraph(uiGraph, link['targetName']);
+				link['source'] = findNodeInGraph(RenderUi.uiGraph, link['sourceName']);
+				link['target'] = findNodeInGraph(RenderUi.uiGraph, link['targetName']);
 
 				return ((link['source']!=-1) && (link['target']!=-1));
 			}
@@ -2378,11 +2344,11 @@ var LuxUi = (function() {
 			function removeGroupFromUi(targetGroup) {
 				var dummyNode = removeDummyNodesFromGroup(targetGroup);
 				removeNodeFromUi(dummyNode);
-				for (var i=0; i<uiGraph.groups.length; i++) {
-					var group = uiGraph.groups[i];
+				for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
+					var group = RenderUi.uiGraph.groups[i];
 					console.log(group);
 					if (group === targetGroup) {
-						uiGraph.groups.splice(i, 1);
+						RenderUi.uiGraph.groups.splice(i, 1);
 						return;
 					}
 				}
@@ -2393,34 +2359,34 @@ var LuxUi = (function() {
 			//	group - group to move
 			//
 			function copyGroupToIncompleteGraph(group) {
-				var uiGroup = copyGroup(group);
+				var uiGroup = RenderUi.copyGroup(group);
 				uiGraphIncomplete.groups.push(uiGroup);
 
 				return uiGroup;
 			}
 
-			function copyGroup(group) {
-				// Copy array
-				var leaves = [];
-				for (var i=0; i<group.leaves.length; i++) {
-					var leaf = group.leaves[i];
-					leaves.push(leaf);
-				}
+			// function copyGroup(group) {
+			// 	// Copy array
+			// 	var leaves = [];
+			// 	for (var i=0; i<group.leaves.length; i++) {
+			// 		var leaf = group.leaves[i];
+			// 		leaves.push(leaf);
+			// 	}
 
-				// Copy group and add d3 specific padding
-				var uiGroup = {
-								leaves: leaves,
-								title: group.title,
-								gtype: group.gtype,
-								padding: circleRadius,
-								rosInstanceId: group.rosInstanceId
-							   };
-				if (group.hostname) {
-					uiGroup.hostname = group.hostname;
-				}			   
+			// 	// Copy group and add d3 specific padding
+			// 	var uiGroup = {
+			// 					leaves: leaves,
+			// 					title: group.title,
+			// 					gtype: group.gtype,
+			// 					padding: circleRadius,
+			// 					rosInstanceId: group.rosInstanceId
+			// 				   };
+			// 	if (group.hostname) {
+			// 		uiGroup.hostname = group.hostname;
+			// 	}			   
 
-				return uiGroup;				
-			}
+			// 	return uiGroup;				
+			// }
 
 			// For group to be ready to display, all leaves must be ready to display
 			//	uiGroup - group that we want to display
@@ -2447,8 +2413,8 @@ var LuxUi = (function() {
 				}
 
 				// If it's an object reference, see if node is on uiGraph
-				for (var i=0; i<uiGraph.nodes.length; i++) {
-					var node = uiGraph.nodes[i];
+				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
+					var node = RenderUi.uiGraph.nodes[i];
 					if (node === leaf) {
 						return true;
 					}
@@ -2461,7 +2427,7 @@ var LuxUi = (function() {
 			//	uiGroup - group that we want to display
 			//	
 			function moveGroupFromIncompleteToUiGraph(uiGroup) {
-				uiGraph.groups.push(uiGroup);
+				RenderUi.uiGraph.groups.push(uiGroup);
 
 				var i = uiGraphIncomplete.groups.length;
 				while (i--) {
@@ -2583,7 +2549,7 @@ var LuxUi = (function() {
 			//
 			function removeNodeFromAnyGroups(node) {
 
-				var nodeIndex = findNodeByNameOnGraph(node.name, uiGraph);
+				var nodeIndex = findNodeByNameOnGraph(node.name, RenderUi.uiGraph);
 				if (nodeIndex<0) {
 					console.log("Can't remove non-existant node: " + node.name);
 					return;
@@ -2591,44 +2557,44 @@ var LuxUi = (function() {
 				}
 
 				// A node could theoretically be in multiple groups
-				for (var g=0; g<uiGraph.groups.length; g++) {
-					var group = uiGraph.groups[g];
+				for (var g=0; g<RenderUi.uiGraph.groups.length; g++) {
+					var group = RenderUi.uiGraph.groups[g];
 
 					removeNodeFromGroup(node, group);
-					addDummyToGroupIfNecessary(group, uiGraph);
+					addDummyToGroupIfNecessary(group, RenderUi.uiGraph);
 				}
 			}
 
-			// Workaround for a bug in WebCola
-			// https://github.com/tgdwyer/WebCola/issues/140
-			function resetLeavesOnAllGroups(graph) {
-				for (var g=0; g<graph.groups.length; g++) {
-					var group = graph.groups[g];
-					resetLeavesOnGroup(group, graph);
-				}
-			}
+			// // Workaround for a bug in WebCola
+			// // https://github.com/tgdwyer/WebCola/issues/140
+			// function resetLeavesOnAllGroups(graph) {
+			// 	for (var g=0; g<graph.groups.length; g++) {
+			// 		var group = graph.groups[g];
+			// 		resetLeavesOnGroup(group, graph);
+			// 	}
+			// }
 
-			// Convert the leaves on a group from references to indexes.
-			// Hopefully can remove this one day when webcole is fixed.
-			//
-			function resetLeavesOnGroup(group, graph) { 
-				var index;
-				for (var l=0; l<group.leaves.length; l++) {
-					var leaf = group.leaves[l];
-					if (typeof leaf === "object") {
-						index = getNodeIndex(leaf, graph);
-						if (index<0) {
-							console.log(group);
-							console.log(l);
-							console.log(leaf);
-							console.log(graph);
-							throw "Node not found in resetLeavesOnGroup()";
-						}	
-						group.leaves[l] = index;	
-						//console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
-					}
-				}
-			}
+			// // Convert the leaves on a group from references to indexes.
+			// // Hopefully can remove this one day when webcole is fixed.
+			// //
+			// function resetLeavesOnGroup(group, graph) { 
+			// 	var index;
+			// 	for (var l=0; l<group.leaves.length; l++) {
+			// 		var leaf = group.leaves[l];
+			// 		if (typeof leaf === "object") {
+			// 			index = getNodeIndex(leaf, graph);
+			// 			if (index<0) {
+			// 				console.log(group);
+			// 				console.log(l);
+			// 				console.log(leaf);
+			// 				console.log(graph);
+			// 				throw "Node not found in resetLeavesOnGroup()";
+			// 			}	
+			// 			group.leaves[l] = index;	
+			// 			//console.log("Reset leaf " + l.toString() + " to " + index + " = " + graph.nodes[index].name + " on group " + group.title);
+			// 		}
+			// 	}
+			// }
 
 			// Functions to manipulate MACHINES on the data graphs ==================
 			//
@@ -2678,12 +2644,12 @@ var LuxUi = (function() {
 			//	
 			function createGroupForMachine(machine) {
 				var machineName = (machine.hostname || "unknown"),
-					existingNodes = nodesWithHostnameOnGraph(machineName, uiGraph);
+					existingNodes = nodesWithHostnameOnGraph(machineName, RenderUi.uiGraph);
 
 				// If there are no nodes in this group then make a dummy one
 				if (existingNodes.length === 0)	{
 					var dummyNode = createDummyNode("/dummy" + machineName);
-					uiGraph.nodes.push(dummyNode);
+					RenderUi.uiGraph.nodes.push(dummyNode);
 					existingNodes.push(dummyNode);
 				}
 
@@ -2709,8 +2675,8 @@ var LuxUi = (function() {
 				var found = false;
 
 				// Look for matching nodes. Remove any dummy nodes if we add a real one
-				for (var i=0; i<uiGraph.groups.length; i++) {
-					var group = uiGraph.groups[i];
+				for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
+					var group = RenderUi.uiGraph.groups[i];
 					if (hostname === group.hostname) {
 						console.log("ADDING NODE " + node.name + " TO GROUP " + group.hostname);
 						addNodeToGroupOnUiGraph(node, group);
@@ -2797,20 +2763,20 @@ var LuxUi = (function() {
 			//
 			function removeOrphanedTopics() {
 				if (FilterOrphanedTopics) {
-					var i = uiGraph.nodes.length;
+					var i = RenderUi.uiGraph.nodes.length;
 					while (i--) {
-  						if (uiGraph.nodes[i]['rtype']==='topic') {
-    						var e = uiGraph.links.length,
-        					nodeName = uiGraph.nodes[i]['name'],
+  						if (RenderUi.uiGraph.nodes[i]['rtype']==='topic') {
+    						var e = RenderUi.uiGraph.links.length,
+        					nodeName = RenderUi.uiGraph.nodes[i]['name'],
         					found = false;
     						while (e--) {
-      							if ((uiGraph.links[e].sourceName === nodeName) || (uiGraph.links[e].targetName === nodeName)) {
+      							if ((RenderUi.uiGraph.links[e].sourceName === nodeName) || (RenderUi.uiGraph.links[e].targetName === nodeName)) {
         							found = true;
         							break;
       							}
     						}
     						if (!found) {
-    							deleteNodeFromGraph(uiGraph, nodeName);
+    							deleteNodeFromGraph(RenderUi.uiGraph, nodeName);
     						}
   						}
 					}
