@@ -21,7 +21,8 @@ var TopicViewer = (function() {
                             'diffRobotControlTopicView', 
                             'jointStateHashTopicView',
                             'floorPoseTopicView',
-                            'imuSimpleTopicView'
+                            'imuSimpleTopicView',
+                             LuxUi.TopicViews.ImageView
                             ];
         var NUMBER_GENERIC_VIEWS = 1,
             SHRINK_DURATION = null;
@@ -37,10 +38,10 @@ var TopicViewer = (function() {
             //"tf2_msgs/TFMessage" : ['two3DGraphsTopicView', 'test3DTopicView'],
             "sensor_msgs/foo" : ['two3DGraphsTopicView', 'test3DTopicView'],
             //"sensor_msgs/foo" : ['test3DTopicView'],            
-            
             "sensor_msgs/JointState" : ['two3DGraphsTopicView', 'test3DTopicView', 'jointStateHashTopicView'],
             //"sensor_msgs/Imu" : ['imuSimpleTopicView'],
-            "nav_msgs/Odometry" : ['floorPoseTopicView']
+            "nav_msgs/Odometry" : ['floorPoseTopicView'],
+            "sensor_msgs/Image" : [LuxUi.TopicViews.ImageView],
         };
 
     	// "Class methods" called from UI.
@@ -68,8 +69,13 @@ var TopicViewer = (function() {
     	module.tick = function() {
             // Call tick() for each view_type
             for (var v=0; v<VIEW_TYPES.length; v++) {
-                var viewTypeName = VIEW_TYPES[v];
-                this[viewTypeName].tick();
+                var viewOrTypeName = VIEW_TYPES[v];
+
+                if (typeof viewOrTypeName === 'string') {
+                  this[viewOrTypeName].tick();
+                } else {
+                  viewOrTypeName.tick();
+                }
             }
     	};
 
@@ -96,8 +102,12 @@ var TopicViewer = (function() {
         //
         module.updateCurrentViews = function(selection, uiGraph) {
             for (var v=0; v<VIEW_TYPES.length; v++) {
-                var viewName = VIEW_TYPES[v];
-                this[viewName].updateViews(selection, uiGraph);
+                var viewOrName = VIEW_TYPES[v];
+                if (typeof viewOrName === 'string') {
+                  this[viewOrName].updateViews(selection, uiGraph);
+                } else {
+                  viewOrName.updateViews(selection, uiGraph);
+                }
             }
         };
 
@@ -144,7 +154,15 @@ var TopicViewer = (function() {
                     availableViews = ViewsAvailable[that.messageType];
                     for (var i=0; i<availableViews.length; i++) {
                         // Call constructor (no 'new')
-                        var view = TopicViewer[availableViews[i]](viewSpec);
+                        var view;
+                        if (typeof availableViews[i] === 'string') {
+                          view = TopicViewer[availableViews[i]](viewSpec);
+                        } else {
+                          var viewClass = availableViews[i];
+                          viewClass.injectUpdateViews(updateCanvasesForViewType);
+                          view = new viewClass(viewSpec);
+                        }
+
                         that.views.push(view);
                     }
                 } else {

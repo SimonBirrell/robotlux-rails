@@ -24,6 +24,16 @@ describe("Topic Viewer", function() {
 		expect(topicViewer.numberOfViews).toEqual(1);
 	});
 
+	describe("given a topic for type sensor_msgs/Image", function() {
+		it("creates a new ImageView", function() {
+			var topicNode = {name: 'foo', data: {type: 'sensor_msgs/Image'}},
+			topicViewer = new TopicViewer.TopicViewer(topicNode);
+
+			var newView = topicViewer.views[topicViewer.views.length - 1];
+			expect(newView.viewType).toEqual('ImageView');
+		});
+	});
+
 	describe("sensor_msgs/foo", function() {
 
 		beforeEach(function() { 
