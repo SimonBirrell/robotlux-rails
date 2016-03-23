@@ -15,15 +15,21 @@ var RenderUi = (function() {
 	var NODE_PADDING_WIDTH = 30;
 	var NODE_PADDING_HEIGHT = 30;
 
+	// Callbacks to save
+	var CallbackUnfoldPile,
+		CallbackAddPileUpLevel,
+		CallbackCollapsePiles;
+
 	// Global variables to this module
 	var uiGraph = {nodes: [], links: [], groups: [], machines: []};
 	var svg;
-	var dragColaSetup = {};
+	var dragColaSetup;
 	var force;
 	var circleRadius = 32;
 	var forced;
 	var machineTreeMenu = {};
 	var DragDropManager = {};
+	var margin;
 
 	// End of global variables
 
@@ -32,7 +38,12 @@ var RenderUi = (function() {
 	module.DragDropManager = DragDropManager;
 	// End of externally accessible variables 
 
-	module.open = function() {
+	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles) {
+
+		// Save callbacks
+		CallbackUnfoldPile = callbackUnfoldPile;
+		CallbackAddPileUpLevel = callbackAddPileUpLevel;
+		CallbackCollapsePiles = collapsePiles;
 
 		// Basic parameters
 		var width = 1500,
@@ -59,7 +70,7 @@ var RenderUi = (function() {
 			;
 
 		// The margin of the viewing area
-		var margin = {top: 200, right: 20, bottom: 20, left: 300},
+		margin = {top: 200, right: 20, bottom: 20, left: 300},
 		    width = width - margin.right - margin.left,
 		    height = height - margin.top - margin.bottom;
 
@@ -568,7 +579,8 @@ var RenderUi = (function() {
 	//	this - d3 node that has been clicked
 	//
 	function foldup() {
-		module.addPileUpLevel(this.pileLevel);
+		CallbackAddPileUpLevel(this.pileLevel);
+		CallbackCollapsePiles();
 		uiGraphUpdate();
 	}
 
@@ -578,7 +590,7 @@ var RenderUi = (function() {
 	function unfold() {
 		var summaryNode = this.node;
 		var levelToUnfold = this.pileLevel.substring(0, this.pileLevel.length-4);
-		unfoldPile(levelToUnfold, summaryNode);
+		CallbackUnfoldPile(levelToUnfold, summaryNode);
 		uiGraphUpdate();
 	}
 
@@ -1098,6 +1110,30 @@ var RenderUi = (function() {
 		}
 		return -1;
 	}
+
+	// Create a new d3 group and add an array of nodes as the leaves.
+	// 	existingNodes - an array of nodes that should be on uiGraph
+	//	title - the name of the group TODO: Add a label to the display
+	//	groupType - right now, we only have "machine" as a groupType
+	//
+	function createNewGroup(existingNodes, title, groupType, rosInstanceId) {
+		//var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
+
+		var newGroup = {
+						//leaves: indexNodes, 
+						leaves: existingNodes,
+						title: title,
+						gtype: groupType,
+						padding: circleRadius,
+						rosInstanceId: rosInstanceId
+					   };
+		if (groupType==="machine") {
+			newGroup.hostname = title;
+		}
+
+		return newGroup;
+	}
+	module.createNewGroup = createNewGroup;
 
     return module;
 })();

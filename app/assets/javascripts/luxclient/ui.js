@@ -115,7 +115,7 @@ var LuxUi = (function() {
 
 			ProtocolToUiLayer = protocolToUiLayer;
 
-			RenderUi.open();
+			RenderUi.open(unfoldPile, addPileUpLevel, collapsePiles);
 
 			// // Basic parameters
 			// var width = 1500,
@@ -1237,7 +1237,9 @@ var LuxUi = (function() {
 			//	targetNodeName - unused? TODO
 			// Note trailing / added to level
 			//
-			module.addPileUpLevel = function(level, targetNodeName) {
+			function addPileUpLevel(level, targetNodeName) {
+				console.log("addPileUpLevel: " + level);
+				console.log(targetNodeName);
 				for (var i=0; i<PilePoints.length; i++) {
 					var pilePoint = PilePoints[i];
 					if (pilePoint[0] === level + "/") {
@@ -1246,6 +1248,7 @@ var LuxUi = (function() {
 				}
 				PilePoints.push([level, targetNodeName]);
 			};
+			module.addPileUpLevel = addPileUpLevel;
 
 				// Call this when unfolding a name space and showing the individual nodes
 				// again.
@@ -1592,7 +1595,7 @@ var LuxUi = (function() {
 						addNodeLinksToUI(node);
 					}
 				}
-			}
+			} 
 
 			// =============== GRAPH MANIPULATION FUNCTIONS =========================
 			//
@@ -2458,28 +2461,28 @@ var LuxUi = (function() {
 				}
 			}
 
-			// Create a new d3 group and add an array of nodes as the leaves.
-			// 	existingNodes - an array of nodes that should be on uiGraph
-			//	title - the name of the group TODO: Add a label to the display
-			//	groupType - right now, we only have "machine" as a groupType
-			//
-			function createNewGroup(existingNodes, title, groupType, rosInstanceId) {
-				//var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
+			// // Create a new d3 group and add an array of nodes as the leaves.
+			// // 	existingNodes - an array of nodes that should be on uiGraph
+			// //	title - the name of the group TODO: Add a label to the display
+			// //	groupType - right now, we only have "machine" as a groupType
+			// //
+			// function createNewGroup(existingNodes, title, groupType, rosInstanceId) {
+			// 	//var indexNodes = convertNodesToIndexes(existingNodes, uiGraph);
 
-				var newGroup = {
-								//leaves: indexNodes, 
-								leaves: existingNodes,
-								title: title,
-								gtype: groupType,
-								padding: circleRadius,
-								rosInstanceId: rosInstanceId
-							   };
-				if (groupType==="machine") {
-					newGroup.hostname = title;
-				}
+			// 	var newGroup = {
+			// 					//leaves: indexNodes, 
+			// 					leaves: existingNodes,
+			// 					title: title,
+			// 					gtype: groupType,
+			// 					padding: circleRadius,
+			// 					rosInstanceId: rosInstanceId
+			// 				   };
+			// 	if (groupType==="machine") {
+			// 		newGroup.hostname = title;
+			// 	}
 
-				return newGroup;
-			}
+			// 	return newGroup;
+			// }
 
 			// Add a single node to an existing group on uiGraph
 			//	node - reference to node object on uiGraph
@@ -2654,7 +2657,7 @@ var LuxUi = (function() {
 				}
 
 				// Create the group and add it to uiGraph
-				var group = createNewGroup(existingNodes, machineName, "machine", machine.rosInstanceId);
+				var group = RenderUi.createNewGroup(existingNodes, machineName, "machine", machine.rosInstanceId);
 				var uiGroup = addGroupToUi(group);
 				uiGroup.rosInstanceId = machine.rosInstanceId;
 				machine.group = uiGroup;
