@@ -18,7 +18,8 @@ var RenderUi = (function() {
 	// Callbacks to save
 	var CallbackUnfoldPile,
 		CallbackAddPileUpLevel,
-		CallbackCollapsePiles;
+		CallbackCollapsePiles,
+		CallbackKill;
 
 	// Global variables to this module
 	var uiGraph = {nodes: [], links: [], groups: [], machines: []};
@@ -33,12 +34,13 @@ var RenderUi = (function() {
 
 	// End of global variables
 
-	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles) {
+	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles, kill) {
 
 		// Save callbacks
 		CallbackUnfoldPile = callbackUnfoldPile;
 		CallbackAddPileUpLevel = callbackAddPileUpLevel;
 		CallbackCollapsePiles = collapsePiles;
+		CallbackKill = kill;
 
 		// Basic parameters
 		var width = 1500,
@@ -859,7 +861,7 @@ var RenderUi = (function() {
 	    	.attr("opacity", 0.0)
 	    	.on("click", function(d) {
 	    		console.log("Sending kill message to UI layer with hostname " + d.hostname + " PID " + d.pid);
-	    		ProtocolToUiLayer.kill(d.hostname, d.pid);
+	    		CallbackKill(d.hostname, d.pid);
 	    	})
 	    	.transition()
 	    	.duration(SHRINK_DURATION)
