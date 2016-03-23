@@ -204,7 +204,6 @@ var MachineTreeMenu = (function() {
 		//					a hostname that is the place to do rosrun / roslaunch in the real world.
 		//
 		function droppedDraggableItemOntoGroup(draggedItem, dropTarget) {
-			console.log(draggedItem);
 			if (draggedItem.node_type === 'node') {
 				ProtocolToUiLayer.rosrun(dropTarget.hostname, draggedItem.package, draggedItem.name);
 			} else if (draggedItem.node_type === 'launch') {

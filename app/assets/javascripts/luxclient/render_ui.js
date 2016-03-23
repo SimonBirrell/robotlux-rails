@@ -28,15 +28,10 @@ var RenderUi = (function() {
 	var circleRadius = 32;
 	var forced;
 	var machineTreeMenu = {};
-	var DragDropManager = {};
+	var DragDropManager;
 	var margin;
 
 	// End of global variables
-
-	// Externally accessible variables - TEMPORARY //
-	module.uiGraph = uiGraph;
-	module.DragDropManager = DragDropManager;
-	// End of externally accessible variables 
 
 	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles) {
 
@@ -130,7 +125,8 @@ var RenderUi = (function() {
 				if (!this.droppable) return false;
 					return true;
 			}
-		}		
+		}	
+		module.DragDropManager = DragDropManager;	
 
 	} // End of open()
 
@@ -591,6 +587,7 @@ var RenderUi = (function() {
 		var summaryNode = this.node;
 		var levelToUnfold = this.pileLevel.substring(0, this.pileLevel.length-4);
 		CallbackUnfoldPile(levelToUnfold, summaryNode);
+		CallbackCollapsePiles();
 		uiGraphUpdate();
 	}
 
@@ -1134,6 +1131,11 @@ var RenderUi = (function() {
 		return newGroup;
 	}
 	module.createNewGroup = createNewGroup;
+
+	// Externally accessible variables - TEMPORARY //
+	module.uiGraph = uiGraph;
+	module.DragDropManager = DragDropManager;
+	// End of externally accessible variables 
 
     return module;
 })();

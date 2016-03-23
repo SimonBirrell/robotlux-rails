@@ -1498,6 +1498,10 @@ var LuxUi = (function() {
 				var token, level,
 					levels = listOfLevels(nodeName);
 
+						console.log(NameSpaceTree);
+						console.log(nodeName);
+						console.log(levels);
+
 				for (var i=0; i<levels.length; i++) {
 					level = levels[i];
 					if (level in NameSpaceTree) {
