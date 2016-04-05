@@ -103,7 +103,9 @@ var LuxUi = (function() {
 
 			ProtocolToUiLayer = protocolToUiLayer;
 
-			RenderUi.open(unfoldPile, addPileUpLevel, collapsePiles, ProtocolToUiLayer.kill);
+			RenderUi.open(unfoldPile, addPileUpLevel, collapsePiles, 
+						  ProtocolToUiLayer.kill, removeNodeAndAssociatedLinksFromUiGraph,
+						  removeNodeAndAssociatedLinksFromFullGraph);
 
 			// These two graphs handle nodes before they are actually displayed
 			//	uiFullGraph - This is a copy of all the nodes/topics/links on the server,
@@ -808,20 +810,20 @@ var LuxUi = (function() {
 				}
 			}
 
-			// Remove a node from uiGraph and the display.
-			// 	nodeToDelete - reference to the node object on uiGraph
-			// This does not delete the associated links.
-			//
-			function removeNodeFromUi(nodeToDelete) {
-				//removeFromNameSpaceTree(node);
-				var i = RenderUi.uiGraph.nodes.length;
-				while (i--) {
-					var node = RenderUi.uiGraph.nodes[i];
-					if (node === nodeToDelete) {
-						RenderUi.uiGraph.nodes.splice(i, 1);
-					}
-				}
-			}
+			// // Remove a node from uiGraph and the display.
+			// // 	nodeToDelete - reference to the node object on uiGraph
+			// // This does not delete the associated links.
+			// //
+			// function removeNodeFromUi(nodeToDelete) {
+			// 	//removeFromNameSpaceTree(node);
+			// 	var i = RenderUi.uiGraph.nodes.length;
+			// 	while (i--) {
+			// 		var node = RenderUi.uiGraph.nodes[i];
+			// 		if (node === nodeToDelete) {
+			// 			RenderUi.uiGraph.nodes.splice(i, 1);
+			// 		}
+			// 	}
+			// }
 
 			// Make a copy of a node from uiFullGraph and place it in uiGraphIncomplete
 			// ready for moving to uiGraph
@@ -884,11 +886,18 @@ var LuxUi = (function() {
 			//	targetNode - reference to node object
 			//
 			function removeNodeAndAssociatedLinksFromUiGraph(targetNode) {
+				console.log("removeNodeAndAssociatedLinksFromUiGraph");
+				console.log(targetNode);
 				removeNodeFromAnyGroups(targetNode);
 				deleteLinksFromGraphConnectedToNode(targetNode, RenderUi.uiGraph);
 				removeGroupIfLastNodeOfGroup(targetNode);
 				removeNode(targetNode);	
 				removeNodeFromParent(targetNode);
+			}
+
+			function removeNodeAndAssociatedLinksFromFullGraph(name) {
+	    		deleteLinksFromFullGraphConnectedTo(name);
+				deleteNodeFromFullGraph(name);
 			}
 
 			// Remove node from uiGraph
@@ -938,7 +947,7 @@ var LuxUi = (function() {
 				var parent = targetNode.parentNode;
 				if ((parent)&&(parent.hashTopicOrigin)&&(parent.uiNodes.length===1)) {
 					var groupIndex = targetNode.group;
-					removeGroupFromUi(RenderUi.uiGraph.groups[groupIndex]);
+					RenderUi.removeGroupFromUi(RenderUi.uiGraph.groups[groupIndex]);
 				}
 			}
 
@@ -1396,21 +1405,21 @@ var LuxUi = (function() {
 			}
 			module.addGroupToUi = addGroupToUi;
 
-			// Completely remove group and amy dummy nodes from uiGraph
-			//	targetGroup - reference to group to delete
-			//
-			function removeGroupFromUi(targetGroup) {
-				var dummyNode = removeDummyNodesFromGroup(targetGroup);
-				removeNodeFromUi(dummyNode);
-				for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
-					var group = RenderUi.uiGraph.groups[i];
-					console.log(group);
-					if (group === targetGroup) {
-						RenderUi.uiGraph.groups.splice(i, 1);
-						return;
-					}
-				}
-			}
+			// // Completely remove group and amy dummy nodes from uiGraph
+			// //	targetGroup - reference to group to delete
+			// //
+			// function removeGroupFromUi(targetGroup) {
+			// 	var dummyNode = RenderUi.removeDummyNodesFromGroup(targetGroup);
+			// 	RenderUi.removeNodeFromUi(dummyNode);
+			// 	for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
+			// 		var group = RenderUi.uiGraph.groups[i];
+			// 		console.log(group);
+			// 		if (group === targetGroup) {
+			// 			RenderUi.uiGraph.groups.splice(i, 1);
+			// 			return;
+			// 		}
+			// 	}
+			// }
 
 			// Copy a group to the incomplete graph
 			// Groups will sit here until all their leaves are displayable
@@ -1563,21 +1572,6 @@ var LuxUi = (function() {
 				group.leaves.push(dummyNode);
 			}
 
-			// Remove any unneeded dummies from a group. Once a "real" node has been added
-			// there's no need to keep the dummy.
-			//	group - reference to group object
-			//
-			function removeDummyNodesFromGroup(group) {
-				var i = group.leaves.length;
-				while (i--) {
-					var leaf = group.leaves[i];
-					if (leaf.rtype === "dummy") {
-						group.leaves.splice(i, 1);
-						return leaf;
-					}
-				}
-			}
-
 			// Remove node from any groups on uiGraph and add a dummy node instead
 			// if the group would otherwise be empty.
 			//	node - reference to node object
@@ -1623,7 +1617,7 @@ var LuxUi = (function() {
 			//	targetMachine - reference to machine on uiFullGraph
 			//
 			function removeMachineFromAllGraphs(targetMachine) {
-				removeGroupFromUi(targetMachine.group);
+				RenderUi.removeGroupFromUi(targetMachine.group);
 				for (var i=0; i<uiFullGraph.machines.length; i++) {
 					var machine = uiFullGraph.machines[i];
 					if (machine === targetMachine) {
@@ -1684,7 +1678,7 @@ var LuxUi = (function() {
 					if (hostname === group.hostname) {
 						console.log("ADDING NODE " + node.name + " TO GROUP " + group.hostname);
 						addNodeToGroupOnUiGraph(node, group);
-						removeDummyNodesFromGroup(group);
+						RenderUi.removeDummyNodesFromGroup(group);
 						found = true;
 					} 
 				}

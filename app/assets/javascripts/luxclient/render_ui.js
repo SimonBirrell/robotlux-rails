@@ -19,7 +19,9 @@ var RenderUi = (function() {
 	var CallbackUnfoldPile,
 		CallbackAddPileUpLevel,
 		CallbackCollapsePiles,
-		CallbackKill;
+		CallbackKill,
+		CallbackRemoveNodeAndAssociatedLinksFromUiGraph,
+		CallbackRemoveNodeAndAssociatedLinksFromFullGraph;
 
 	// Global variables to this module
 	var uiGraph = {nodes: [], links: [], groups: [], machines: []};
@@ -34,13 +36,15 @@ var RenderUi = (function() {
 
 	// End of global variables
 
-	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles, kill) {
+	module.open = function(callbackUnfoldPile, callbackAddPileUpLevel, collapsePiles, kill, removeNodeAndAssociatedLinksFromUiGraph, removeNodeAndAssociatedLinksFromFullGraph) {
 
 		// Save callbacks
 		CallbackUnfoldPile = callbackUnfoldPile;
 		CallbackAddPileUpLevel = callbackAddPileUpLevel;
 		CallbackCollapsePiles = collapsePiles;
 		CallbackKill = kill;
+		CallbackRemoveNodeAndAssociatedLinksFromUiGraph = removeNodeAndAssociatedLinksFromUiGraph;
+		CallbackRemoveNodeAndAssociatedLinksFromFullGraph = removeNodeAndAssociatedLinksFromFullGraph;
 
 		// Basic parameters
 		var width = 1500,
@@ -730,9 +734,12 @@ var RenderUi = (function() {
 					d.keepForceLayoutHeated = true;
 				})
 	    		.each("end", function(d) {
-	    			removeNodeAndAssociatedLinksFromUiGraph(d);
-	    			deleteLinksFromFullGraphConnectedTo(d.name);
-					deleteNodeFromFullGraph(d.name);
+	    			console.log("setUpDyingNodes");
+	    			console.log(d);
+	    			CallbackRemoveNodeAndAssociatedLinksFromUiGraph(d);
+	    			//deleteLinksFromFullGraphConnectedTo(d.name);
+					//deleteNodeFromFullGraph(d.name);
+					CallbackRemoveNodeAndAssociatedLinksFromFullGraph(d.name);
 					// Trigger a graph update 
 					setTimeout(uiGraphUpdate, 100);
 	    		})
@@ -1133,6 +1140,55 @@ var RenderUi = (function() {
 		return newGroup;
 	}
 	module.createNewGroup = createNewGroup;
+
+	// Remove a node from uiGraph and the display.
+	// 	nodeToDelete - reference to the node object on uiGraph
+	// This does not delete the associated links.
+	//
+	function removeNodeFromUi(nodeToDelete) {
+		//removeFromNameSpaceTree(node);
+		var i = RenderUi.uiGraph.nodes.length;
+		while (i--) {
+			var node = RenderUi.uiGraph.nodes[i];
+			if (node === nodeToDelete) {
+				RenderUi.uiGraph.nodes.splice(i, 1);
+			}
+		}
+	}
+	module.removeNodeFromUi = removeNodeFromUi;
+
+	// Completely remove group and amy dummy nodes from uiGraph
+	//	targetGroup - reference to group to delete
+	//
+	function removeGroupFromUi(targetGroup) {
+		var dummyNode = RenderUi.removeDummyNodesFromGroup(targetGroup);
+		RenderUi.removeNodeFromUi(dummyNode);
+		for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
+			var group = RenderUi.uiGraph.groups[i];
+			console.log(group);
+			if (group === targetGroup) {
+				RenderUi.uiGraph.groups.splice(i, 1);
+				return;
+			}
+		}
+	}
+	module.removeGroupFromUi = removeGroupFromUi;
+
+	// Remove any unneeded dummies from a group. Once a "real" node has been added
+	// there's no need to keep the dummy.
+	//	group - reference to group object
+	//
+	function removeDummyNodesFromGroup(group) {
+		var i = group.leaves.length;
+		while (i--) {
+			var leaf = group.leaves[i];
+			if (leaf.rtype === "dummy") {
+				group.leaves.splice(i, 1);
+				return leaf;
+			}
+		}
+	}
+	module.removeDummyNodesFromGroup = removeDummyNodesFromGroup;
 
 	// Externally accessible variables - TEMPORARY //
 	module.uiGraph = uiGraph;
