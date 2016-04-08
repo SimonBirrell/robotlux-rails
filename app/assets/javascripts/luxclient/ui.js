@@ -132,8 +132,6 @@ var LuxUi = (function() {
 				collapsePiles();
 				RenderUi.uiGraphUpdate();
 				MachineTreeMenu.updateMachineMenu(RenderUi.machineTreeMenu, uiFullGraph, RenderUi.DragDropManager, ProtocolToUiLayer);
-				console.log("Finishing uiGraphUpdate() in ui.js");
-				console.log(RenderUi.uiGraph.links.length);
 			}
 			module.uiGraphUpdate = uiGraphUpdate;
 
@@ -202,7 +200,7 @@ var LuxUi = (function() {
 			function uiGraphDel(update, rosInstanceId) {
 				for (var i=0; i<update.nodes.length; i++) {
 					var nameNodeToDelete = update.nodes[i];
-					triggerNodeDeath(nameNodeToDelete);
+					RenderUi.triggerNodeDeath(nameNodeToDelete);
 					removeFromNameSpaceTree(nameNodeToDelete);
 				}
 				uiGraphUpdate();
@@ -354,11 +352,12 @@ var LuxUi = (function() {
 
 				// Check how many visible nodes belong to this level
 				// pileLevel = " /foo" will count " /foo", " /foo/bar" etc.
-				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
-					if (matchesLevel(RenderUi.uiGraph.nodes[i]['name'], pileLevel)) {
+				RenderUi.iterateDownUiNodes(function(node, nodeName) {
+					if (matchesLevel(nodeName, pileLevel)) {
 						pilePointsFound++;
-					}
-				}
+					}					
+				});
+
 				// Only consolidate if there's more than one
 				if (pilePointsFound>1) {
 					collapseNodesInPileLevel(pileLevel);
@@ -384,12 +383,10 @@ var LuxUi = (function() {
 			// and prune all the others.
 			//
 			function modifyAndConsolidateLinksToPointToSummaryNode(pileLevel) {
-				// Modify and consolidate any links to point to summary node
-				var index = RenderUi.uiGraph.links.length;
-				while (index--) {
+				RenderUi.iterateDownUiLinks(function(link, index) {
 					// Alter targets to consolidated node
-					modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel);
-				}	
+					modifyAndConsolidateLinkAtIndexToPointToSummaryNode(link, index, pileLevel);
+				});
 			}
 
 			// Returns TRUE if nodeName is a pile 
@@ -405,9 +402,9 @@ var LuxUi = (function() {
 			// add to the list of links.
 			// TODO dodgy logic?
 			//
-			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(index, pileLevel) {
+			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(link, index, pileLevel) {
 
-				var link = RenderUi.uiGraph.links[index],
+				var //link = RenderUi.uiGraph.links[index],
 					consolidatedNodeName = pileLevel + '/...',
 					matchesLevelSource = (matchesLevel(link.sourceName, pileLevel) && !nodeNameIsAPile(link.sourceName)),
 					matchesLevelTarget = (matchesLevel(link.targetName, pileLevel) && !nodeNameIsAPile(link.targetName));
@@ -428,16 +425,15 @@ var LuxUi = (function() {
 					var itsADuplicate = false;
 
 					// Now go through all other links and see if they duplicate this new link
-					var j = RenderUi.uiGraph.links.length;
-					while (j--) {
-						var linkCursor = RenderUi.uiGraph.links[j];
+					RenderUi.iterateDownUiLinks(function(linkCursor, j) {
 						if ((j !== index) &&
 							(linkCursor.sourceName === newLink.sourceName) &&
 							(linkCursor.targetName === newLink.targetName)) {
 							itsADuplicate = true;
-							break;
-						}
-					}
+							//break;
+						}						
+					});
+
 					// If a similar link already exists, then don't need to add it
 					if (!itsADuplicate) {
 						RenderUi.uiGraph.links.push(newLink);
@@ -452,15 +448,24 @@ var LuxUi = (function() {
 				var link,
 					nodeToTransformIntoPile=null;
 
-				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
-					var node = RenderUi.uiGraph.nodes[i];
-					if (node.name === consolidatedNodeName) {
+				RenderUi.iterateDownUiNodes(function(node, nodeName, i) {
+					if (nodeName === consolidatedNodeName) {
 						nodeToTransformIntoPile = node;
-						break;
-					}
-				}
+					}					
+				});
 
 				if (nodeToTransformIntoPile) {
+
+					RenderUi.iterateDownUiLinks(function(link, index) {
+						if (link.sourceName === consolidatedNodeName) {
+							link.source = nodeToTransformIntoPile;
+						}
+						if (link.targetName === consolidatedNodeName) {
+							link.target = nodeToTransformIntoPile;
+						}
+					});
+
+					/*
 					for (var j=0; j<RenderUi.uiGraph.links.length; j++) {
 						link = RenderUi.uiGraph.links[j];
 						if (link.sourceName === consolidatedNodeName) {
@@ -469,8 +474,11 @@ var LuxUi = (function() {
 						if (link.targetName === consolidatedNodeName) {
 							link.target = nodeToTransformIntoPile;
 						}
-					}					
+					}	
+					*/				
 				}
+
+
 			}					
 
 			// Eliminate the individual nodes in a pilelevel and replace them with a summary node
@@ -479,7 +487,6 @@ var LuxUi = (function() {
 			function removeMatchingNodesAndGetSummaryNode(pileLevel) {
 				// Remove any matching nodes except the first	
 				var pilePointsFound = 0,
-					index = RenderUi.uiGraph.nodes.length,
 					nodeName = null,
 					thisIsTheNodeToPreserve = null,
 					nodeToTransformIntoPile = null,
@@ -489,18 +496,18 @@ var LuxUi = (function() {
 				// figure out a node which can provide position data for the summary node
 				// (The node that the user selects becomes the summary)	
 				//
-				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
-					nodeName = RenderUi.uiGraph.nodes[i]['name'];
+
+				
+				RenderUi.iterateUpUiNodes(function(node, nodeName, i) {
 					if (matchesLevel(nodeName, pileLevel)&&(nodeName!==pileLevel+'/...')) {
-					//if (matchesLevel(nodeName, pileLevel)&&(nodeName.substring(-3)!=='...')&&(nodeName!==pileLevel+'/...')) {
 						pilePointsFound++;
 						thisIsTheNodeToPreserve = (pilePointsFound === 1);
 						if (thisIsTheNodeToPreserve) {
-							nodeToTransformIntoPile = RenderUi.uiGraph.nodes[i];
+							nodeToTransformIntoPile = node;
 						}
 					}
-				}	
-
+				});
+												
 				// Only if we found a node to transform into a pile
 				if (nodeToTransformIntoPile) {
 					// Create a summary node
@@ -520,12 +527,11 @@ var LuxUi = (function() {
 				}	
 
 				// Delete any nodes in this pileLevel
-				while (index--) {
-					nodeName = RenderUi.uiGraph.nodes[index]['name'];
+				RenderUi.iterateDownUiNodes(function(node, nodeName, i) {
 					if (matchesLevel(nodeName, pileLevel)&&(nodeName!==pileLevel+'/...')) {
 						deleteNodeFromGraph(RenderUi.uiGraph, nodeName);
 					}
-				}
+				});
 
 				if (nodeToTransformIntoPile) {
 					// ... and add the single summary node in their place
@@ -844,21 +850,6 @@ var LuxUi = (function() {
 				}
 			}
 
-			// // Remove a node from uiGraph and the display.
-			// // 	nodeToDelete - reference to the node object on uiGraph
-			// // This does not delete the associated links.
-			// //
-			// function removeNodeFromUi(nodeToDelete) {
-			// 	//removeFromNameSpaceTree(node);
-			// 	var i = RenderUi.uiGraph.nodes.length;
-			// 	while (i--) {
-			// 		var node = RenderUi.uiGraph.nodes[i];
-			// 		if (node === nodeToDelete) {
-			// 			RenderUi.uiGraph.nodes.splice(i, 1);
-			// 		}
-			// 	}
-			// }
-
 			// Make a copy of a node from uiFullGraph and place it in uiGraphIncomplete
 			// ready for moving to uiGraph
 			//	node - reference to node object
@@ -1127,19 +1118,6 @@ var LuxUi = (function() {
 				deleteNodeFromGraph(uiFullGraph, nameNodeToDelete);	
 			};
 
-			// Set a flag on the node that will start a node dying.
-			// This will trigger a "kill" animation in d3.
-			// 	nameNodeToKill - ROS name of node/topic to kill
-			//
-			function triggerNodeDeath(nameNodeToKill) {
-				for (var j=0; j<RenderUi.uiGraph.nodes.length; j++) {
-					if (RenderUi.uiGraph.nodes[j].name === nameNodeToKill) {
-						RenderUi.uiGraph.nodes[j].dying = true;
-						console.log("set dying on " + nameNodeToKill);
-					}	
-				}							
-			}
-			
 			// Functions to manipulate LINKS on the data graphs ====================
 			//
 
@@ -1445,22 +1423,6 @@ var LuxUi = (function() {
 				return uiGroup;
 			}
 			module.addGroupToUi = addGroupToUi;
-
-			// // Completely remove group and amy dummy nodes from uiGraph
-			// //	targetGroup - reference to group to delete
-			// //
-			// function removeGroupFromUi(targetGroup) {
-			// 	var dummyNode = RenderUi.removeDummyNodesFromGroup(targetGroup);
-			// 	RenderUi.removeNodeFromUi(dummyNode);
-			// 	for (var i=0; i<RenderUi.uiGraph.groups.length; i++) {
-			// 		var group = RenderUi.uiGraph.groups[i];
-			// 		console.log(group);
-			// 		if (group === targetGroup) {
-			// 			RenderUi.uiGraph.groups.splice(i, 1);
-			// 			return;
-			// 		}
-			// 	}
-			// }
 
 			// Copy a group to the incomplete graph
 			// Groups will sit here until all their leaves are displayable
@@ -1795,13 +1757,15 @@ var LuxUi = (function() {
 				}
 			}
 
+/*
 			// When you delete a ROS node on ROS, the associated topics seem to hang around
 			// for a while. These are "orphaned topics" and we try not to show them.
 			// TODO: There is an argument for filtering these on the ROS end of things, not the
-			// client.
+			// client. 
 			//
 			function removeOrphanedTopics() {
 				if (FilterOrphanedTopics) {
+
 					var i = RenderUi.uiGraph.nodes.length;
 					while (i--) {
   						if (RenderUi.uiGraph.nodes[i]['rtype']==='topic') {
@@ -1819,8 +1783,10 @@ var LuxUi = (function() {
     						}
   						}
 					}
+
 				}	
 			};
+*/
 
 			// TODO Clean up. hashTopic code unfinished.
 			function updateNodeOnUiGraph(uiFullGraphNode) {

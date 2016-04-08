@@ -849,6 +849,20 @@ var RenderUi = (function() {
 	///////////////////// End of Switch Icons /////////////////////////////////////
 
 
+	// Set a flag on the node that will start a node dying.
+	// This will trigger a "kill" animation in d3.
+	// 	nameNodeToKill - ROS name of node/topic to kill
+	//
+	function triggerNodeDeath(nameNodeToKill) {
+		for (var j=0; j<uiGraph.nodes.length; j++) {
+			if (uiGraph.nodes[j].name === nameNodeToKill) {
+				uiGraph.nodes[j].dying = true;
+				console.log("set dying on " + nameNodeToKill);
+			}	
+		}							
+	}
+	module.triggerNodeDeath = triggerNodeDeath;
+
 	// Set up Kill Icons - only visible as an "X" on large format ROS nodes
 	//	nodeSelection - d3 selection of nodes
 	//
@@ -1032,6 +1046,51 @@ var RenderUi = (function() {
 	}
 
 	// ======================= End of DEBUGGING FUNCTIONS =======================
+
+	// ======================= Access to uiGraph ================================
+
+	// Call callback once per node
+	// callback(node, nodeName, i);
+	//
+	module.iterateDownUiNodes = function(callback) {
+      var i = uiGraph.nodes.length;
+
+      while (i--) {
+      	var node = uiGraph.nodes[i],
+      		nodeName = node.name;
+
+      	callback(node, nodeName, i);	
+      }
+    }
+
+	// Call callback once per node
+	// callback(node, nodeName, i);
+	//
+	module.iterateUpUiNodes = function(callback) {
+      for (var i=0; i<uiGraph.nodes.length; i++) {
+      	var node = uiGraph.nodes[i],
+      		nodeName = node.name;
+
+      	callback(node, nodeName, i);	
+      }
+    }
+
+	// Call callback once per link
+	// callback(link, i);
+	//
+	module.iterateDownUiLinks = function(callback) {
+      var i = uiGraph.links.length;
+
+      while (i--) {
+      	var link = uiGraph.links[i];
+
+      	callback(link, i);	
+      }
+    }
+
+    // ==========================================================================
+
+
 
 	// === To be resettled ======================================================
 
