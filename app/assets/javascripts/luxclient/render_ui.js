@@ -471,6 +471,7 @@ var RenderUi = (function() {
 		      .start();
 		console.log(uiGraph);
 		console.log("finished forced in update2");
+		console.log(uiGraph.links.length);
 
 		// Apply force to entering and updating elements
 		// http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
@@ -482,6 +483,7 @@ var RenderUi = (function() {
 		// Package tree added to menu
 		//MachineTreeMenu.updateMachineMenu(machineTreeMenu, uiFullGraph, DragDropManager, ProtocolToUiLayer);
 		console.log("Finished update2 --------------------------");
+		console.log(uiGraph.links.length);
 	}
 	module.uiGraphUpdate = uiGraphUpdate;
 	// This update routine can be called from outside the module

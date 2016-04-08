@@ -132,6 +132,8 @@ var LuxUi = (function() {
 				collapsePiles();
 				RenderUi.uiGraphUpdate();
 				MachineTreeMenu.updateMachineMenu(RenderUi.machineTreeMenu, uiFullGraph, RenderUi.DragDropManager, ProtocolToUiLayer);
+				console.log("Finishing uiGraphUpdate() in ui.js");
+				console.log(RenderUi.uiGraph.links.length);
 			}
 			module.uiGraphUpdate = uiGraphUpdate;
 
@@ -309,6 +311,7 @@ var LuxUi = (function() {
 				for (var i=0; i<PilePoints.length; i++) {
 					var pilePoint = PilePoints[i];
 					if (pilePoint[0] === level + "/") {
+						console.log("Level already exists.");
 						return;
 					}
 				}
@@ -316,10 +319,10 @@ var LuxUi = (function() {
 			};
 			module.addPileUpLevel = addPileUpLevel;
 
-				// Call this when unfolding a name space and showing the individual nodes
-				// again.
-				//	level - " /foo/bar/" will unfold a pile that contains " /foo/bar/one" 
-				// and " /foo/bar/two"
+			// Call this when unfolding a name space and showing the individual nodes
+			// again.
+			//	level - " /foo/bar/" will unfold a pile that contains " /foo/bar/one" 
+			// and " /foo/bar/two"
 			module.removePileUpLevel = function(level) {
 				var i = PilePoints.length;
 				while (i--) {
@@ -330,10 +333,10 @@ var LuxUi = (function() {
 			};
 
 
-				// Consolidate nodes or topics based on namespace. Goes through uiGraph
-				// and looks for nodes that pertain to levels in the "PilePoints" list of
-				// folded levels.
-				//
+			// Consolidate nodes or topics based on namespace. Goes through uiGraph
+			// and looks for nodes that pertain to levels in the "PilePoints" list of
+			// folded levels.
+			//
 			function collapsePiles() {
 				for (var p=0; p<PilePoints.length; p++) {
 					var pilePoint = PilePoints[p];
@@ -373,8 +376,8 @@ var LuxUi = (function() {
 				var nodeToTransformIntoPile = removeMatchingNodesAndGetSummaryNode(pileLevel);
 				if (nodeToTransformIntoPile) {
 					transformNodeIntoPile(nodeToTransformIntoPile, consolidatedNodeName);
-					connectNewLinksToPile(nodeToTransformIntoPile, consolidatedNodeName);
-				}	
+				} 
+				connectNewLinksToPile(consolidatedNodeName);					
 			}
 
 			// For a given pileLevel, create links that will point to the summary node
@@ -389,6 +392,13 @@ var LuxUi = (function() {
 				}	
 			}
 
+			// Returns TRUE if nodeName is a pile 
+			// Must finish in ... 
+			//
+			function nodeNameIsAPile(nodeName) {
+				return (nodeName.substring(nodeName.length-3)==='...');
+			}
+
 			// For a given link (defined by index) and pileLevel, check if it links to
 			// one of the nodes in the pile defined by pilelevel. If it does, then create
 			// a new link that links to the pile. Then check if this is a duplicate, and if not,
@@ -399,8 +409,9 @@ var LuxUi = (function() {
 
 				var link = RenderUi.uiGraph.links[index],
 					consolidatedNodeName = pileLevel + '/...',
-					matchesLevelSource = matchesLevel(link.sourceName, pileLevel),
-					matchesLevelTarget = matchesLevel(link.targetName, pileLevel);
+					matchesLevelSource = (matchesLevel(link.sourceName, pileLevel) && !nodeNameIsAPile(link.sourceName)),
+					matchesLevelTarget = (matchesLevel(link.targetName, pileLevel) && !nodeNameIsAPile(link.targetName));
+
 				if (matchesLevelSource || matchesLevelTarget) {
 					// Create a new link to summary node
 					var newLink = {
@@ -434,29 +445,45 @@ var LuxUi = (function() {
 				}
 			}
 
-			function connectNewLinksToPile(nodeToTransformIntoPile, consolidatedNodeName) {
-				var link;
-				for (var j=0; j<RenderUi.uiGraph.links.length; j++) {
-					link = RenderUi.uiGraph.links[j];
-					if (link.sourceName === consolidatedNodeName) {
-						link.source = nodeToTransformIntoPile;
+			// Search for links to a node of name consolidatedNodeName and ensure
+			// that the pointers to the node are correct.
+			//
+			function connectNewLinksToPile(consolidatedNodeName) {
+				var link,
+					nodeToTransformIntoPile=null;
+
+				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
+					var node = RenderUi.uiGraph.nodes[i];
+					if (node.name === consolidatedNodeName) {
+						nodeToTransformIntoPile = node;
+						break;
 					}
-					if (link.targetName === consolidatedNodeName) {
-						link.target = nodeToTransformIntoPile;
-					}
+				}
+
+				if (nodeToTransformIntoPile) {
+					for (var j=0; j<RenderUi.uiGraph.links.length; j++) {
+						link = RenderUi.uiGraph.links[j];
+						if (link.sourceName === consolidatedNodeName) {
+							link.source = nodeToTransformIntoPile;
+						}
+						if (link.targetName === consolidatedNodeName) {
+							link.target = nodeToTransformIntoPile;
+						}
+					}					
 				}
 			}					
 
 			// Eliminate the individual nodes in a pilelevel and replace them with a summary node
 			// whose positioning data is taken from the node defined by targetNodeName
 			//
-			function removeMatchingNodesAndGetSummaryNode(pileLevel, targetNodeName) {
+			function removeMatchingNodesAndGetSummaryNode(pileLevel) {
 				// Remove any matching nodes except the first	
 				var pilePointsFound = 0,
 					index = RenderUi.uiGraph.nodes.length,
 					nodeName = null,
 					thisIsTheNodeToPreserve = null,
-					nodeToTransformIntoPile = null;
+					nodeToTransformIntoPile = null,
+					summaryNode = null;
 
 				// For any nodes that match the level (but are not the summary node)
 				// figure out a node which can provide position data for the summary node
@@ -464,50 +491,57 @@ var LuxUi = (function() {
 				//
 				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
 					nodeName = RenderUi.uiGraph.nodes[i]['name'];
-					if (matchesLevel(nodeName, pileLevel)&&(nodeName.substring(-3)!=='...')) {
+					if (matchesLevel(nodeName, pileLevel)&&(nodeName!==pileLevel+'/...')) {
+					//if (matchesLevel(nodeName, pileLevel)&&(nodeName.substring(-3)!=='...')&&(nodeName!==pileLevel+'/...')) {
 						pilePointsFound++;
-						thisIsTheNodeToPreserve = targetNodeName ? (nodeName === targetNodeName) : (pilePointsFound === 1);
+						thisIsTheNodeToPreserve = (pilePointsFound === 1);
 						if (thisIsTheNodeToPreserve) {
 							nodeToTransformIntoPile = RenderUi.uiGraph.nodes[i];
 						}
 					}
 				}	
 
-				// Create a summary node
-				var summaryNode = {
-					name: 'summary',
-					rtype: nodeToTransformIntoPile.rtype,
-					x: nodeToTransformIntoPile.x,
-					y: nodeToTransformIntoPile.y,
-					focus: nodeToTransformIntoPile.focus,
-					parentNode: nodeToTransformIntoPile.parentNode
-				};
+				// Only if we found a node to transform into a pile
+				if (nodeToTransformIntoPile) {
+					// Create a summary node
+					summaryNode = {
+						name: 'summary',
+						rtype: nodeToTransformIntoPile.rtype,
+						x: nodeToTransformIntoPile.x,
+						y: nodeToTransformIntoPile.y,
+						focus: nodeToTransformIntoPile.focus,
+						parentNode: nodeToTransformIntoPile.parentNode
+					};
 
-				// Copy data from old node to the summary node
-				if (nodeToTransformIntoPile.data) {
-					summaryNode.data = nodeToTransformIntoPile.data;
-				}
+					// Copy data from old node to the summary node
+					if (nodeToTransformIntoPile.data) {
+						summaryNode.data = nodeToTransformIntoPile.data;
+					}
+				}	
 
 				// Delete any nodes in this pileLevel
 				while (index--) {
 					nodeName = RenderUi.uiGraph.nodes[index]['name'];
-					if (matchesLevel(nodeName, pileLevel)) {
+					if (matchesLevel(nodeName, pileLevel)&&(nodeName!==pileLevel+'/...')) {
 						deleteNodeFromGraph(RenderUi.uiGraph, nodeName);
 					}
 				}
 
-				// ... and add the single summary node in their place
-				RenderUi.uiGraph.nodes.push(summaryNode);
+				if (nodeToTransformIntoPile) {
+					// ... and add the single summary node in their place
+					RenderUi.uiGraph.nodes.push(summaryNode);
 
-				// Switch uiNode pointer on parent to summaryNode
-				var parentNode = nodeToTransformIntoPile.parentNode;
-				for (var i=0; i<parentNode.uiNodes.length; i++) {
-					var uiNode = parentNode.uiNodes[i];
-					if (uiNode === nodeToTransformIntoPile) {
-						parentNode.uiNodes[i] = summaryNode;
-						break;
+					// Switch uiNode pointer on parent to summaryNode
+					var parentNode = nodeToTransformIntoPile.parentNode;
+					for (var i=0; i<parentNode.uiNodes.length; i++) {
+						var uiNode = parentNode.uiNodes[i];
+						if (uiNode === nodeToTransformIntoPile) {
+							parentNode.uiNodes[i] = summaryNode;
+							break;
+						}
 					}
 				}
+
 
 				return summaryNode;
 			}
@@ -564,9 +598,9 @@ var LuxUi = (function() {
 				var token, level,
 					levels = listOfLevels(nodeName);
 
-						console.log(NameSpaceTree);
-						console.log(nodeName);
-						console.log(levels);
+				console.log(NameSpaceTree);
+				console.log(nodeName);
+				console.log(levels);
 
 				for (var i=0; i<levels.length; i++) {
 					level = levels[i];
@@ -957,6 +991,7 @@ var LuxUi = (function() {
 			//	TODO: Refactor with other versions
 			//
 			function deleteNodeFromGraph(graph, nameNodeToDelete) {
+				//console.log("deleteNodeFromGraph: " + nameNodeToDelete);
 				for (var j=0; j<graph.nodes.length; j++) {
 					if (graph.nodes[j].name === nameNodeToDelete) {
 						adjustLinks(graph, j);
@@ -1184,8 +1219,9 @@ var LuxUi = (function() {
 					targetName = link.targetName;
 
 				if (shouldNodeWithNameBeDisplayed(sourceName) &&
-					shouldNodeWithNameBeDisplayed(sourceName)) {
+					shouldNodeWithNameBeDisplayed(targetName)) {
 					var newLink = copyLink(link);
+					console.log("insertLinkIntoUI: " + sourceName + " -> " + targetName);
 					RenderUi.uiGraph.links.push(newLink);	
 
 					return true;						
@@ -1322,6 +1358,7 @@ var LuxUi = (function() {
 				while (j--) {
 					if ((graph.links[j].sourceName===targetNode) ||
 						(graph.links[j].targetName===targetNode)) {
+						console.log("deleteLinksFromGraphConnectedToNodeName: " + graph.links[j].sourceName + " -> " + graph.links[j].targetName);
 						graph.links.splice(j, 1);
 					}
 				}
@@ -1334,6 +1371,7 @@ var LuxUi = (function() {
 				for (var i=0; i<graph.links.length; i++) {
 					var link = graph.links[i];
 					if (link === targetLink) {
+						console.log("deleteLinkFromGraph: " + targetLink.sourceName + " -> " + targetLink.targetName);
 						graph.links.splice(i, 1);
 						return true;
 					}
@@ -1363,6 +1401,9 @@ var LuxUi = (function() {
 					if ((graph.links[i].sourceName === nameNodeToDelete) ||
 						(graph.links[i].targetName === nameNodeToDelete)) {
 						//deleteLink(graph, i);
+						console.log("adjustLinks: " + graph.links[i].sourceName + " -> " + graph.links[i].targetName);	
+						console.log("nameNodeToDelete: " + nameNodeToDelete);
+						console.trace();
 						graph.links.splice(i, 1);
 
 					} else {
