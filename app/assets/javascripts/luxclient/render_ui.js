@@ -2,6 +2,29 @@
 //
 // (c) 2016 Simon Birrell. All Rights Reserved.
 
+// API
+// RenderUi.open()
+// RenderUi.setUpAnimation()
+// RenderUi.clearGraph()
+// RenderUi.uiGraphUpdate()
+// RenderUi.triggerNodeDeath()
+// RenderUi.pushLink()
+// RenderUi.snipLinkAtIndex()
+// RenderUi.pushNode()
+// RenderUi.leafIsReadyForDisplay()
+// RenderUi.setNodeFormatFromSize()
+// RenderUi.findANode()
+// RenderUi.iterateDownUiNodes()
+// RenderUi.iterateUpUiNodes()
+// RenderUi.iterateDownUiLinks()
+// RenderUi.forceStop()
+// RenderUi.setUpNewNode()
+// RenderUi.copyGroup()
+// RenderUi.createNewGroup()
+// RenderUi.removeNodeFromUi()
+// RenderUi.removeGroupFromUi()
+// RenderUi.removeDummyNodesFromGroup()
+
 var RenderUi = (function() { 
     "use strict"; 
     var module = {}; 
@@ -848,21 +871,6 @@ var RenderUi = (function() {
 
 	///////////////////// End of Switch Icons /////////////////////////////////////
 
-
-	// Set a flag on the node that will start a node dying.
-	// This will trigger a "kill" animation in d3.
-	// 	nameNodeToKill - ROS name of node/topic to kill
-	//
-	function triggerNodeDeath(nameNodeToKill) {
-		for (var j=0; j<uiGraph.nodes.length; j++) {
-			if (uiGraph.nodes[j].name === nameNodeToKill) {
-				uiGraph.nodes[j].dying = true;
-				console.log("set dying on " + nameNodeToKill);
-			}	
-		}							
-	}
-	module.triggerNodeDeath = triggerNodeDeath;
-
 	// Set up Kill Icons - only visible as an "X" on large format ROS nodes
 	//	nodeSelection - d3 selection of nodes
 	//
@@ -981,7 +989,6 @@ var RenderUi = (function() {
 				};
 	}
 
-
 	////////////////////////////////////////////////////
 	// User interaction callbacks
 	////////////////////////////////////////////////////
@@ -1026,6 +1033,23 @@ var RenderUi = (function() {
 	function dragended(d) {
 	  d3.select(this).classed("dragging", false);
 	}
+
+
+
+
+
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// Everything below this line is a data manipulation function
+	// d3 formmating code finishes here
+	//
+	//////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 
 	// ======================= DEBUGGING FUNCTIONS ==============================
 
@@ -1250,6 +1274,60 @@ var RenderUi = (function() {
 		}
 	}
 	module.removeDummyNodesFromGroup = removeDummyNodesFromGroup;
+
+	// Set a flag on the node that will start a node dying.
+	// This will trigger a "kill" animation in d3.
+	// 	nameNodeToKill - ROS name of node/topic to kill
+	//
+	function triggerNodeDeath(nameNodeToKill) {
+		for (var j=0; j<uiGraph.nodes.length; j++) {
+			if (uiGraph.nodes[j].name === nameNodeToKill) {
+				uiGraph.nodes[j].dying = true;
+				console.log("set dying on " + nameNodeToKill);
+			}	
+		}							
+	}
+	module.triggerNodeDeath = triggerNodeDeath;
+
+	// Add a link. Called from Pile code in UI.
+	function pushLink(link) {
+		uiGraph.links.push(link);
+	}
+	module.pushLink = pushLink;
+
+	// Remove a link. Called from Pile code in UI.
+	function snipLinkAtIndex(index) {
+		uiGraph.links.splice(index, 1);
+	}
+	module.snipLinkAtIndex = snipLinkAtIndex;
+
+	// Add a node. Called from Pile code in UI.
+	function pushNode(node) {
+		uiGraph.nodes.push(node);
+	}
+	module.pushNode = pushNode;
+
+	// For a leaf to be ready to display, it must be pointing to a node on uiGraph
+	// It can either be an index (because it has alrady been converted) or an object
+	// reference.
+	//	leaf - entry from group.leaves[]
+	//
+	function leafIsReadyForDisplay(leaf) {
+		// See if leaf has already been converted to an index
+		if (typeof leaf === "number") {
+			return true;
+		}
+
+		// If it's an object reference, see if node is on uiGraph
+		for (var i=0; i<uiGraph.nodes.length; i++) {
+			var node = uiGraph.nodes[i];
+			if (node === leaf) {
+				return true;
+			}
+		}
+		return false;
+	}
+	module.leafIsReadyForDisplay = leafIsReadyForDisplay;
 
 	// Externally accessible variables - TEMPORARY //
 	module.uiGraph = uiGraph;

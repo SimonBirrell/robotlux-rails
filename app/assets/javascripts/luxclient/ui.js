@@ -404,8 +404,7 @@ var LuxUi = (function() {
 			//
 			function modifyAndConsolidateLinkAtIndexToPointToSummaryNode(link, index, pileLevel) {
 
-				var //link = RenderUi.uiGraph.links[index],
-					consolidatedNodeName = pileLevel + '/...',
+				var consolidatedNodeName = pileLevel + '/...',
 					matchesLevelSource = (matchesLevel(link.sourceName, pileLevel) && !nodeNameIsAPile(link.sourceName)),
 					matchesLevelTarget = (matchesLevel(link.targetName, pileLevel) && !nodeNameIsAPile(link.targetName));
 
@@ -419,7 +418,7 @@ var LuxUi = (function() {
 						value: 15
 					};
 					// Remove existing link
-					RenderUi.uiGraph.links.splice(index, 1);
+					RenderUi.snipLinkAtIndex(index);
 
 					// Detect if link is duplicate
 					var itsADuplicate = false;
@@ -430,13 +429,12 @@ var LuxUi = (function() {
 							(linkCursor.sourceName === newLink.sourceName) &&
 							(linkCursor.targetName === newLink.targetName)) {
 							itsADuplicate = true;
-							//break;
 						}						
 					});
 
 					// If a similar link already exists, then don't need to add it
 					if (!itsADuplicate) {
-						RenderUi.uiGraph.links.push(newLink);
+						RenderUi.pushLink(newLink);
 					}
 				}
 			}
@@ -464,21 +462,7 @@ var LuxUi = (function() {
 							link.target = nodeToTransformIntoPile;
 						}
 					});
-
-					/*
-					for (var j=0; j<RenderUi.uiGraph.links.length; j++) {
-						link = RenderUi.uiGraph.links[j];
-						if (link.sourceName === consolidatedNodeName) {
-							link.source = nodeToTransformIntoPile;
-						}
-						if (link.targetName === consolidatedNodeName) {
-							link.target = nodeToTransformIntoPile;
-						}
-					}	
-					*/				
 				}
-
-
 			}					
 
 			// Eliminate the individual nodes in a pilelevel and replace them with a summary node
@@ -535,7 +519,7 @@ var LuxUi = (function() {
 
 				if (nodeToTransformIntoPile) {
 					// ... and add the single summary node in their place
-					RenderUi.uiGraph.nodes.push(summaryNode);
+					RenderUi.pushNode(summaryNode);
 
 					// Switch uiNode pointer on parent to summaryNode
 					var parentNode = nodeToTransformIntoPile.parentNode;
@@ -866,7 +850,7 @@ var LuxUi = (function() {
 			//	node - reference to node object
 			//
 			function moveNodeFromIncompleteToUiGraph(node) {
-				RenderUi.uiGraph.nodes.push(node);
+				RenderUi.pushNode(node);
 				addNodeToMatchingMachineGroups(node);
 				deleteNodeFromGraph(uiGraphIncomplete, node.name);
 			}
@@ -1200,7 +1184,8 @@ var LuxUi = (function() {
 					shouldNodeWithNameBeDisplayed(targetName)) {
 					var newLink = copyLink(link);
 					console.log("insertLinkIntoUI: " + sourceName + " -> " + targetName);
-					RenderUi.uiGraph.links.push(newLink);	
+					RenderUi.pushLink(newLink);
+					//RenderUi.uiGraph.links.push(newLink);	
 
 					return true;						
 				}
@@ -1435,61 +1420,17 @@ var LuxUi = (function() {
 				return uiGroup;
 			}
 
-			// function copyGroup(group) {
-			// 	// Copy array
-			// 	var leaves = [];
-			// 	for (var i=0; i<group.leaves.length; i++) {
-			// 		var leaf = group.leaves[i];
-			// 		leaves.push(leaf);
-			// 	}
-
-			// 	// Copy group and add d3 specific padding
-			// 	var uiGroup = {
-			// 					leaves: leaves,
-			// 					title: group.title,
-			// 					gtype: group.gtype,
-			// 					padding: circleRadius,
-			// 					rosInstanceId: group.rosInstanceId
-			// 				   };
-			// 	if (group.hostname) {
-			// 		uiGroup.hostname = group.hostname;
-			// 	}			   
-
-			// 	return uiGroup;				
-			// }
-
 			// For group to be ready to display, all leaves must be ready to display
 			//	uiGroup - group that we want to display
 			//
 			function groupIsReadyForDisplay(uiGroup) {
 				for (var i=0; i<uiGroup.leaves.length; i++) {
 					var leaf = uiGroup.leaves[i];
-					if (!leafIsReadyForDisplay(leaf)) {
+					if (!RenderUi.leafIsReadyForDisplay(leaf)) {
 						return false;
 					}
 				}
 				return true;
-			}
-
-			// For a leaf to be ready to display, it must be pointing to a node on uiGraph
-			// It can either be an index (because it has alrady been converted) or an object
-			// reference.
-			//	leaf - entry from group.leaves[]
-			//
-			function leafIsReadyForDisplay(leaf) {
-				// See if leaf has already been converted to an index
-				if (typeof leaf === "number") {
-					return true;
-				}
-
-				// If it's an object reference, see if node is on uiGraph
-				for (var i=0; i<RenderUi.uiGraph.nodes.length; i++) {
-					var node = RenderUi.uiGraph.nodes[i];
-					if (node === leaf) {
-						return true;
-					}
-				}
-				return false;
 			}
 
 			// Move a group from uiGraphIncomplete to uiGraph
@@ -1600,7 +1541,7 @@ var LuxUi = (function() {
 			// Functions to manipulate MACHINES on the data graphs ==================
 			//
 			// Machines aren't a d3 concept, so you could argue they don't belong on
-			// uiGraph, uiGraphIcomplete and uiFullGraph
+			// uiGraph, uiGraphIncomplete and uiFullGraph
 			// That's where they are right now.
 			// A machine is a Linux host running ROS that is part of a "ROS installation"
 			// We render a d3 group to represent this machine and put all ROS nodes
@@ -1650,7 +1591,7 @@ var LuxUi = (function() {
 				// If there are no nodes in this group then make a dummy one
 				if (existingNodes.length === 0)	{
 					var dummyNode = createDummyNode("/dummy" + machineName);
-					RenderUi.uiGraph.nodes.push(dummyNode);
+					RenderUi.pushNode(dummyNode);
 					existingNodes.push(dummyNode);
 				}
 
