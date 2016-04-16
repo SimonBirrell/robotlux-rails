@@ -1,4 +1,4 @@
-class UsersController < ApplicationController
+class UsersController < Devise::RegistrationsController
   before_action :authenticate_user!
   before_action :admin_only, :except => :show
 
@@ -28,6 +28,11 @@ class UsersController < ApplicationController
     user = User.find(params[:id])
     user.destroy
     redirect_to users_path, :notice => "User deleted."
+  end
+
+  def after_update_path_for(resource)
+    foo
+    signed_in_root_path(resource)
   end
 
   private

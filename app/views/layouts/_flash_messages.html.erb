@@ -1,0 +1,4 @@
+<% # Flash error messages formatted for Bootstrap %>
+<% flash.each do |key, value| %>
+	<div class="<%= bootstrap_error_class(key) %>"><%= value %></div>
+<% end %>
