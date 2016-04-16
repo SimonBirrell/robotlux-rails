@@ -1,12 +1,19 @@
 <%= simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
 
+	<% flash.each do |key, value| %>
+        <div class="<%= bootstrap_error_class(key) %>"><%= value %></div>
+    <% end %>
+
     <%= f.input :email, required: false, autofocus: true, class: 'form-control', placeholder: 'E-mail', label: false %>
     <%= f.input :password, required: false, class: 'form-control', placeholder: 'Password', label: false %>
 	<!---
     <%= f.input :remember_me, as: :boolean if devise_mapping.rememberable? %>
 	-->
 
+	<%= f.button :submit, 'Sign in', class: "btn-primary btn-block sign", onclick: "$(this).parents('form').submit();" %>
+	<!--
 	<%= link_to "Sign in", "#", class: "btn btn-primary btn-block sign", onclick: "$(this).parents('form').submit();", html: {id: "follow-me"} %>
+-->
 	
 <% end %>
 
