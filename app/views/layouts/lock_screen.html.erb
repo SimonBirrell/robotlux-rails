@@ -32,7 +32,8 @@
 			<div class="front">
 				<!-- front content -->
 				<div class="holder">
-					<h1 class="heading">robot lux</h1>		
+					<h1 class="heading">robot lux</h1>	
+					<p><%= t('login.welcome') %></p>	
 
 					<%= yield %>
 
@@ -44,7 +45,7 @@
 					<div class="avatar_holder">
 						<img src="/assets/piluku/avatar/five.png" alt="">
 					</div>						
-					<div class="log_msg">logging in as admin...</div>					
+					<div class="log_msg"><%= t('login.logging_in') %></div>					
 				</div>
 			</div>
 		</div>

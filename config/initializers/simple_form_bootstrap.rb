@@ -15,7 +15,9 @@ SimpleForm.setup do |config|
     b.use :label, class: 'control-label'
 
     b.use :input, class: 'form-control'
-    b.use :error, wrap_with: { tag: 'span', class: 'help-block' }
+    # https://github.com/plataformatec/simple_form/issues/1330
+    #b.use :error, wrap_with: { tag: 'span', class: 'help-block' }
+    b.use :full_error, wrap_with: { tag: 'span', class: 'help-block' }
     b.use :hint,  wrap_with: { tag: 'p', class: 'help-block' }
   end
 

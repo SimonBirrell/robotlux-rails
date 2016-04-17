@@ -23,3 +23,6 @@ en:
   hello: "Hello world"
   login:
      sign_out: 'Sign out'
+     welcome: 'Welcome to Robot Lux!'
+     logging_in: 'logging in...'
+     

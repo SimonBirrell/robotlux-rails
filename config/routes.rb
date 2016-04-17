@@ -2,6 +2,9 @@ Rails.application.routes.draw do
 
   devise_for :users
   devise_scope :user do
+
+    resources :users
+
     authenticated :user do
       root 'home#index', as: :authenticated_root
     end
@@ -11,8 +14,9 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :users
-  
   get '/demo', to: 'home#demo'
+
+  # http://stackoverflow.com/questions/22741975/undefined-local-variable-or-method-root-path
+  root "static#home"
   
 end
