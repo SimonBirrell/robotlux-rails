@@ -16,7 +16,7 @@ var LuxUi = (function() {
     						'/rqt', '/statistics', '/luxagent','/rosout_agg','/zeroconf/zeroconf',
     						'/interactions', '/app_manager', '/bumper2pointcloud',
     						//' /tf', 
-    						' /tf_static', '/robot_state_publisher',
+    						//' /tf_static', '/robot_state_publisher',
     						'/capability_server','/diagnostic_aggregator', ' /diagnostics_agg', ' /diagnostics_toplevel_state',
     						' /zeroconf/new_connections', ' /zeroconf/lost_connections', '/capability_server_nodelet_manager',
     						' /gateway/gateway_info', ' /interactions/interactive_clients',
