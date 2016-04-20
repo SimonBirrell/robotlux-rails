@@ -38,3 +38,10 @@
 //= require piluku/widgets.js
 //= require piluku/jquery.countTo.js
 
+// Set up controls on UI
+$(document).ready(function() {
+	$(".package-bar-toggle").on("click",function(e) {
+		e.preventDefault();
+		$(".wrapper").toggleClass("package-bar-enabled");
+	});
+});

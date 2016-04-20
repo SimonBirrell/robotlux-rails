@@ -43,7 +43,7 @@
 	</div>
 	<div class="wrapper ">
 
-	<div class="left-bar ">
+	<div class="side-bar left-bar ">
 		<%= render 'layouts/left_bar' %>
 	</div>
 	<!-- left-bar -->
@@ -63,26 +63,28 @@
 		</div>
 
 	</div>  
-		<!--
 
-		<div class="side-bar right-bar ">
+		<div class="side-bar package-bar ">
 			<div class="contacts">
 				<div class="col col-md-12">
 					<ul class="tabs">
-						<li class="tab col-md-3"><a href="#test1" class="active">Chat</a></li>
-						<li class="tab col-md-3"><a href="#test2">Settings</a></li>
-						<li class="tab col-md-3"><a href="#test3">Messages</a></li>
+						<li class="tab col-md-3"><a href="#test1" class="active">Installed</a></li>
+						<li class="tab col-md-3"><a href="#test2">Store</a></li>
+						<li class="tab col-md-3"><a href="#test3">Settings</a></li>
 					</ul>
 				</div>
 				<div class="content-holder">
 					<div id="test1" class="col-md-12 no_padding">					
 						<div class="panel-body no_padding">
 							<div class="panel-group piluku-accordion piluku-accordion-two" id="accordionOne" role="tablist" aria-multiselectable="true">
+
+								<div id="machinePackageMenu"></div>
+
 								<div class="panel panel-default">
 									<div class="panel-heading" role="tab" id="headingModalOne">
 										<h4 class="panel-title">
 											<a class="collapsed" data-toggle="collapse" data-parent="#accordionOne" href="#collapseModalOne" aria-expanded="true" aria-controls="collapseOne">
-												Online <i class="chevron ti-angle-down"></i>
+												ROS Workstation <i class="chevron ti-angle-down"></i>
 											</a>
 										</h4>
 									</div>
@@ -94,7 +96,7 @@
 														<div class="avatar">
 															<img src="<%= image_path('piluku/avatar/one.png') %>" alt="">
 														</div>
-														<span class="name">Richards carlson</span>
+														<span class="name">Rbx1 Bringup</span>
 														<i class="ion ion-record online"></i>
 													</a>
 												</li>
@@ -179,7 +181,7 @@
 									<div class="panel-heading" role="tab" id="headingModalTwo">
 										<h4 class="panel-title">
 											<a data-toggle="collapse" data-parent="#accordionOne" href="#collapseModalTwo" aria-expanded="false" aria-controls="collapseTwo">
-												offline
+												Robot CPU
 											</a>
 										</h4>
 									</div>
@@ -278,7 +280,7 @@
 									<div class="panel-heading" role="tab" id="headingModalThree">
 										<h4 class="panel-title">
 											<a class="collapsed" data-toggle="collapse" data-parent="#accordionOne" href="#collapseModalThree" aria-expanded="false" aria-controls="collapseThree">
-												Away
+												Cloud VM
 											</a>
 										</h4>
 									</div>
@@ -497,7 +499,6 @@
 				</div>
 			</div>
 		</div>
-	-->
 
 		<!-- /Right-bar -->
 	</div>

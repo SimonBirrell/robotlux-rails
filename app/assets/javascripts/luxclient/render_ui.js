@@ -38,6 +38,9 @@ var RenderUi = (function() {
 	var NODE_PADDING_WIDTH = 30;
 	var NODE_PADDING_HEIGHT = 30;
 
+	//var MACHINE_PACKAGE_MENU_ROOT = "#mainMenu";
+	var MACHINE_PACKAGE_MENU_ROOT = "#machinePackageMenu";
+
 	// Callbacks to save
 	var CallbackUnfoldPile,
 		CallbackAddPileUpLevel,
@@ -142,7 +145,7 @@ var RenderUi = (function() {
 		// Set up the machine tree menu on the left hand side
 		// This will be populated with the list of installed ROS packages
 		// and run/launch targets
-		machineTreeMenu = d3.select("#mainMenu");
+		machineTreeMenu = d3.select(MACHINE_PACKAGE_MENU_ROOT);
 		module.machineTreeMenu = machineTreeMenu;
 
 		// Drag HTML to SVG

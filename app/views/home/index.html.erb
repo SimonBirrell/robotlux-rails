@@ -23,14 +23,16 @@
 				<div id="robotlux">
 				</div>	
 				<script>
-					// Main set up
-					var communicationsProtocol = LuxProtocolWebsockets,
-						protocolToUiLayer = LuxUiToProtocol;
+					$(document).ready(function(){
+						// Main set up
+						var communicationsProtocol = LuxProtocolWebsockets,
+							protocolToUiLayer = LuxUiToProtocol;
 
-					LuxUi.setFilterDebugNodes(true);
-					LuxUi.setFilterOrphanedTopics(true);
-					protocolToUiLayer.setProtocol(communicationsProtocol);
-					LuxUi.open(protocolToUiLayer); 
+						LuxUi.setFilterDebugNodes(true);
+						LuxUi.setFilterOrphanedTopics(true);
+						protocolToUiLayer.setProtocol(communicationsProtocol);
+						LuxUi.open(protocolToUiLayer); 
+					});
 				</script>
 			</div>
 		</div>

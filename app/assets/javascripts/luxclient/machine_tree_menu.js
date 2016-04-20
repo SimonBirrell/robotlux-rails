@@ -8,6 +8,11 @@ var MachineTreeMenu = (function() {
     
     var module = {};
 
+    function humanName(key) {
+    	key = key.replace(/_/g, ' ');
+    	return key.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+    }
+
     // Called from UI to indicate that the machine menu (currently on screen left)
     // needs updating.
     //	machineTreeMenu - d3 selection of the <div> containing the machine menu
@@ -35,10 +40,89 @@ var MachineTreeMenu = (function() {
 		var machines = machineTreeMenu.selectAll(".menu-machine")	
 			.data(function(d) { return (d.children) ? (d.children) : []});	
 		var newMachines = machines.enter()
-							  		.append('li')
-							  		.attr("class", "submenu menu-machine");
+							  		.append('div')
+							  		.attr('class', 'panel panel-default menu-machine')
+							  		.each(function(d, i) {
+							  			var machineNumber = i.toString(); 
+							  			d3.select(this).append('div')
+							  				.attr('class', 'panel-heading')
+							  				.attr('role', 'tab')
+							  				.attr('id', 'headingModal' + machineNumber)
+							  				
+							  				.each(function(d){
+							  					d3.select(this).append('h4')
+							  						.attr('class', 'panel-title')
+							  						.each(function(d){
+							  							d3.select(this).append('a')
+							  								.attr('class', 'collapsed')
+							  								.attr('data-toggle', 'collapse')
+							  								.attr('data-parent', '#accordionOne')
+							  								.attr('href', '#collapseModal' + machineNumber)
+							  								.attr('aria-expanded', 'true')
+							  								.attr('aria-controls', 'collapse' + machineNumber)
+							  								.text(d.name)
+							  								.each(function(d){
+							  									d3.select(this).append('i')
+							  										.attr('class', 'chevron ti-angle-down');
+							  								});
+							  						});
+							  				})
+																						/*
+							  				.append('div')
+							  					.attr('id', 'collapseModal' + machineNumber)
+							  					.attr('class', 'panel-collapse collapse in')
+							  					.attr('role', 'tab-panel')
+							  					.attr('aria-labelledby', 'heading' + machineNumber)
+							  					.each(function(d) {
+							  						d3.select(this).append('div')
+							  							.attr('class', 'panel-body no_padding')
+							  							.each(function(d) {
+							  								d3.select(this).append('ul')
+							  									.attr('class', 'list-group contacts-list menu-packages');
+							  							});
+							  					});
+							  				*/	
+							  		});
+
+/*
+		newMachines.each(function(d){
+	  					d3.select(this).append('h4')
+	  						.attr('class', 'panel-title')
+	  						.each(function(d){
+	  							d3.select(this).append('a')
+	  								.attr('class', 'collapsed')
+	  								.attr('data-toggle', 'collapse')
+	  								.attr('data-parent', '#accordionOne')
+	  								.attr('href', '#collapseModal' + machineNumber)
+	  								.attr('aria-expanded', 'true')
+	  								.attr('aria-controls', 'collapse' + machineNumber)
+	  								.text(d.name)
+	  								.each(function(d){
+	  									d3.select(this).append('i')
+	  										.attr('class', 'chevron ti-angle-down');
+	  								});
+	  						});
+	  				});
+*/
+		var machineNumber = "x";
+
+		newMachines.append('div')
+						.attr('id', 'collapseModal' + machineNumber)
+						.attr('class', 'panel-collapse collapse in')
+						.attr('role', 'tab-panel')
+						.attr('aria-labelledby', 'heading' + machineNumber)
+						.each(function(d) {
+							d3.select(this).append('div')
+								.attr('class', 'panel-body no_padding')
+								.each(function(d) {
+									d3.select(this).append('ul')
+										.attr('class', 'list-group contacts-list menu-packages');
+							  	});
+						});
+
+
 		// render the menu rows that display the machine name and icon							  		
-		addMachines(newMachines);
+		//addMachines(newMachines);
 
 		// Remove any disconnected machines
 		machines.exit().remove();
@@ -52,10 +136,30 @@ var MachineTreeMenu = (function() {
 				// Create rows for new packages								
 				var newPackages = packages.enter()
 											.append('li')
-											.attr("class", "submenu menu-package");
+											.attr("class", "list-group-item menu-package")
+											.each(function(d){
+												d3.select(this).append('a')
+													.attr('href', '#')
+												.each(function(d){
+													d3.select(this).append('div')
+														.attr('class', 'avatar')
+														.each(function(d){
+															d3.select(this).append('img')
+																.attr('src', '/assets/piluku/avatar/one.png')
+																.attr('alt', '');
+															});
+													d3.select(this).append('span')
+														.attr('class', 'name')
+														.text(humanName(d.name));
+													d3.select(this).append('i')
+														.attr('class', 'ion ion-record online');	
+												});	
+											});
+
 				// Render package rows											
-				addPackages(newPackages);
+				//addPackages(newPackages);
 				packages.exit().remove();
+				/*
 				packages.each(function(d) {
 					if (d.children) {
 						// Render a row for each target
@@ -70,7 +174,8 @@ var MachineTreeMenu = (function() {
 
 						targets.exit().remove();										
 					}
-					});										
+				});
+				*/										
 			}
 		});
 		setAllTargetsToBeDraggable();

@@ -2,3 +2,25 @@
 .sign {
 	background-color: #2e64aa !important;
 }
+
+.side-bar.package-bar {
+	float: right !important;
+	left: -266px;
+	top: 70px;
+}
+
+
+.wrapper.package-bar-enabled .package-bar {
+	left: 0;
+	z-index: 99;
+}
+
+/*
+.wrapper.package-bar-enabled .left-layout {
+	left: 0;
+	z-index: 99;
+}
+*/
+
+
+
