@@ -54,6 +54,7 @@ var MachineTreeMenu = (function() {
 							  						.attr('class', 'panel-title')
 							  						.each(function(d){
 							  							d3.select(this).append('a')
+							  								.attr('id', 'packageMenuMachineHeader' + machineNumber)
 							  								.attr('class', 'collapsed')
 							  								.attr('data-toggle', 'collapse')
 							  								.attr('data-parent', '#accordionOne')
@@ -65,6 +66,8 @@ var MachineTreeMenu = (function() {
 							  									d3.select(this).append('i')
 							  										.attr('class', 'chevron ti-angle-down');
 							  								});
+							  							// Activate Bootstrap collapse behaviour
+							  							$('#packageMenuMachineHeader' + machineNumber).collapse();	
 							  						});
 							  				})
 																						/*
@@ -104,7 +107,7 @@ var MachineTreeMenu = (function() {
 	  						});
 	  				});
 */
-		var machineNumber = "x";
+		var machineNumber = "0";
 
 		newMachines.append('div')
 						.attr('id', 'collapseModal' + machineNumber)
@@ -119,7 +122,6 @@ var MachineTreeMenu = (function() {
 										.attr('class', 'list-group contacts-list menu-packages');
 							  	});
 						});
-
 
 		// render the menu rows that display the machine name and icon							  		
 		//addMachines(newMachines);
