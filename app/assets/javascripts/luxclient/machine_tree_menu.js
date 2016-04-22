@@ -36,23 +36,29 @@ var MachineTreeMenu = (function() {
 		machineTreeMenu
 			.datum({name:'', node_type: 'root', children : uiGraph.machines});
 
+		// TODO Need to ensure that machineNumber is globally unique if package menu
+		// loaded incrementally
+
 		// Render a hierarchical menu where the top level is "machine"
 		var machines = machineTreeMenu.selectAll(".menu-machine")	
 			.data(function(d) { return (d.children) ? (d.children) : []});	
 		var newMachines = machines.enter()
+									// <div class="panel panel-default menu-machine">
 							  		.append('div')
 							  		.attr('class', 'panel panel-default menu-machine')
 							  		.each(function(d, i) {
 							  			var machineNumber = i.toString(); 
+							  			// <div class="panel-heading" role="tab" id="headingModal0">
 							  			d3.select(this).append('div')
 							  				.attr('class', 'panel-heading')
 							  				.attr('role', 'tab')
-							  				.attr('id', 'headingModal' + machineNumber)
-							  				
+							  				.attr('id', 'headingModal' + machineNumber)						  				
 							  				.each(function(d){
+							  					// <h4 class="panel title">
 							  					d3.select(this).append('h4')
 							  						.attr('class', 'panel-title')
 							  						.each(function(d){
+							  							// <a id="packageMenuMachineHeader0" class="collapsed" data-toggle="collapse" etc.
 							  							d3.select(this).append('a')
 							  								.attr('id', 'packageMenuMachineHeader' + machineNumber)
 							  								.attr('class', 'collapsed')
@@ -63,62 +69,37 @@ var MachineTreeMenu = (function() {
 							  								.attr('aria-controls', 'collapse' + machineNumber)
 							  								.text(d.name)
 							  								.each(function(d){
+							  									// <i class="chevron ti-angle-down">
 							  									d3.select(this).append('i')
 							  										.attr('class', 'chevron ti-angle-down');
 							  								});
-							  							// Activate Bootstrap collapse behaviour
-							  							$('#packageMenuMachineHeader' + machineNumber).collapse();	
+							  								// Activate Bootstrap collapse behaviour
+							  								$('#packageMenuMachineHeader' + machineNumber).collapse();	
 							  						});
 							  				})
-																						/*
-							  				.append('div')
-							  					.attr('id', 'collapseModal' + machineNumber)
-							  					.attr('class', 'panel-collapse collapse in')
-							  					.attr('role', 'tab-panel')
-							  					.attr('aria-labelledby', 'heading' + machineNumber)
-							  					.each(function(d) {
-							  						d3.select(this).append('div')
-							  							.attr('class', 'panel-body no_padding')
-							  							.each(function(d) {
-							  								d3.select(this).append('ul')
-							  									.attr('class', 'list-group contacts-list menu-packages');
-							  							});
-							  					});
-							  				*/	
 							  		});
 
-/*
-		newMachines.each(function(d){
-	  					d3.select(this).append('h4')
-	  						.attr('class', 'panel-title')
-	  						.each(function(d){
-	  							d3.select(this).append('a')
-	  								.attr('class', 'collapsed')
-	  								.attr('data-toggle', 'collapse')
-	  								.attr('data-parent', '#accordionOne')
-	  								.attr('href', '#collapseModal' + machineNumber)
-	  								.attr('aria-expanded', 'true')
-	  								.attr('aria-controls', 'collapse' + machineNumber)
-	  								.text(d.name)
-	  								.each(function(d){
-	  									d3.select(this).append('i')
-	  										.attr('class', 'chevron ti-angle-down');
-	  								});
-	  						});
-	  				});
-*/
-		var machineNumber = "0";
-
+		// Add collapsible list of packages
+		// <div id="collapseModal0" class="panel-collapse collapse in" role="tab panel" aria-labelledby="heading0">
+		// appended after <div class="panel-heading" role="tab" id="headingModal0">
 		newMachines.append('div')
-						.attr('id', 'collapseModal' + machineNumber)
+						.attr('id', function(d, i) {
+							return 'collapseModal' + i;
+						})
 						.attr('class', 'panel-collapse collapse in')
 						.attr('role', 'tab-panel')
-						.attr('aria-labelledby', 'heading' + machineNumber)
+						.attr('aria-labelledby', function(d, i) {
+							return 'heading' + i;
+						})
 						.each(function(d) {
+							// Add <div class="panel-body no_padding">
 							d3.select(this).append('div')
+								// Add inner panel
 								.attr('class', 'panel-body no_padding')
 								.each(function(d) {
+									// Add <ul class="list-group contacts-list menu-packages">
 									d3.select(this).append('ul')
+										// Add unordered list
 										.attr('class', 'list-group contacts-list menu-packages');
 							  	});
 						});
@@ -136,52 +117,106 @@ var MachineTreeMenu = (function() {
 								.selectAll(".menu-package")
 								.data(function(d) { return (d.children) ? (d.children) : []});
 				// Create rows for new packages								
-				var newPackages = packages.enter()
-											.append('li')
-											.attr("class", "list-group-item menu-package")
+				var newPackages = packages.enter();
+
+				newPackages.
+					append('div')
+					.each(function(d, i){
+						var packageNumber = i;
+						d3.select(this)
+							// <li class="list-group-item menu-package">
+							.append('li')
+								.attr("class", "list-group-item menu-package")
+								.each(function(d){
+									// Add a link that represents the package
+									// <a href="#">
+									d3.select(this).append('a')
+										.attr('href', '#test-targets' + packageNumber)
+										.attr('data-toggle', 'collapse')
+									.each(function(d){
+										// <div class="avatar">
+										d3.select(this).append('div')
+											// Avatar DIV
+											.attr('class', 'avatar')
 											.each(function(d){
-												d3.select(this).append('a')
-													.attr('href', '#')
-												.each(function(d){
-													d3.select(this).append('div')
-														.attr('class', 'avatar')
-														.each(function(d){
-															d3.select(this).append('img')
-																.attr('src', '/assets/piluku/avatar/one.png')
-																.attr('alt', '');
-															});
-													d3.select(this).append('span')
-														.attr('class', 'name')
-														.text(humanName(d.name));
-													d3.select(this).append('i')
-														.attr('class', 'ion ion-record online');	
-												});	
-											});
+												// Avatar Image
+												// <img src="/assets/piluku/avatar/one.png">
+												d3.select(this).append('img')
+													.attr('src', '/assets/piluku/avatar/one.png')
+													.attr('alt', '');
+												});
+										// <span class="name">	
+										d3.select(this).append('span')
+											// Package name
+											.attr('class', 'name')
+											.text(humanName(d.name));
+										// <i class="ion ion-record online">	
+										d3.select(this).append('i')
+											// Package status icon
+											.attr('class', 'ion ion-record online');	
+									});	
+
+								});
+						// <li class="targets panel-collapse collapse">
+						d3.select(this)
+							.append('li')
+								.attr('id', 'test-targets' + packageNumber)
+								.attr("class", "targets panel-collapse collapse")
+								.each(function(d){
+									// <ul class="list-group targets-list menu-targets">
+									d3.select(this).append('ul')
+										.attr('class', 'list-group targets-list menu-targets');
+								});
+					});
 
 				// Render package rows											
 				//addPackages(newPackages);
 				packages.exit().remove();
-				/*
+				
 				packages.each(function(d) {
 					if (d.children) {
 						// Render a row for each target
 						var targets = packages.selectAll(".menu-targets")
 										.selectAll(".menu-target")
 										.data(function(d) { return (d.children) ? (d.children) : []});
+
 						var newTargets = targets.enter()
-												  .append("li")
-												  .attr("class", "submenu menu-target");
-						addTargets(newTargets)
-							.attr("id", function(d) {var targetId = d.node_type + "-" + packages.datum().name + "-" + d.name; return targetId;});	
+												// <li class="list-group-item">
+												.append("li")
+												.attr("class", "list-group-item menu-target");
+
+						newTargets
+							// Add target link
+							// <a href="#" class="drag-to-launch">
+							.append('a')
+								.attr('href', '#')
+								.attr('class', 'drag-to-launch')
+								.each(function(d){
+									// <i class="icon ti-control-record">
+									d3.select(this).append('i')
+										//.attr('class', 'icon ti-control-record');
+										.attr("class", function(d) {return machineTypesToIcons[d.node_type]});	
+									// <span class="name">foo</span>	
+									d3.select(this).append('span')
+										.attr('class', 'name')
+										.text(function(d) {return humanName(d.name)});
+								})
+							.attr("id", function(d) {
+								var targetId = d.node_type + "-" + packages.datum().name + "-" + d.name; 
+								return targetId;
+							});	
+
+						//addTargets(newTargets)
+						//	.attr("id", function(d) {var targetId = d.node_type + "-" + packages.datum().name + "-" + d.name; return targetId;});	
 
 						targets.exit().remove();										
 					}
 				});
-				*/										
 			}
 		});
 		setAllTargetsToBeDraggable();
 
+/* LEGACY CODE
 		// Each machine has a row with an icon, machine name and an arrow
 		//	menuItem - d3 selection of <div>s for rendering machines into 
 		//
@@ -259,6 +294,7 @@ var MachineTreeMenu = (function() {
 				.attr("class", "machine-menu-item list-unstyled " + levelDefinition)	
 				.attr("id", listId);	
 		}
+*/
 
 		// All targets in the menu can be dragged onto the SVG display
 		// This function sets it up.

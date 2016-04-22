@@ -235,3 +235,49 @@ li.chat_btn .package-bar-toggle i {
   border-radius: 0;
 }
 
+/* Package targets on Package menu */
+
+.targets .targets-list .list-group-item {
+  border-width: 0;
+  display: table;
+  width: 100%;
+  background-color: transparent;
+}
+.targets .targets-list .list-group-item a:hover span.name {
+  color: #2196f3;
+}
+.targets .targets-list .list-group-item span.name {
+  white-space: nowrap;
+  width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  float: left;
+  padding-top: 2px;
+  padding-left: 5px;
+  color: #707780;
+}
+
+/* New CSS */
+
+.contacts li.targets {
+  line-height: 0px;
+}
+
+.contacts .targets .list-group.targets-list a {
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 14px;
+  background-color: 'red';
+}
+
+.contacts .targets .list-group.targets-list i {
+  float: left;
+  color: #707780;
+  line-height: 14px;
+}
+
+
+
+
+
