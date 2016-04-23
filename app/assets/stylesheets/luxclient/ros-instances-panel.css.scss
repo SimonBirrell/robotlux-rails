@@ -1,0 +1,31 @@
+/* Extra styling for ROS instances dropdown panel */
+
+.piluku-dropdown .dropdown-piluku-menu li.dropdown-header {
+  font-size: 14px;
+  overflow: hidden;
+  display: table;
+  width: 100%;
+  padding: 10px 10px !important;
+  border-bottom: 1px solid #e9ecf2;
+  text-decoration: none;
+}
+
+.piluku-dropdown .dropdown-piluku-menu.neat_drop .text-warning {
+  text-align: center;
+  color: #df6c6e; 
+  padding: 15px;
+}
+
+.top-bar .top-elements .info-number.danger {
+  background-color: #df6c6e;
+}
+
+.top-bar .top-elements .info-number.warning {
+  background-color: #f7941d;
+}
+
+.top-bar .top-elements .info-number.success {
+  background-color: #6fd64b;
+}
+
+
