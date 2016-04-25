@@ -44,4 +44,6 @@ $(document).ready(function() {
 		e.preventDefault();
 		$(".wrapper").toggleClass("package-bar-enabled");
 	});
+
+	$('[data-toggle="tooltip"]').tooltip();   
 });

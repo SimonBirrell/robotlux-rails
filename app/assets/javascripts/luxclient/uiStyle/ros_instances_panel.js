@@ -28,7 +28,7 @@ var RosInstancesPanel = (function() {
         if (title.length>0) {
             title = title.substring(0, title.length - 2);
         } else {
-            title = " ";
+            title = "No robots selected";
         }
         return title;
     }

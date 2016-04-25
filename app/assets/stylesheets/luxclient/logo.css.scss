@@ -18,3 +18,16 @@ div.navbar-header {
 	margin-bottom: 0px;
 }
 
+/* Tooltip styling */ 
+
+.tooltip-inner {
+	background-color: #2196f3;
+}
+
+.tooltip.bottom .tooltip-arrow {
+  top: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-bottom-color: #2196f3; /* black */
+  border-width: 0 5px 5px;
+}

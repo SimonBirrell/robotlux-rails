@@ -17,7 +17,7 @@
 	<ul class="nav navbar-nav navbar-right top-elements">
 
 		<!-- ROS Instances menu -->
-		<li id="ros-connection-menu" class="piluku-dropdown dropdown">
+		<li id="ros-connection-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Select robots" data-placement="bottom">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="ion-bug icon-notification"></i><span id="number-ros-instances-connected" class="badge info-number warning">0</span></a>
 			<ul id="ros-instances-list" class="dropdown-menu dropdown-piluku-menu  animated fadeInUp wow notification-drop neat_drop dropdown-right" data-wow-duration="1500ms" role="menu">
 				<li class="dropdown-header">
@@ -30,12 +30,12 @@
 		</li>
 
 		<!-- Packages menu -->
-		<li id="packages-menu" class="">
+		<li id="packages-menu" class="" data-toggle="tooltip" title="Toggle package menu" data-placement="bottom">
 			<a href="#" class="package-bar-toggle"><i class="ion-cube"></i></a>
 		</li>
 
 		<!-- Server Connection menu -->
-		<li id="server-connection-menu" class="piluku-dropdown dropdown">
+		<li id="server-connection-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Server connection" data-placement="bottom">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 				<i id="server-connection-status" class="ion-flash icon-notification"></i>
 			</a>
@@ -52,7 +52,7 @@
 		<!-- RobotLux Admin menu -->
 		<% if user_signed_in? %>
 			<% if current_user.try(:admin?) %>
-				<li id="robotlux-admin-menu" class="piluku-dropdown dropdown">
+				<li id="robotlux-admin-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Settings" data-placement="bottom">
 					<a href="#" class="dropdown-toggle avatar_width" data-toggle="dropdown" role="button" aria-expanded="false">
 						<i class="ion-ios-gear"></i>
 						<!--
@@ -69,7 +69,7 @@
 		<% end %>
 
 		<!-- Account menu -->
-		<li id="account-menu" class="piluku-dropdown dropdown">
+		<li id="account-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Account" data-placement="bottom">
 			<a href="#" class="dropdown-toggle avatar_width" data-toggle="dropdown" role="button" aria-expanded="false">
 				<span class="avatar-holder">
 					<img src="<%= image_path('piluku/avatar.jpg') %>" alt="">
