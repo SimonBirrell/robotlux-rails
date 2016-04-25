@@ -1,0 +1,28 @@
+#server-connection-status {
+	font-size: 25px;
+}
+
+.piluku-dropdown .dropdown-piluku-menu a.text-danger {
+	color: #df6c6e;
+}
+
+.piluku-dropdown .dropdown-piluku-menu a.text-warning {
+	color: #eac841;
+}
+
+.piluku-dropdown .dropdown-piluku-menu a.text-success {
+	color: #a0d269;
+}
+
+#server-connection-status.danger {
+	color: #df6c6e;	
+}
+
+#server-connection-status.warning {
+	color: #eac841;	
+}
+
+#server-connection-status.success {
+	color: #a0d269;	
+}
+

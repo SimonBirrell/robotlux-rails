@@ -144,6 +144,7 @@ var LuxUiToProtocol = (function() {
     function tryToReconnect() {
       reconnectStarted = true;
       console.log("Trying to reconnect...");
+      ConnectionPanel.connecting();
       setTimeout(function() {
         console.log("")
         LuxUi.close();

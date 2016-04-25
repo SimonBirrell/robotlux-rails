@@ -14,12 +14,14 @@ var ConnectionPanel = (function() {
     	status = "connecting";
     	clearPanel();
     	$('#connection-panel-warning').show();
+        setConnectionIconStatus('warning');
     };
 
     module.couldntConnect = function() {
     	status = "couldntConnect";
     	clearPanel();
     	$('#connection-panel-danger').show();
+        setConnectionIconStatus('danger');
     };
 
     module.connectionLost = function(secondsToReconnect, reconnectCallback) {
@@ -28,6 +30,7 @@ var ConnectionPanel = (function() {
         module.connectionLostUpdateReconnectSeconds(secondsToReconnect);
         $('#connection-panel-reconnect-retry').click(reconnectCallback);
     	$('#connection-panel-danger').show();  
+        setConnectionIconStatus('danger');
     };
 
     module.connectionLostUpdateReconnectSeconds = function(secondsToReconnect) {
@@ -38,17 +41,20 @@ var ConnectionPanel = (function() {
     	status = "connectionOk";
     	clearPanel();
     	$('#connection-panel-success').show();
-    	setTimeout(function() {
-    		if (status === 'connectionOk') {
-		    	clearPanel();
-    		}
-    	}, 1000);
+        setConnectionIconStatus('success');
     };
 
     function clearPanel() {
     	$('#connection-panel-warning').hide();
     	$('#connection-panel-danger').hide();
     	$('#connection-panel-success').hide();
+    }
+
+    function setConnectionIconStatus(status) {
+        $('#server-connection-status').removeClass('danger');        
+        $('#server-connection-status').removeClass('warning');        
+        $('#server-connection-status').removeClass('success');        
+        $('#server-connection-status').addClass(status);        
     }
 
     return module;
