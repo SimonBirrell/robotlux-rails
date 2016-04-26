@@ -991,6 +991,7 @@ var RenderUi = (function() {
 						"height": 50
 				};
 	}
+	module.createDummyNode = createDummyNode;
 
 	////////////////////////////////////////////////////
 	// User interaction callbacks

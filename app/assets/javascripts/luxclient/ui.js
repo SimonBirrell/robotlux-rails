@@ -1511,7 +1511,7 @@ var LuxUi = (function() {
 					return;
 				}
 
-				var dummyNode = createDummyNode("/dummy" + (group.title || "Unknown"));
+				var dummyNode = RenderUi.createDummyNode("/dummy" + (group.title || "Unknown"));
 				graph.nodes.push(dummyNode);
 				group.leaves.push(dummyNode);
 			}
@@ -1590,7 +1590,7 @@ var LuxUi = (function() {
 
 				// If there are no nodes in this group then make a dummy one
 				if (existingNodes.length === 0)	{
-					var dummyNode = createDummyNode("/dummy" + machineName);
+					var dummyNode = RenderUi.createDummyNode("/dummy" + machineName);
 					RenderUi.pushNode(dummyNode);
 					existingNodes.push(dummyNode);
 				}

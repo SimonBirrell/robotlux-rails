@@ -224,6 +224,17 @@ var RosInstancesPanel = (function() {
 
         var rosInstanceMenuItemsExiting = rosInstanceMenuItems.exit();
         displayExitingInstances(rosInstanceMenuItemsExiting);    
+
+        // Auto-connect robot if only one new instance found
+        if (newLinks.length === 1) {
+            $('#ros-instances-list').collapse('show');
+            $('.ros-instance').click();
+            setTimeout(function() {
+                $('#ros-instances-list').removeClass('in');
+                $('#ros-connection-menu').collapse('hide');
+            }, 5000);
+
+        }
     };
 
     function rosInstanceIdToCssId(rosInstanceId) {
