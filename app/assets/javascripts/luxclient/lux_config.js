@@ -1,9 +1,10 @@
-// Development configuration with a local node.js server on 8080.
+// Production configuration with node.js server on Heroku, port 80
 //
+
 var LuxConfig = (function() {
 	var module = {};
 
-	module.socketsServer = "ws://localhost:8080/";
+	module.socketsServer = "ws://luxserver.herokuapp.com/";
 
 	return module;
 })();
