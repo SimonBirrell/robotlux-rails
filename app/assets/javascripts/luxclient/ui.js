@@ -1553,8 +1553,26 @@ var LuxUi = (function() {
 			//
 			function addMachineToAllGraphs(machine, rosInstanceId) {
 				machine.rosInstanceId = rosInstanceId;
+				sortPackagesOnMachine(machine);
 				uiFullGraph.machines.push(machine);
 				insertMachineIntoUI(machine);
+			}
+
+			// Sort packages on machine
+			// For the moment, alphabetically.
+			//
+			function sortPackagesOnMachine(machine) {
+				var packages = machine.children;
+				packages.sort(function(a, b) {
+					var aa = a.name.toLowerCase(),
+						bb = b.name.toLowerCase();
+					if (aa < bb) {
+						return -1;
+					} else if (aa > bb) {
+						return 1;
+					}	
+					return 0;
+				});
 			}
 
 			// Delete a machine and remove any associated uiGraph groups

@@ -142,7 +142,7 @@ var MachineTreeMenu = (function() {
 												// Avatar Image
 												// <img src="/assets/piluku/avatar/one.png">
 												d3.select(this).append('img')
-													.attr('src', '/assets/piluku/avatar/one.png')
+													.attr('src', '/assets/package-avatar-default.jpg')
 													.attr('alt', '');
 												});
 										// <span class="name">	
