@@ -352,7 +352,9 @@ var RenderUi = (function() {
 					var labelGroup = (d.gtype === "hashTopic") ? "group-label-hash-topic" : "group-label-machine";
 					return "group-label " + labelGroup;
 				})
-				.text(function(d) {return d.title;});
+				.text(function(d) {
+					return MachineTreeMenu.humanName(d.title);
+				});
             	
         // When mouse is over a group, tell the DragDropManager that it's available
         // as a drop target
@@ -539,7 +541,7 @@ var RenderUi = (function() {
 			    .classed('nodetopic-label', true)
 			    .classed('nodetopic-label-active', function(d) {return (d.clickHandler !== null)})
 			    .text(function(d) {
-			    	return d.chunkName;
+			    	return MachineTreeMenu.humanName(d.chunkName);
 			    })
 	    		.style("cursor", function(d) {
 	    			return d.clickHandler ? "pointer" : "default";
@@ -632,7 +634,8 @@ var RenderUi = (function() {
 	    var nodeLabels = node.selectAll(".nodetopic-label")
 			.text(function(d) {
 			    console.log("************* >>>>> Changed label in UPDATE <<<<< ****************");
-			    return d.chunkName;
+			    return MachineTreeMenu.humanName(d.chunkName);
+			    //return d.chunkName;
 			})			   		
 			.transition()
 	   		.duration(SHRINK_DURATION)

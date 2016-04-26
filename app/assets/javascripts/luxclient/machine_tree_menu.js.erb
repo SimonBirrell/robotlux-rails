@@ -12,6 +12,7 @@ var MachineTreeMenu = (function() {
     	key = key.replace(/_/g, ' ');
     	return key.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     }
+    module.humanName = humanName;
 
     // Called from UI to indicate that the machine menu (currently on screen left)
     // needs updating.
