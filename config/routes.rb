@@ -1,9 +1,23 @@
 Rails.application.routes.draw do
 
-  devise_for :users
+  resources :agent_sessions
+  resources :agents
+  devise_for :users, :controllers => {sessions: 'sessions'} 
   devise_scope :user do
 
+    # API 
+    namespace :api do
+      namespace :v1 do
+        resources :orgs do
+          get 'agents_info', on: :member
+        end
+      end
+    end
+
     resources :users
+    resources :orgs do
+      get 'agents_info', on: :member
+    end
 
     authenticated :user do
       root 'home#index', as: :authenticated_root

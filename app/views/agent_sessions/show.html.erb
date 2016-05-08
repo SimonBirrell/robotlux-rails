@@ -1,0 +1,39 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Agent:</strong>
+  <%= @agent_session.agent_id %>
+</p>
+
+<p>
+  <strong>Start time:</strong>
+  <%= @agent_session.start_time %>
+</p>
+
+<p>
+  <strong>End time:</strong>
+  <%= @agent_session.end_time %>
+</p>
+
+<p>
+  <strong>Hostname:</strong>
+  <%= @agent_session.hostname %>
+</p>
+
+<p>
+  <strong>Ros master uri:</strong>
+  <%= @agent_session.ros_master_uri %>
+</p>
+
+<p>
+  <strong>Session status:</strong>
+  <%= @agent_session.session_status %>
+</p>
+
+<p>
+  <strong>Token:</strong>
+  <%= @agent_session.token %>
+</p>
+
+<%= link_to 'Edit', edit_agent_session_path(@agent_session) %> |
+<%= link_to 'Back', agent_sessions_path %>

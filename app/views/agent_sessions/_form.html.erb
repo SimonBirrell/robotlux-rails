@@ -1,0 +1,17 @@
+<%= simple_form_for(@agent_session) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :agent_id %>
+    <%= f.input :start_time %>
+    <%= f.input :end_time %>
+    <%= f.input :hostname %>
+    <%= f.input :ros_master_uri %>
+    <%= f.input :session_status %>
+    <%= f.input :token %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit %>
+  </div>
+<% end %>

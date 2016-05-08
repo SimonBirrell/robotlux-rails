@@ -1,0 +1,44 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @agent.name %>
+</p>
+
+<p>
+  <strong>Slug:</strong>
+  <%= @agent.slug %>
+</p>
+
+<p>
+  <strong>Org:</strong>
+  <%= @agent.org_id %>
+</p>
+
+<p>
+  <strong>Guid:</strong>
+  <%= @agent.guid %>
+</p>
+
+<p>
+  <strong>Hostname:</strong>
+  <%= @agent.hostname %>
+</p>
+
+<p>
+  <strong>Ros master uri:</strong>
+  <%= @agent.ros_master_uri %>
+</p>
+
+<p>
+  <strong>Network:</strong>
+  <%= @agent.network %>
+</p>
+
+<p>
+  <strong>Authorization:</strong>
+  <%= @agent.authorization %>
+</p>
+
+<%= link_to 'Edit', edit_agent_path(@agent) %> |
+<%= link_to 'Back', agents_path %>
