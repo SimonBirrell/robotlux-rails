@@ -2,7 +2,7 @@ module ApiHelpers
 
     def sign_in(user)
         params = { email: user.email, password: 'secret123' }
-        post "/users/sign_in", params.to_json, { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
+        post "/api/v1/users/sign_in", params.to_json, { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
         expect(response).to have_http_status 201
         sign_in_info = JSON.parse(response.body)
         sign_in_info['user']

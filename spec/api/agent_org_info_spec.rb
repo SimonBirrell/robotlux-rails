@@ -51,15 +51,12 @@ RSpec.describe "Agent gets Org info", type: :request do
         expect(json['slug']).to eq org.slug
 
         agents = json['agents']
-        puts agents.inspect
         expect(agents).to be_present
         agents.each do |agent|
             expect(agent['id']).to be_present
             expect(agent['name']).to be_present
             expect(agent['slug']).to be_present
         end
-
-        puts json.inspect
     end
 
 end

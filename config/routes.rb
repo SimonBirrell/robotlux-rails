@@ -8,6 +8,8 @@ Rails.application.routes.draw do
     # API 
     namespace :api do
       namespace :v1 do
+        post 'users/sign_in' => 'sessions#create'
+
         resources :orgs do
           get 'agents_info', on: :member
           resources :agents
