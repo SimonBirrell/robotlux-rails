@@ -1,7 +1,8 @@
 require 'rails_helper'
 
-RSpec.describe "Agent gets Org info", type: :request, focus: false do 
+RSpec.describe "Agent gets Org info", type: :request do 
 	include Warden::Test::Helpers
+    include ApiHelpers
 
 	it "won't allow unauthenticated user to get org info" do
 		org = FactoryGirl.create :org
@@ -14,9 +15,7 @@ RSpec.describe "Agent gets Org info", type: :request, focus: false do
 	
     it "won't allow badly authenticated user to get org info" do
         org = FactoryGirl.create :org
-        user = FactoryGirl.create :user
-        expect(user.id).to be_present
-        user.confirm
+        user = create_user
 
         # Sign In
         sign_in_info = sign_in(user)
@@ -34,9 +33,7 @@ RSpec.describe "Agent gets Org info", type: :request, focus: false do
         org = FactoryGirl.create :org
         agent1 = FactoryGirl.create :agent, org: org, slug: 'foo'
         agent2 = FactoryGirl.create :agent, org: org, slug: 'bar'
-        user = FactoryGirl.create :user
-        expect(user.id).to be_present
-        user.confirm
+        user = create_user
 
         # Sign In
         sign_in_info = sign_in(user)
@@ -64,28 +61,5 @@ RSpec.describe "Agent gets Org info", type: :request, focus: false do
 
         puts json.inspect
     end
-
-    private
-    
-        def sign_in(user)
-            params = { email: user.email, password: 'secret123' }
-            post "/users/sign_in", params.to_json, { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
-            expect(response).to have_http_status 201
-            sign_in_info = JSON.parse(response.body)
-            sign_in_info['user']
-        end
-
-        def json_headers
-            { 
-                'Content-Type' => 'application/json', 
-                'Accept' => 'application/json',
-            }
-        end
-
-        def add_authentication_to_headers(headers, email, auth_token)
-            headers['X-API-EMAIL'] = email
-            headers['X-API-TOKEN'] = auth_token
-            headers
-        end
 
 end

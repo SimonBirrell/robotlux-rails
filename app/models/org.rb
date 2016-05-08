@@ -1,6 +1,7 @@
 class Org < ActiveRecord::Base
 
 	has_many :agents
+	has_many :users
 
 	validates :name, presence: true 
 	validates :slug, presence: true 

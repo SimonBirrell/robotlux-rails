@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       namespace :v1 do
         resources :orgs do
           get 'agents_info', on: :member
+          resources :agents
         end
       end
     end
