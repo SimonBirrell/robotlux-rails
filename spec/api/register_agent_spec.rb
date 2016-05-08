@@ -52,7 +52,9 @@ RSpec.describe "register Agent", type: :request do
         expect(org.agents.first.name).to eq 'Bar'
         expect(org.agents.first.slug).to eq 'bar'
         expect(org.users.count).to eq 2
-        expect(org.agents.last.user).to eq org.users.last
+        new_user = org.agents.last.user
+        expect(new_user).to eq org.users.last
+        expect(new_user.role).to eq 'agent'
 
         expect(new_agent_params['slug']).to eq 'bar'
         expect(new_agent_params['password']).to be_present

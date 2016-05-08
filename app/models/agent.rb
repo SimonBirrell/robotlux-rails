@@ -26,7 +26,8 @@ class Agent < ActiveRecord::Base
 			user = User.create 	email: email, 
 								name: name, 
 								password: @password, 
-								org: org
+								org: org,
+								role: :agent
 			user.confirm	
 			self.user_id = user.id				
 		end		

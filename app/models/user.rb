@@ -1,7 +1,7 @@
 class User < ActiveRecord::Base
   belongs_to :org
 
-  enum role: [:user, :vip, :admin]
+  enum role: [:user, :admin, :org_admin, :agent]
   after_initialize :set_default_role, :if => :new_record?
 
   # http://soryy.com/blog/2014/apis-with-devise/
