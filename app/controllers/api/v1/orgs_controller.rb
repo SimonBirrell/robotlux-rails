@@ -10,7 +10,11 @@ module Api
                               }})
 
         respond_to do |format|
-           format.json { render json: json}
+          if current_user.org_id == @org.id
+            format.json { render json: json}
+          else
+            format.json { render json: [], status: :unauthorized }
+          end
         end    
       end
 

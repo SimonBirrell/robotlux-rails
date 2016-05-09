@@ -52,7 +52,7 @@ module Api
               return invalid_login_attempt unless resource
 
               if resource.valid_password?(params[:password])
-                render :json => { user: { email: resource.email, :auth_token => resource.authentication_token } }, success: true, status: :created
+                render :json => { user: { email: resource.email, :auth_token => resource.authentication_token, org_id: resource.org_id } }, success: true, status: :created
               else
                 invalid_login_attempt
               end
