@@ -15,6 +15,9 @@ class Agent < ActiveRecord::Base
 	before_save :auto_generate_name
 	before_create :create_user_for_agent
 
+	# Alphabetical order by default
+    default_scope  { order("slug ASC") }
+
 	private
 
 		def auto_generate_name

@@ -20,7 +20,7 @@ module Api
     	#	}
     	#	
     	# Then use
-    	# curl -XGET -v http://localhost:3000/orgs/1/agents_info 
+    	# curl -XGET -v http://localhost:3000/api/v1/orgs/1/agents_info 
     	# -H 'Content-Type: application/json' -H 'Accept: application/json' 
     	# -H 'X-API-EMAIL: user@gmail.com' 
     	# -H 'X-API-TOKEN: blahblahblah' 

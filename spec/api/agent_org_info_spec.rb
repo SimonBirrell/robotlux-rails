@@ -41,6 +41,7 @@ RSpec.describe "Agent gets Org info", type: :request do
         org_id = sign_in_info['org_id']
         expect(auth_token).to be_present
         expect(org_id).to be_present
+        expect(org.id).to eq user.org_id
 
         headers = json_headers
         headers = add_authentication_to_headers(headers, user.email, auth_token)
