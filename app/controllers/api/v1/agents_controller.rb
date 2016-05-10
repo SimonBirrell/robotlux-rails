@@ -28,12 +28,15 @@ module Api
       # PATCH/PUT /agents/1
       # PATCH/PUT /agents/1.json
       def update
+        @org = Org.find(params[:org_id])        
         respond_to do |format|
-          if @agent.update(agent_params)
-            format.html { redirect_to @agent, notice: 'Agent was successfully updated.' }
-            format.json { render :show, status: :ok, location: @agent }
+          if (current_user.org.id == @org.id) && @agent.update(agent_params)
+            agent_description = @agent.attributes
+            agent_description['password'] = @agent.password
+            format.json { render json: agent_description.to_json, status: :created, location: @agent}
+          elsif current_user.org.id != @org.id
+            format.json { render json: @agent.errors, status: :unauthorized }
           else
-            format.html { render :edit }
             format.json { render json: @agent.errors, status: :unprocessable_entity }
           end
         end
