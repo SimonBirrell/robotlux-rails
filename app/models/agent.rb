@@ -18,6 +18,14 @@ class Agent < ActiveRecord::Base
 	# Alphabetical order by default
     default_scope  { order("slug ASC") }
 
+	def change_password
+		@password = generate_password
+		self.user.password = @password
+			self.user.password_confirmation = @password
+			self.user.save
+			@password 
+	end
+
 	private
 
 		def auto_generate_name

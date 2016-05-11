@@ -32,7 +32,7 @@ module Api
         respond_to do |format|
           if (current_user.org.id == @org.id) && @agent.update(agent_params)
             agent_description = @agent.attributes
-            agent_description['password'] = @agent.password
+            agent_description['password'] = @agent.change_password
             format.json { render json: agent_description.to_json, status: :created, location: @agent}
           elsif current_user.org.id != @org.id
             format.json { render json: @agent.errors, status: :unauthorized }

@@ -36,6 +36,7 @@ RSpec.describe "Update Agent", type: :request do
         agent = FactoryGirl.create :agent, org: org, slug: 'foo'
         user = create_user org: org
         expect(org.users.count).to eq 2
+        old_encrypted_password = user.encrypted_password
 
         # Sign In
         sign_in_info = sign_in(user)
@@ -56,6 +57,7 @@ RSpec.describe "Update Agent", type: :request do
         expect(org.users.count).to eq 2
 
         expect(new_agent_params['slug']).to eq 'bar'
+        expect(agent.user.encrypted_password).not_to eq old_encrypted_password
     end
 
 	it "will not allow authenticated user from different org to update an agent" do
