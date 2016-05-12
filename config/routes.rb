@@ -9,6 +9,7 @@ Rails.application.routes.draw do
     namespace :api do
       namespace :v1 do
         post 'users/sign_in' => 'sessions#create'
+        delete 'users/sign_out' => 'sessions#destroy'
 
         resources :orgs do
           get 'agents_info', on: :member

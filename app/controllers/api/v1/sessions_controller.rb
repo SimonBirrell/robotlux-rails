@@ -52,6 +52,8 @@ module Api
               return invalid_login_attempt unless resource
 
               if resource.valid_password?(params[:password])
+                reset_auth_token_each_logon_if_agent(resource)
+                resource.reload
                 render :json => { user: { email: resource.email, :auth_token => resource.authentication_token, org_id: resource.org_id } }, success: true, status: :created
               else
                 invalid_login_attempt
@@ -91,6 +93,29 @@ module Api
               		res
             	end
         	end
+        end
+
+        def reset_auth_token_each_logon_if_agent(resource)
+          if resource.role == 'agent'
+            agent = Agent.where(user_id: resource.id).first
+            agent.logon
+          end
+        end
+
+        def logoff_agent_if_agent(user, user_auth_token)
+          if user.role == 'agent'
+            agent = Agent.where(user_id: user.id).first
+            agent.logoff(user_auth_token)
+          end
+        end
+
+        # http://stackoverflow.com/questions/26241357/overriding-devise-sessionscontroller-destroy
+        def verify_signed_out_user
+          user_email = request.headers["X-API-EMAIL"].presence
+          user_auth_token = request.headers["X-API-TOKEN"].presence
+          user = user_email && User.find_by_email(user_email)
+          logoff_agent_if_agent(user, user_auth_token)
+          super
         end
 
     end  

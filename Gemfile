@@ -43,10 +43,16 @@ group :production do
   gem 'rails_12factor'
   gem 'unicorn'
 end
+group :development, :production do
+  gem 'redis'
+end
 group :test do
   gem 'capybara'
   gem 'database_cleaner'
   gem 'launchy'
   gem 'selenium-webdriver'
   gem 'jasmine'
+  gem 'fakeredis', :require => "fakeredis/rspec"
 end
+gem 'redis-namespace'
+

@@ -14,6 +14,7 @@ class Agent < ActiveRecord::Base
 
 	before_save :auto_generate_name
 	before_create :create_user_for_agent
+	before_create :set_default_network
 
 	# Alphabetical order by default
     default_scope  { order("slug ASC") }
@@ -24,6 +25,25 @@ class Agent < ActiveRecord::Base
 			self.user.password_confirmation = @password
 			self.user.save
 			@password 
+	end
+
+	def logon
+		new_auth_token = user.reset_authentication_token!
+		user.save! 
+        LuxserverInterface.set_agent_details(new_auth_token, {
+        	"slug" => slug,
+        	"username" => username,
+        	"org_slug" => org.slug,
+        	"network" => network
+        	})
+	end
+
+	def logoff(auth_token)
+		LuxserverInterface.delete_agent_details(auth_token)
+	end
+
+	def username
+		"#{slug}@#{org.slug}.orgs.robotlux.com"
 	end
 
 	private
@@ -49,6 +69,10 @@ class Agent < ActiveRecord::Base
 
 		def generate_password
 			SecureRandom.urlsafe_base64(25).tr('lIO0', 'sxyz')
+		end
+
+		def set_default_network
+			self.network ||= "0"
 		end
 
 end
