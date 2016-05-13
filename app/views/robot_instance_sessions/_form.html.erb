@@ -1,0 +1,15 @@
+<%= simple_form_for(@robot_instance_session) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :name %>
+    <%= f.input :robot_instance_id %>
+    <%= f.input :start_session %>
+    <%= f.input :end_session %>
+    <%= f.input :session_token %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit %>
+  </div>
+<% end %>

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160508181417) do
+ActiveRecord::Schema.define(version: 20160513090711) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,8 +24,9 @@ ActiveRecord::Schema.define(version: 20160508181417) do
     t.string   "ros_master_uri"
     t.string   "session_status"
     t.string   "token"
-    t.datetime "created_at",     null: false
-    t.datetime "updated_at",     null: false
+    t.datetime "created_at",                null: false
+    t.datetime "updated_at",                null: false
+    t.integer  "robot_instance_session_id"
   end
 
   create_table "agents", force: :cascade do |t|
@@ -47,6 +48,26 @@ ActiveRecord::Schema.define(version: 20160508181417) do
     t.string   "slug"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "robot_instance_sessions", force: :cascade do |t|
+    t.string   "name"
+    t.string   "robot_instance_id"
+    t.datetime "start_session"
+    t.datetime "end_session"
+    t.string   "session_token"
+    t.datetime "created_at",        null: false
+    t.datetime "updated_at",        null: false
+  end
+
+  create_table "robot_instances", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "org_id"
+    t.string   "network"
+    t.string   "master_key"
+    t.string   "launch_command"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
   end
 
   create_table "users", force: :cascade do |t|

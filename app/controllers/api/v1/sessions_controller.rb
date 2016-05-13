@@ -52,7 +52,7 @@ module Api
               return invalid_login_attempt unless resource
 
               if resource.valid_password?(params[:password])
-                reset_auth_token_each_logon_if_agent(resource)
+                logon_agent_if_agent(resource)
                 resource.reload
                 render :json => { user: { email: resource.email, :auth_token => resource.authentication_token, org_id: resource.org_id } }, success: true, status: :created
               else
@@ -95,16 +95,16 @@ module Api
         	end
         end
 
-        def reset_auth_token_each_logon_if_agent(resource)
-          if resource.role == 'agent'
-            agent = Agent.where(user_id: resource.id).first
-            agent.logon
+        def logon_agent_if_agent(user)
+          if user.role == 'agent'
+            agent = get_agent(user)
+            agent.logon(params)
           end
         end
 
         def logoff_agent_if_agent(user, user_auth_token)
           if user.role == 'agent'
-            agent = Agent.where(user_id: user.id).first
+            agent = get_agent(user)
             agent.logoff(user_auth_token)
           end
         end
@@ -117,6 +117,12 @@ module Api
           logoff_agent_if_agent(user, user_auth_token)
           super
         end
+
+        private
+
+          def get_agent(user)
+            Agent.where(user_id: user.id).first
+          end
 
     end  
   end

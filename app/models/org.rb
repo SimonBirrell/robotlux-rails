@@ -2,6 +2,7 @@ class Org < ActiveRecord::Base
 
 	has_many :agents
 	has_many :users
+	has_many :robot_instances
 
 	validates :name, presence: true 
 	validates :slug, presence: true 

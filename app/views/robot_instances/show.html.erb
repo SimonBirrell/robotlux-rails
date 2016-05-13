@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @robot_instance.name %>
+</p>
+
+<p>
+  <strong>Org:</strong>
+  <%= @robot_instance.org_id %>
+</p>
+
+<p>
+  <strong>Network:</strong>
+  <%= @robot_instance.network %>
+</p>
+
+<p>
+  <strong>Master key:</strong>
+  <%= @robot_instance.master_key %>
+</p>
+
+<p>
+  <strong>Launch command:</strong>
+  <%= @robot_instance.launch_command %>
+</p>
+
+<%= link_to 'Edit', edit_robot_instance_path(@robot_instance) %> |
+<%= link_to 'Back', robot_instances_path %>

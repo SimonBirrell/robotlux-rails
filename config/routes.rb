@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
 
+  resources :robot_instance_sessions
+  resources :robot_instances
   resources :agent_sessions
   resources :agents
   devise_for :users, :controllers => {sessions: 'sessions'} 

@@ -59,7 +59,6 @@ class SessionsController < Devise::SessionsController
     end
 
     def destroy
-      puts "************ root controller"
       respond_to do |format|
         format.html {
           super

@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @robot_instance_session.name %>
+</p>
+
+<p>
+  <strong>Robot instance:</strong>
+  <%= @robot_instance_session.robot_instance_id %>
+</p>
+
+<p>
+  <strong>Start session:</strong>
+  <%= @robot_instance_session.start_session %>
+</p>
+
+<p>
+  <strong>End session:</strong>
+  <%= @robot_instance_session.end_session %>
+</p>
+
+<p>
+  <strong>Session token:</strong>
+  <%= @robot_instance_session.session_token %>
+</p>
+
+<%= link_to 'Edit', edit_robot_instance_session_path(@robot_instance_session) %> |
+<%= link_to 'Back', robot_instance_sessions_path %>

@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Listing Robot Instances</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Org</th>
+      <th>Network</th>
+      <th>Master key</th>
+      <th>Launch command</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @robot_instances.each do |robot_instance| %>
+      <tr>
+        <td><%= robot_instance.name %></td>
+        <td><%= robot_instance.org_id %></td>
+        <td><%= robot_instance.network %></td>
+        <td><%= robot_instance.master_key %></td>
+        <td><%= robot_instance.launch_command %></td>
+        <td><%= link_to 'Show', robot_instance %></td>
+        <td><%= link_to 'Edit', edit_robot_instance_path(robot_instance) %></td>
+        <td><%= link_to 'Destroy', robot_instance, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Robot instance', new_robot_instance_path %>
