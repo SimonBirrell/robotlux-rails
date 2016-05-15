@@ -94,14 +94,9 @@ RSpec.describe "Agent signs in", type: :request do
         sign_out(@user, @user.email, auth_token)
         expect(agent_session.reload.end_time).to be_present
 
-        # Second sign in with same values should not create a new robot instance
-        # sign_in_info3 = sign_in(@user, @agent.password, agent_logon_params)
-        # expect(AgentSession.count).to eq 3
-        # expect(RobotInstance.count).to eq 1        
-        # expect(RobotInstanceSession.count).to eq 1
-
         # Sign Out Second agent
         sign_out(agent2.user, agent2.user.email, auth_token2)
+        expect(RobotInstance.count).to eq 1
         expect(RobotInstanceSession.count).to eq 1
         expect(robot_instance_session.reload.end_session).to be_present
 

@@ -1,0 +1,16 @@
+          <tr>
+            <% columns.each do |column| %>
+                <td>
+                <% if column[:link].present? %>
+                    <a href="<%= column[:link] %>">
+                <% end %>        
+                    <%= column[:text] %>
+                <% if column[:link].present? %>
+                    </a>
+                <% end %>        
+                </td>
+            <% end %>
+            <td><%= link_to 'Show', row %></td>
+            <td><%= link_to 'Edit', send("edit_"+row.model_name.param_key+"_path", row) %></td>
+            <td><%= link_to 'Destroy', row, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+          </tr>

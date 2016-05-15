@@ -4,6 +4,8 @@ class RobotInstance < ActiveRecord::Base
 
 	before_create :set_name_if_blank
 
+	validates :org, presence: true
+
 	private
 
 		def set_name_if_blank

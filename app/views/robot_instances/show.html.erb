@@ -1,29 +1,18 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @robot_instance, item_class: 'robot_instance', breadcrumb: [
+      {link: org_path(@robot_instance.org), text: current_user.org.name},
+      {link: robot_instances_path, text: 'Robot Instances'},
+      {text: @robot_instance.name}
+      ]} %>       
 
-<p>
-  <strong>Name:</strong>
-  <%= @robot_instance.name %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Name', field_id: 'name', field_value: @robot_instance.name} %>
 
-<p>
-  <strong>Org:</strong>
-  <%= @robot_instance.org_id %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Org', field_id: 'org', field_value: @robot_instance.org.name} %>
 
-<p>
-  <strong>Network:</strong>
-  <%= @robot_instance.network %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Master Key', field_id: 'master-key', field_value: @robot_instance.master_key} %>
 
-<p>
-  <strong>Master key:</strong>
-  <%= @robot_instance.master_key %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Launch Command', field_id: 'launch-command', field_value: @robot_instance.launch_command} %>
 
-<p>
-  <strong>Launch command:</strong>
-  <%= @robot_instance.launch_command %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Network', field_id: 'network', field_value: @robot_instance.network} %>
 
-<%= link_to 'Edit', edit_robot_instance_path(@robot_instance) %> |
-<%= link_to 'Back', robot_instances_path %>
+
+<%= render 'layouts/show_bottom' %>

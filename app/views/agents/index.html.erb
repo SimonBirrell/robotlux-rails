@@ -1,41 +1,19 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'agents', headings: ['Name', 'Slug', 'Org', 'Guid', 'Hostname', 'ROS Master URI', 'Network', 'Authorization', 'User']} %>
 
-<h1>Listing Agents</h1>
+        <% @agents.each do |agent| %>
+          <%= render partial: 'layouts/index_row', locals: {
+            row: robot_instance, 
+            columns: [
+            {link: agent_path(agent), text: agent.name},
+            {text: agent.slug},
+            {link: org_path(agent.org), text: agent.org.name},
+            {text: agent.guid},
+            {text: agent.hostname},
+            {text: agent.ros_master_uri},
+            {text: agent.network},
+            {text: agent.authorization},
+            {link: user_path(agent.user), text: agent.user.email},
+            ]} %>
+        <% end %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Slug</th>
-      <th>Org</th>
-      <th>Guid</th>
-      <th>Hostname</th>
-      <th>Ros master uri</th>
-      <th>Network</th>
-      <th>Authorization</th>
-      <th colspan="3"></th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% @agents.each do |agent| %>
-      <tr>
-        <td><%= agent.name %></td>
-        <td><%= agent.slug %></td>
-        <td><%= agent.org_id %></td>
-        <td><%= agent.guid %></td>
-        <td><%= agent.hostname %></td>
-        <td><%= agent.ros_master_uri %></td>
-        <td><%= agent.network %></td>
-        <td><%= agent.authorization %></td>
-        <td><%= link_to 'Show', agent %></td>
-        <td><%= link_to 'Edit', edit_agent_path(agent) %></td>
-        <td><%= link_to 'Destroy', agent, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<br>
-
-<%= link_to 'New Agent', new_agent_path %>
+<%= render partial: 'layouts/index_bottom' %>

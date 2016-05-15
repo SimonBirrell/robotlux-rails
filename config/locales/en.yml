@@ -25,4 +25,9 @@ en:
      sign_out: 'Sign out'
      welcome: 'Welcome to Robot Lux!'
      logging_in: 'logging in...'
-     
+  agents: 'Agents'
+  agent_sessions: 'Agent Sessions'
+  orgs: 'Organizations'
+  robot_instances: 'Robots'
+  robot_instance_sessions: 'Robot Instance Sessions'
+  users: 'Users'

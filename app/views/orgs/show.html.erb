@@ -1,14 +1,10 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @org, item_class: 'org', breadcrumb: [
+      {text: @org.name}
+      ]} %>       
 
-<p>
-  <strong>Name:</strong>
-  <%= @org.name %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Name', field_id: 'name', field_value: @org.name} %>
 
-<p>
-  <strong>Slug:</strong>
-  <%= @org.slug %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Slug', field_id: 'slug', field_value: @org.slug} %>
 
-<%= link_to 'Edit', edit_org_path(@org) %> |
-<%= link_to 'Back', orgs_path %>
+ 
+<%= render 'layouts/show_bottom' %>

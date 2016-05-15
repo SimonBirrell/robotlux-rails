@@ -3,7 +3,13 @@ class UsersController < Devise::RegistrationsController
   before_action :admin_only, :except => :show
 
   def index
-    @users = User.all
+    if current_user.role == :admin
+      @users = User.all
+    elsif current_user.role == :org_admin
+      @users = User.where(org_id: current_user.org_id)
+    else
+      @users = Array(current_user)
+    end
   end
 
   def show
@@ -38,9 +44,9 @@ class UsersController < Devise::RegistrationsController
   private
 
   def admin_only
-    unless current_user.admin?
-      redirect_to :back, :alert => "Access denied."
-    end
+    # unless current_user.admin?
+    #   redirect_to :back, :alert => "Access denied."
+    # end
   end
 
   def secure_params

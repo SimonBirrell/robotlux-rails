@@ -1,29 +1,17 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @robot_instance_session, item_class: 'robot_instance_session', breadcrumb: [
+      {link: org_path(@robot_instance_session.robot_instance.org), text: @robot_instance_session.robot_instance.org.name},
+      {link: robot_instance_path(@robot_instance_session.robot_instance), text: @robot_instance_session.robot_instance.name},
+      {text: @robot_instance_session.name}
+      ]} %>       
 
-<p>
-  <strong>Name:</strong>
-  <%= @robot_instance_session.name %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Name', field_id: 'name', field_value: @robot_instance_session.name} %>
 
-<p>
-  <strong>Robot instance:</strong>
-  <%= @robot_instance_session.robot_instance_id %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Robot Instance', field_id: 'robot-instance', field_value: @robot_instance_session.robot_instance.name} %>
 
-<p>
-  <strong>Start session:</strong>
-  <%= @robot_instance_session.start_session %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Start Session', field_id: 'start-session', field_value: @robot_instance_session.start_session} %>
 
-<p>
-  <strong>End session:</strong>
-  <%= @robot_instance_session.end_session %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'End Session', field_id: 'end-session', field_value: @robot_instance_session.end_session} %>
 
-<p>
-  <strong>Session token:</strong>
-  <%= @robot_instance_session.session_token %>
-</p>
-
-<%= link_to 'Edit', edit_robot_instance_session_path(@robot_instance_session) %> |
-<%= link_to 'Back', robot_instance_sessions_path %>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Session Token', field_id: 'session-token', field_value: @robot_instance_session.session_token} %>
+ 
+<%= render 'layouts/show_bottom' %>

@@ -1,44 +1,25 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @agent, item_class: 'agent', breadcrumb: [
+      {link: org_path(@agent.org), text: @agent.org.name},
+      {text: @agent.name}
+      ]} %>       
 
-<p>
-  <strong>Name:</strong>
-  <%= @agent.name %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Name', field_id: 'name', field_value: @agent.name} %>
 
-<p>
-  <strong>Slug:</strong>
-  <%= @agent.slug %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Slug', field_id: 'slug', field_value: @agent.slug} %>
 
-<p>
-  <strong>Org:</strong>
-  <%= @agent.org_id %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Org', field_id: 'org', field_value: @agent.org.name} %>
 
-<p>
-  <strong>Guid:</strong>
-  <%= @agent.guid %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Guid', field_id: 'guid', field_value: @agent.guid} %>
 
-<p>
-  <strong>Hostname:</strong>
-  <%= @agent.hostname %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Hostname', field_id: 'hostname', field_value: @agent.hostname} %>
 
-<p>
-  <strong>Ros master uri:</strong>
-  <%= @agent.ros_master_uri %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'ROS Master URI', field_id: 'ros_master_uri', field_value: @agent.ros_master_uri} %>
 
-<p>
-  <strong>Network:</strong>
-  <%= @agent.network %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Network', field_id: 'network', field_value: @agent.network} %>
 
-<p>
-  <strong>Authorization:</strong>
-  <%= @agent.authorization %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Authorization', field_id: 'authorization', field_value: @agent.authorization} %>
 
-<%= link_to 'Edit', edit_agent_path(@agent) %> |
-<%= link_to 'Back', agents_path %>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'User', field_id: 'user', field_value: @agent.user.email} %>
+
+ 
+<%= render 'layouts/show_bottom' %>

@@ -1,39 +1,17 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'agent_sessions', headings: ['Agent', 'Start', 'End', 'Hostname', 'ROS Master URI', 'Status', 'Token']} %>
 
-<h1>Listing Agent Sessions</h1>
+        <% @agent_sessions.each do |agent_session| %>
+          <%= render partial: 'layouts/index_row', locals: {
+            row: agent_session, 
+            columns: [
+            {link: agent_path(agent_session.agent), text: agent_session.agent.name},
+            {text: agent_session.start_session},
+            {text: agent_session.end_session},
+            {text: agent_session.hostname},
+            {text: agent_session.ros_master_uri},
+            {text: agent_session.status},
+            {text: agent_session.token}
+            ]} %>
+        <% end %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Agent</th>
-      <th>Start time</th>
-      <th>End time</th>
-      <th>Hostname</th>
-      <th>Ros master uri</th>
-      <th>Session status</th>
-      <th>Token</th>
-      <th colspan="3"></th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% @agent_sessions.each do |agent_session| %>
-      <tr>
-        <td><%= agent_session.agent_id %></td>
-        <td><%= agent_session.start_time %></td>
-        <td><%= agent_session.end_time %></td>
-        <td><%= agent_session.hostname %></td>
-        <td><%= agent_session.ros_master_uri %></td>
-        <td><%= agent_session.session_status %></td>
-        <td><%= agent_session.token %></td>
-        <td><%= link_to 'Show', agent_session %></td>
-        <td><%= link_to 'Edit', edit_agent_session_path(agent_session) %></td>
-        <td><%= link_to 'Destroy', agent_session, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<br>
-
-<%= link_to 'New Agent session', new_agent_session_path %>
+<%= render partial: 'layouts/index_bottom' %>

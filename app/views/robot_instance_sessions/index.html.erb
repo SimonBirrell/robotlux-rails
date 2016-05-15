@@ -1,35 +1,15 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'robot_instance_sessions', headings: ['Name', 'Robot Instance', 'Start', 'End', 'Token']} %>
 
-<h1>Listing Robot Instance Sessions</h1>
+        <% @robot_instance_sessions.each do |robot_instance_session| %>
+          <%= render partial: 'layouts/index_row', locals: {
+            row: robot_instance, 
+            columns: [
+            {link: robot_instance_session_path(robot_instance_session), text: robot_instance_session.name},
+            {link: robot_instance_path(robot_instance_session.robot_instance), text: robot_instance_session.robot_instance.name},
+            {text: robot_instance.start_session},
+            {text: robot_instance.end_session},
+            {text: robot_instance.token}
+            ]} %>
+        <% end %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Robot instance</th>
-      <th>Start session</th>
-      <th>End session</th>
-      <th>Session token</th>
-      <th colspan="3"></th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% @robot_instance_sessions.each do |robot_instance_session| %>
-      <tr>
-        <td><%= robot_instance_session.name %></td>
-        <td><%= robot_instance_session.robot_instance_id %></td>
-        <td><%= robot_instance_session.start_session %></td>
-        <td><%= robot_instance_session.end_session %></td>
-        <td><%= robot_instance_session.session_token %></td>
-        <td><%= link_to 'Show', robot_instance_session %></td>
-        <td><%= link_to 'Edit', edit_robot_instance_session_path(robot_instance_session) %></td>
-        <td><%= link_to 'Destroy', robot_instance_session, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<br>
-
-<%= link_to 'New Robot instance session', new_robot_instance_session_path %>
+<%= render partial: 'layouts/index_bottom' %>

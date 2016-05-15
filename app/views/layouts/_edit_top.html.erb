@@ -1,0 +1,15 @@
+<% if notice.to_s !='' %>
+  <div class="alert alert-info"><%= notice %></div>
+<% end %>
+
+<div class="panel panel-piluku">
+  <div class="panel-heading">
+    <h1>Editing <%= item.model_name.human %> <%= item.name %>
+      <span class="panel-options">
+        <a href="<%= send(item.model_name.param_key + '_path', item) %>"><i class="icon ti-close"></i></a>
+      </span>
+    </h1>
+
+  </div>
+
+  <div class="panel-body">

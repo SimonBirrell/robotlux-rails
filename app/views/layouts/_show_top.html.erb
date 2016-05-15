@@ -1,0 +1,30 @@
+<% if notice.to_s !='' %>
+  <div class="alert alert-info"><%= notice %></div>
+<% end %>
+
+<div class="panel panel-piluku">
+  <div class="panel-heading">
+    <h1><%= item.name %>
+      <span class="panel-options">
+        <a id="edit-record" href="<%= send "edit_"+item_class+"_path", item %>"><i class="icon ti-pencil"></i></a>
+      </span>
+    </h1>
+  </div>
+
+  <div class="panel-body">
+    <ol class="breadcrumb">
+      <% breadcrumb.each do |b| %>
+        <li>
+        <% if b[:link] %>
+          <a href="<%= b[:link] %>">
+        <% end %>
+          <%= b[:text] %>
+        <% if b[:link] %>
+          </a>
+        <% end %>
+      <% end %>
+    </ol>
+
+    <table class="table table-bordered table-striped table-hover">
+      <tbody>
+

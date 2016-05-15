@@ -1,6 +1,5 @@
-<h1>Editing Agent</h1>
+<%= render partial: 'layouts/edit_top', locals: {item: @agent } %>
 
 <%= render 'form' %>
 
-<%= link_to 'Show', @agent %> |
-<%= link_to 'Back', agents_path %>
+<%= render partial: 'layouts/edit_bottom' %>

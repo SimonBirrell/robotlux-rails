@@ -10,8 +10,16 @@
  * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
  * file per style scope.
  *
- *= require_tree .
- *= require_self
+ *= require agent_sessions.css
+ *= require agents.css
+ *= require application.css
+ *= require home.css
+ *= require orgs.css
+ *= require robot_instance_sessions.css
+ *= require robot_instances.css
+ *= require scaffolds.css
+ *= require bootstrap_and_overrides.css
+ *= require framework_and_overrides.css
  *= require piluku/material.css
  *= require piluku/style.css
  *= require piluku/animated-masonry-gallery.css

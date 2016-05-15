@@ -1,6 +1,5 @@
-<h1>Editing Org</h1>
+<%= render partial: 'layouts/edit_top', locals: {item: @org } %>
 
 <%= render 'form' %>
 
-<%= link_to 'Show', @org %> |
-<%= link_to 'Back', orgs_path %>
+<%= render partial: 'layouts/edit_bottom' %>

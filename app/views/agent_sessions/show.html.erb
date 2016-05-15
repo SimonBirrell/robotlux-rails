@@ -1,39 +1,20 @@
-<p id="notice"><%= notice %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @agent_session, item_class: 'agent_session', breadcrumb: [
+      {link: org_path(@agent_session.agent.org), text: @agent_session.agent.org.name},
+      {link: agent_path(@agent_session.agent), text: @agent_session.agent.name},
+      {text: @agent_session.start_time}
+      ]} %>       
 
-<p>
-  <strong>Agent:</strong>
-  <%= @agent_session.agent_id %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Start Time', field_id: 'start_time', field_value: @agent_session.start_time} %>
 
-<p>
-  <strong>Start time:</strong>
-  <%= @agent_session.start_time %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'End Time', field_id: 'end_time', field_value: @agent_session.end_time} %>
 
-<p>
-  <strong>End time:</strong>
-  <%= @agent_session.end_time %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Hostname', field_id: 'hostname', field_value: @agent_session.hostname} %>
 
-<p>
-  <strong>Hostname:</strong>
-  <%= @agent_session.hostname %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'ROS Master URI', field_id: 'ros-master-uri', field_value: @agent_session.ros_master_uri} %>
 
-<p>
-  <strong>Ros master uri:</strong>
-  <%= @agent_session.ros_master_uri %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Session Status', field_id: 'session-status', field_value: @agent_session.session_status} %>
 
-<p>
-  <strong>Session status:</strong>
-  <%= @agent_session.session_status %>
-</p>
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Token', field_id: 'token', field_value: @agent_session.token} %>
+ 
+<%= render 'layouts/show_bottom' %>
 
-<p>
-  <strong>Token:</strong>
-  <%= @agent_session.token %>
-</p>
-
-<%= link_to 'Edit', edit_agent_session_path(@agent_session) %> |
-<%= link_to 'Back', agent_sessions_path %>

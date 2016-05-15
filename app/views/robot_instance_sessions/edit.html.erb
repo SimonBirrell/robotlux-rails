@@ -1,6 +1,5 @@
-<h1>Editing Robot Instance Session</h1>
+<%= render partial: 'layouts/edit_top', locals: {item: @robot_instance_session } %>
 
 <%= render 'form' %>
 
-<%= link_to 'Show', @robot_instance_session %> |
-<%= link_to 'Back', robot_instance_sessions_path %>
+<%= render partial: 'layouts/edit_bottom' %>
