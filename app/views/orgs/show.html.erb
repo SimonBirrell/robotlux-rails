@@ -21,7 +21,7 @@
 
         <% @agents.each do |agent| %>
           <%= render partial: 'layouts/index_row', locals: {
-            row: robot_instance, 
+            row: agent, 
             columns: [
             {link: agent_path(agent), text: agent.name},
             {text: agent.slug},
