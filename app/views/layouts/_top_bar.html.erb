@@ -16,6 +16,8 @@
 
 	<ul class="nav navbar-nav navbar-right top-elements">
 
+		<% if current_user.present? %>
+
 		<!-- Active ROS Instances menu -->
 		<li id="ros-connection-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Select robots" data-placement="bottom">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="ion-bug icon-notification"></i><span id="number-ros-instances-connected" class="badge info-number warning">0</span></a>
@@ -105,6 +107,8 @@
 		        <%= render 'layouts/navigation_links' %>
 			</ul>
 		</li>
+
+		<% end %>
 
 	</ul>
 
