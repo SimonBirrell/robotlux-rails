@@ -4,7 +4,7 @@ class UsersController < Devise::RegistrationsController
 
   def index
     if current_user.role == :admin
-      @users = User.all
+      @users = User.where("role != 'agent'")
     elsif current_user.role == :org_admin
       @users = User.where(org_id: current_user.org_id).where("role != 'agent'")
     else
