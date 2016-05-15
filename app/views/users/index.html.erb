@@ -1,9 +1,7 @@
 <%= render partial: 'layouts/index_top', locals: {items_name: 'users', headings: ['Name', 'Email', 'Organization', 'Role']} %>
 
         <% @users.each do |user| %>
-        	<tr>
               <%= render user %>
-             </tr> 
         <% end %>
 
 <%= render partial: 'layouts/index_bottom' %>
