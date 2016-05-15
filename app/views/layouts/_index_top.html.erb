@@ -2,15 +2,21 @@
   <div class="alert alert-info"><%= notice %></div>
 <% end %>
 
+<% if defined?(index_style) %>
+<%  heading_size = (index_style==:sub_table) ? 'h2' : 'h1' %>
+<% else %>
+<%  heading_size = 'h1' %>
+<% end %>
+
 <div class="panel panel-piluku">
   <div class="panel-heading">
-    <h1><%= I18n.t items_name %>
+    <<%= heading_size %>><%= I18n.t items_name %>
       <span class="panel-options">
         <% if defined?(new_item) %>
         <a href="<%= send('new_' + item_name + '_path') %>"><i class="icon ti-wand"></i></a>
         <% end %>
       </span>
-    </h1>
+    </<%= heading_size %>>
   </div>
 
   <div class="panel-body">
@@ -20,7 +26,7 @@
           <% headings.each do |heading| %>
             <th><%= heading %></th>
           <% end %>
-          <th colspan="3"></th>
+          <th colspan="2"></th>
         </tr>
       </thead>
 

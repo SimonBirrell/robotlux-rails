@@ -28,6 +28,6 @@ en:
   agents: 'Agents'
   agent_sessions: 'Agent Sessions'
   orgs: 'Organizations'
-  robot_instances: 'Robots'
+  robot_instances: 'Robot Instances'
   robot_instance_sessions: 'Robot Instance Sessions'
   users: 'Users'

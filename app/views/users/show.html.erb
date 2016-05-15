@@ -1,3 +1,13 @@
-<h3>User</h3>
-<p>Name: <%= @user.name if @user.name %></p>
-<p>Email: <%= @user.email if @user.email %></p>
+<%= render partial: 'layouts/show_top', locals: {item: @user, item_class: 'user', breadcrumb: [
+      {link: org_path(@user.org), text: @user.org.name},
+      {link: users_path, text: I18n.t(:users)},
+      {text: @user.name}
+      ]} %>       
+
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Name', field_id: 'name', field_value: @user.name} %>
+
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Org', field_id: 'org', field_value: @user.org.name} %>
+
+        <%= render partial: 'layouts/show_field', locals: {field_name: 'Email', field_id: 'email', field_value: @user.email} %>
+
+<%= render 'layouts/show_bottom' %>

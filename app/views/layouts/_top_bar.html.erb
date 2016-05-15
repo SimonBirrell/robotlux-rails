@@ -75,7 +75,9 @@
 			</a>
 			<ul id="org-menu" class="dropdown-menu dropdown-piluku-menu  animated fadeInUp wow notification-drop neat_drop dropdown-right" data-wow-duration="1500ms" role="menu">
 				<li class="dropdown-header">
+					<a href="/orgs/<%= current_user.org.id %>">
 						<i class="ion-person-stalker"></i> <%= current_user.org.name %>
+					</a>
 				</li>
 				<li>
 					<a href="/users"><%= I18n.t 'users' %></a>

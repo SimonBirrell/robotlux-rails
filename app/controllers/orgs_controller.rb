@@ -11,6 +11,9 @@ class OrgsController < ApplicationController
   # GET /orgs/1
   # GET /orgs/1.json
   def show
+    @users = @org.users
+    @agents = @org.agents
+    @robot_instances = @org.robot_instances
   end
 
   # GET /orgs/new

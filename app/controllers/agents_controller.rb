@@ -10,6 +10,7 @@ class AgentsController < ApplicationController
   # GET /agents/1
   # GET /agents/1.json
   def show
+    @agent_sessions = @agent.agent_sessions.order(start_time: :desc)
   end
 
   # GET /agents/new

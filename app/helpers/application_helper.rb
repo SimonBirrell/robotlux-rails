@@ -10,4 +10,12 @@ module ApplicationHelper
   	"alert alert-#{bootstrap_key}"
   end
 
+  def edit_icon
+  	"<i class='icon ti-pencil'></i>".html_safe
+  end
+
+  def destroy_icon
+  	"<i class='icon ti-close'></i>".html_safe
+  end
+
 end

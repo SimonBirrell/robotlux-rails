@@ -1,26 +1,7 @@
-<%= render partial: 'layouts/index_top', locals: {items_name: 'users', headings: ['Email', 'Organization', 'Role']} %>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'users', headings: ['Name', 'Email', 'Organization', 'Role']} %>
 
         <% @users.each do |user| %>
               <%= render user %>
         <% end %>
 
 <%= render partial: 'layouts/index_bottom' %>
-
-<!--
-<div class="container">
-  <div class="row">
-    <h3>Users</h3>
-    <div class="column">
-      <table class="table">
-        <tbody>
-          <% @users.each do |user| %>
-            <tr>
-              <%= render user %>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
--->

@@ -8,3 +8,49 @@
 
  
 <%= render 'layouts/show_bottom' %>
+
+<%= render partial: 'layouts/index_top', locals: {items_name: 'users', headings: ['Email', 'Organization', 'Role'], index_style: :sub_table} %>
+
+        <% @users.each do |user| %>
+              <%= render user %>
+        <% end %>
+
+<%= render partial: 'layouts/index_bottom' %>
+
+<%= render partial: 'layouts/index_top', locals: {items_name: 'agents', headings: ['Name', 'Slug', 'Org', 'Guid', 'Hostname', 'ROS Master URI', 'Network', 'Authorization', 'User'], index_style: :sub_table} %>
+
+        <% @agents.each do |agent| %>
+          <%= render partial: 'layouts/index_row', locals: {
+            row: robot_instance, 
+            columns: [
+            {link: agent_path(agent), text: agent.name},
+            {text: agent.slug},
+            {link: org_path(agent.org), text: agent.org.name},
+            {text: agent.guid},
+            {text: agent.hostname},
+            {text: agent.ros_master_uri},
+            {text: agent.network},
+            {text: agent.authorization},
+            {link: user_path(agent.user), text: agent.user.email},
+            ]} %>
+        <% end %>
+
+<%= render partial: 'layouts/index_bottom' %>
+
+<%= render partial: 'layouts/index_top', locals: {items_name: 'robot_instances', headings: ['Name', 'Org', 'Network', 'Master Key', 'Launch Command'], index_style: :sub_table} %>
+
+        <% @robot_instances.each do |robot_instance| %>
+          <%= render partial: 'layouts/index_row', locals: {
+            row: robot_instance, 
+            columns: [
+            {link: robot_instance_path(robot_instance), text: robot_instance.name},
+            {link: org_path(robot_instance.org), text: robot_instance.org.name},
+            {text: robot_instance.network},
+            {text: robot_instance.master_key},
+            {text: robot_instance.launch_command}
+            ]} %>
+        <% end %>
+
+<%= render partial: 'layouts/index_bottom' %>
+
+

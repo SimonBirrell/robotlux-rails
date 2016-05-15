@@ -10,6 +10,7 @@ class RobotInstancesController < ApplicationController
   # GET /robot_instances/1
   # GET /robot_instances/1.json
   def show
+    @robot_instance_sessions = @robot_instance.robot_instance_sessions.order(start_session: :desc)
   end
 
   # GET /robot_instances/new
