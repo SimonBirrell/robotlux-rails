@@ -1,6 +1,6 @@
 <tr>
 	<td>
-	  <%= link_to user.name, user %>
+	  <%= link_to user.name, user, id: 'show-user-' + user.id.to_s %>
 	</td>
 	<td>
 	  <%= link_to user.email, user %>

@@ -3,10 +3,10 @@ class UsersController < Devise::RegistrationsController
   before_action :admin_only, :except => :show
 
   def index
-    if current_user.role == :admin
-      @users = User.where("role != 'agent'")
-    elsif current_user.role == :org_admin
-      @users = User.where(org_id: current_user.org_id).where("role != 'agent'")
+    if current_user.role == 'admin'
+      @users = User.no_agents
+    elsif current_user.role == 'org_admin'
+      @users = User.where(org_id: current_user.org_id).no_agents
     else
       @users = Array(current_user)
     end

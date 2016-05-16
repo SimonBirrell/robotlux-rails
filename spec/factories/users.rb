@@ -2,8 +2,12 @@ FactoryGirl.define do
   factory :user do
   	association :org
     confirmed_at Time.now
-    name "Test User"
-    email "test@example.com"
+    sequence :name do |n|
+      "Test User #{n}"
+    end
+    sequence :email do |n|
+     "test#{n}@example.com"
+    end
     password "secret123"
 
     trait :admin do

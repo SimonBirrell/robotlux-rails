@@ -7,6 +7,8 @@ class User < ActiveRecord::Base
   # http://soryy.com/blog/2014/apis-with-devise/
   before_save :ensure_authentication_token!
 
+  scope :no_agents, -> { where('role <> ?', User.roles[:agent]) }
+
 
   def set_default_role
     self.role ||= :user
