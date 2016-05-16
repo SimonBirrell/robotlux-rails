@@ -3,7 +3,7 @@ class Agent < ActiveRecord::Base
 	attr_reader :password
 	
 	belongs_to :org
-	belongs_to :user
+	belongs_to :user, dependent: :destroy
 	has_many :agent_sessions
 
 	validates :slug, presence: true

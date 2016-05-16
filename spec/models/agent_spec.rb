@@ -59,6 +59,16 @@ RSpec.describe Agent, type: :model do
 
 	end
 
+  it "should create a user when creating an agent and destroy it when destroying" do
+      n = User.count
+      agent = FactoryGirl.create :agent
+      expect(User.count).to eq n + 1
+      expect(agent.user.id).to be_present
+
+      agent.destroy!
+      expect(User.count).to eq n
+  end
+
 	it "should auto-create a name if one is absent" do
 
   		agent = Agent.create org: @org, slug: 'foo_bar'
