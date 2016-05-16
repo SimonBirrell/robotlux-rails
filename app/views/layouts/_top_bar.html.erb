@@ -52,22 +52,20 @@
 		</li>
 
 		<!-- RobotLux Admin menu -->
-		<% if user_signed_in? %>
-			<% if current_user.try(:admin?) %>
-				<li id="robotlux-admin-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Settings" data-placement="bottom">
-					<a href="#" class="dropdown-toggle avatar_width" data-toggle="dropdown" role="button" aria-expanded="false">
-						<i class="ion-ios-gear"></i>
-						<!--
-						<span class="avatar_info">Admin</span>
-						<span class="drop-icon">
-						</span>
-						-->
-					</a>
-					<ul class="dropdown-menu dropdown-piluku-menu  animated fadeInUp wow avatar_drop neat_drop dropdown-right" data-wow-duration="1500ms" role="menu">
-				        <%= render 'layouts/admin_navigation_links' %>
-					</ul>
-				</li>
-			<% end %>
+		<% if current_user.role == 'admin' %>
+			<li id="robotlux-admin-menu" class="piluku-dropdown dropdown" data-toggle="tooltip" title="Settings" data-placement="bottom">
+				<a href="#" class="dropdown-toggle avatar_width" data-toggle="dropdown" role="button" aria-expanded="false">
+					<i class="ion-ios-gear"></i>
+					<!--
+					<span class="avatar_info">Admin</span>
+					<span class="drop-icon">
+					</span>
+					-->
+				</a>
+				<ul class="dropdown-menu dropdown-piluku-menu  animated fadeInUp wow avatar_drop neat_drop dropdown-right" data-wow-duration="1500ms" role="menu">
+			        <%= render 'layouts/admin_navigation_links' %>
+				</ul>
+			</li>
 		<% end %>
 
 		<!-- Org menu -->

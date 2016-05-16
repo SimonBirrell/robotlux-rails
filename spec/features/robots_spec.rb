@@ -1,8 +1,8 @@
 feature 'Robots', :devise do
 
   scenario 'user can see robots page' do
-  	robot_instance = FactoryGirl.create :robot_instance, name: 'Robby'
     user = FactoryGirl.create(:user)
+  	robot_instance = FactoryGirl.create :robot_instance, name: 'Robby', org: user.org
     signin(user.email, user.password)
     expect(page).to have_content I18n.t 'login.sign_out'
     click_link I18n.t 'robot_instances'

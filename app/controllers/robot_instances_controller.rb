@@ -4,7 +4,11 @@ class RobotInstancesController < ApplicationController
   # GET /robot_instances
   # GET /robot_instances.json
   def index
-    @robot_instances = RobotInstance.all
+    if current_user.admin?
+      @robot_instances = RobotInstance.all
+    else
+      @robot_instances = Array(current_user.org.robot_instances)
+    end
   end
 
   # GET /robot_instances/1

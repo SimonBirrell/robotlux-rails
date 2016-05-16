@@ -4,7 +4,12 @@ class RobotInstanceSessionsController < ApplicationController
   # GET /robot_instance_sessions
   # GET /robot_instance_sessions.json
   def index
-    @robot_instance_sessions = RobotInstanceSession.all
+    if current_user.admin?
+      @robot_instance_sessions = RobotInstanceSession.all
+    else
+      @robot_instance_sessions = RobotInstanceSession.joins('INNER JOIN robot_instances ON robot_instance_sessions.robot_instance_id = robot_instances.id 
+                                                             INNER JOIN orgs ON robot_instances.org_id = orgs.id').where('orgs.id = ?', current_user.org.id)
+    end
   end
 
   # GET /robot_instance_sessions/1

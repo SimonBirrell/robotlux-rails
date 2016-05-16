@@ -5,7 +5,11 @@ class OrgsController < ApplicationController
   # GET /orgs
   # GET /orgs.json
   def index
-    @orgs = Org.all
+    if current_user.admin?
+      @orgs = Org.all
+    else
+      @orgs = Array(current_user.org)
+    end
   end
 
   # GET /orgs/1

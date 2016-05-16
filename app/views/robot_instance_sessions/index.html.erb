@@ -2,13 +2,13 @@
 
         <% @robot_instance_sessions.each do |robot_instance_session| %>
           <%= render partial: 'layouts/index_row', locals: {
-            row: robot_instance, 
+            row: robot_instance_session, 
             columns: [
             {link: robot_instance_session_path(robot_instance_session), text: robot_instance_session.name},
             {link: robot_instance_path(robot_instance_session.robot_instance), text: robot_instance_session.robot_instance.name},
-            {text: robot_instance.start_session},
-            {text: robot_instance.end_session},
-            {text: robot_instance.token}
+            {text: robot_instance_session.start_session},
+            {text: robot_instance_session.end_session},
+            {text: robot_instance_session.session_token}
             ]} %>
         <% end %>
 

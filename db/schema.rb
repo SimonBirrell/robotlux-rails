@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160513090711) do
+ActiveRecord::Schema.define(version: 20160516102036) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -52,12 +52,12 @@ ActiveRecord::Schema.define(version: 20160513090711) do
 
   create_table "robot_instance_sessions", force: :cascade do |t|
     t.string   "name"
-    t.string   "robot_instance_id"
     t.datetime "start_session"
     t.datetime "end_session"
     t.string   "session_token"
     t.datetime "created_at",        null: false
     t.datetime "updated_at",        null: false
+    t.integer  "robot_instance_id"
   end
 
   create_table "robot_instances", force: :cascade do |t|

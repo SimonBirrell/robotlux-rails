@@ -4,7 +4,11 @@ class AgentsController < ApplicationController
   # GET /agents
   # GET /agents.json
   def index
-    @agents = Agent.all
+    if current_user.admin?
+      @agents = Agent.all
+    else
+      @agents = Array(current_user.org.agents)
+    end
   end
 
   # GET /agents/1

@@ -5,11 +5,11 @@
             row: agent_session, 
             columns: [
             {link: agent_path(agent_session.agent), text: agent_session.agent.name},
-            {text: agent_session.start_session},
-            {text: agent_session.end_session},
+            {text: agent_session.start_time},
+            {text: agent_session.end_time},
             {text: agent_session.hostname},
             {text: agent_session.ros_master_uri},
-            {text: agent_session.status},
+            {text: agent_session.session_status},
             {text: agent_session.token}
             ]} %>
         <% end %>

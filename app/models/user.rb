@@ -9,6 +9,13 @@ class User < ActiveRecord::Base
 
   scope :no_agents, -> { where('role <> ?', User.roles[:agent]) }
 
+  def admin?
+    self.role == 'admin'
+  end
+
+  def org_admin?
+    self.role == 'org_admin'
+  end
 
   def set_default_role
     self.role ||= :user

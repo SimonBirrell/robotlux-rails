@@ -4,7 +4,12 @@ class AgentSessionsController < ApplicationController
   # GET /agent_sessions
   # GET /agent_sessions.json
   def index
-    @agent_sessions = AgentSession.all
+    if current_user.admin?
+      @agent_sessions = AgentSession.all
+    else
+      @agent_sessions = AgentSession.joins('INNER JOIN agents ON agent_sessions.agent_id = agents.id 
+                                            INNER JOIN orgs ON agents.org_id = orgs.id').where('orgs.id = ?', current_user.org.id)
+    end
   end
 
   # GET /agent_sessions/1
