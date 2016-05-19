@@ -34,7 +34,7 @@ var LuxProtocolWebsockets = (function() {
                 // This is the first message we send to kick things off
                 module.sendMessage({mtype: 'browserConnect',
                                         mbody: {rosinstance: 'ros_instance_base', 
-                                                org: 'org_id', 
+                                                org: 'robotlux_org', 
                                                 user: 'userName', 
                                                 secret: 'secret'}});
                 // Ask the server to give us a list of ROS instances that we have access
