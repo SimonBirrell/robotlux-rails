@@ -38,7 +38,7 @@
         end
 
         def create
-
+          puts "sessions#create"
           respond_to do |format|
             format.html {
               super
@@ -50,6 +50,7 @@
               return invalid_login_attempt unless resource
 
               if resource.valid_password?(params[:password])
+                puts "logon"
                 logon_user(resource)
                 resource.reload
                 render :json => { user: { email: resource.email, :auth_token => resource.authentication_token, org_id: resource.org_id } }, success: true, status: :created
@@ -105,6 +106,7 @@
 
           def logon_user(user)
             if !user.agent?
+              puts "non-agent logon"
               user.logon(params)
             end
           end
