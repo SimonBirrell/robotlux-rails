@@ -41,10 +41,11 @@
           puts "sessions#create"
           respond_to do |format|
             format.html {
+              resource = resource_from_credentials
+              logon_user(resource)
               super
             }
             format.json {
-
               resource = resource_from_credentials
               #build_resource
               return invalid_login_attempt unless resource
