@@ -41,9 +41,12 @@
           puts "sessions#create"
           respond_to do |format|
             format.html {
-              resource = resource_from_credentials
-              logon_user(resource) if resource.present?                
               super
+              puts "format.html"
+              puts "params #{params.inspect}"
+              resource = resource_from_credentials_html
+              puts "resource #{resource.inspect}"
+              logon_user(resource) if resource.present?                
             }
             format.json {
               resource = resource_from_credentials
@@ -88,8 +91,19 @@
 
         def resource_from_credentials
           data = { email: params[:email] }
+          puts "data #{data}"
           if res = resource_class.find_for_database_authentication(data)
             if res.valid_password?(params[:password])
+                  res
+              end
+          end
+        end
+
+        def resource_from_credentials_html
+          data = { email: params[:user][:email] }
+          puts "data #{data}"
+          if res = resource_class.find_for_database_authentication(data)
+            if res.valid_password?(params[:user][:password])
                   res
               end
           end

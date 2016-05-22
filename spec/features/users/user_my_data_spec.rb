@@ -15,10 +15,6 @@ RSpec.describe "User gets their data", type: :request do
     	@redis = Redis.new
     end
 
-    it "should be able to sign in" do
-        sign_in_user_and_check_redis_data
-    end
-
     it "should be able to sign in and get my_data" do
         sign_in_user_and_check_redis_data
 
@@ -38,6 +34,15 @@ RSpec.describe "User gets their data", type: :request do
         sign_in_user_and_check_redis_data
 
         get "/users/my_data", nil, json_headers
+        expect(response).to have_http_status 401
+    end
+
+    it "should not be able to get my_data with incorrect email and token in headers" do
+        sign_in_user_and_check_redis_data
+
+        headers = json_headers
+        headers = add_authentication_to_headers(headers, @user.email, "wrong_token")
+        get "/users/my_data", nil, headers
         expect(response).to have_http_status 401
     end
 

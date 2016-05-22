@@ -24,6 +24,7 @@ class User < ActiveRecord::Base
   def logon(params)
     puts "===================== user logon"
     if !agent? 
+      puts ">>>>>>>>>>>>>>>>>>>>>> not agent"
       new_auth_token = reset_authentication_token!
       update_attribute :authentication_token, new_auth_token
       auth_data = {
