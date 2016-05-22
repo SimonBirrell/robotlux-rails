@@ -20,7 +20,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :users
+    resources :users do
+      #get 'my_data', on: :member
+      get 'my_data', on: :collection
+    end
+
     resources :orgs do
       get 'agents_info', on: :member
     end
@@ -28,6 +32,9 @@ Rails.application.routes.draw do
     authenticated :user do
       root 'home#index', as: :authenticated_root
     end
+
+    #authenticated do
+    #end 
 
     unauthenticated do
       root 'devise/sessions#new', as: :unauthenticated_root

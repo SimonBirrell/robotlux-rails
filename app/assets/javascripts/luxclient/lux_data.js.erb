@@ -1,0 +1,11 @@
+// Return session-wide data from server
+//
+var LuxData = (function() {
+	var module = {};
+
+	module.authenticationToken = function() {
+		return "<%= current_user.authentication_token %>";
+	};
+
+	return module;
+})();

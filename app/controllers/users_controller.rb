@@ -1,6 +1,6 @@
 class UsersController < Devise::RegistrationsController
   before_action :authenticate_user!
-  before_action :admin_only, :except => :show
+  before_action :admin_only, :except => [:show, :my_data]
 
   def index
     if current_user.admin?
@@ -19,6 +19,7 @@ class UsersController < Devise::RegistrationsController
         redirect_to :back, :alert => "Access denied."
       end
     end
+
   end
 
   def update
@@ -36,21 +37,43 @@ class UsersController < Devise::RegistrationsController
     redirect_to users_path, :notice => "User deleted."
   end
 
+  def my_data
+    puts "my_data"
+    respond_to do |format|
+      puts "doing format"
+      format.json do
+        puts "json"
+        if user_signed_in?
+          puts "user signed in"
+          render json: { user: 
+                          { email: current_user.email, 
+                            auth_token: current_user.authentication_token, 
+                            org_id: current_user.org_id,
+                            org_slug: current_user.org.slug 
+                          } 
+                        }
+        else
+          puts "user not signed in"
+          render json: [], status: :unauthorized
+        end
+      end
+    end
+  end
+
   def after_update_path_for(resource)
-    foo
     signed_in_root_path(resource)
   end
 
   private
 
-  def admin_only
-    # unless current_user.admin?
-    #   redirect_to :back, :alert => "Access denied."
-    # end
-  end
+    def admin_only
+      # unless current_user.admin?
+      #   redirect_to :back, :alert => "Access denied."
+      # end
+    end
 
-  def secure_params
-    params.require(:user).permit(:role)
-  end
+    def secure_params
+      params.require(:user).permit(:role)
+    end
 
 end

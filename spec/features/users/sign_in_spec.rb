@@ -20,7 +20,7 @@ feature 'Sign in', :devise do
   #   Then I see a success message
   scenario 'user can sign in with valid credentials' do
     user = FactoryGirl.create(:user)
-    signin(user.email, user.password)
+    sign_in_info = signin(user.email, user.password)
     expect(page).to have_content I18n.t 'login.sign_out'
   end
 

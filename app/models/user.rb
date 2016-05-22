@@ -17,6 +17,28 @@ class User < ActiveRecord::Base
     self.role == 'org_admin'
   end
 
+  def agent?
+    self.role == 'agent'
+  end
+
+  def logon(params)
+    if !agent? 
+      new_auth_token = reset_authentication_token!
+      update_attribute :authentication_token, new_auth_token
+      LuxserverInterface.set_browser_details(authentication_token, {
+         "email" => email,
+         "name" => name,
+         "org_slug" => org.slug
+      })
+    end
+  end
+
+  def reset_authentication_token_and_save
+    token = reset_authentication_token!
+    update_attribute :authentication_token, token
+    save!
+  end
+
   def set_default_role
     self.role ||= :user
   end

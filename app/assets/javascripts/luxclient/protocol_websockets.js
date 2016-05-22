@@ -17,63 +17,78 @@ var LuxProtocolWebsockets = (function() {
     //  TODO: Make the browser attempt reconnects if connection drops
     //
     module.open = function(interpretMessage, connectionDropped, connectionEstablised) {
+
         connectionDroppedCallback = connectionDropped;
 
         if ("WebSocket" in window)  {
-            // Get the actual websocket URL from the config
-            ws = new WebSocket(LuxConfig.socketsServer);
+            // First thing to do is get the authentication information from Rails.
+            $.ajax({
+                url: "/users/my_data"
+            }).done(function(data) {
+                var my_data = data['user'],
+                    email = my_data['email'],
+                    auth_token = my_data['auth_token'],
+                    org_id = my_data['org_id'],
+                    org_slug = my_data['org_slug'];
+                // At this point we know authentication details to send
+                // to websocket server
 
-            // Callback when socket connects
-            ws.onopen = function() {
-                // Web Socket is connected, send data using send()
-                console.log("Websocket connected to server...");
-                statusConnection = 'connected';
+                // Get the actual websocket URL from the config
+                ws = new WebSocket(LuxConfig.socketsServer);
 
-                connectionEstablised();
-
-                // This is the first message we send to kick things off
-                module.sendMessage({mtype: 'browserConnect',
-                                        mbody: {rosinstance: 'ros_instance_base', 
-                                                org: 'robotlux_org', 
-                                                user: 'userName', 
-                                                secret: 'secret'}});
-                // Ask the server to give us a list of ROS instances that we have access
-                // to.
-                module.sendMessage({mtype: 'subscribeRosInstances'});
-
-                // Choose a ROS instance.
-                // HARDWIRED DEMO CODE
-                /*
-                module.sendMessage({mtype: 'subscribeRosInstance',
-                                    mbody: {rosInstance: 'org_id 0 ros_instance_base'}});
-                */
-                console.log("Message is sent...");
-            }
-            
-            // Receive a message from the server
-            ws.onmessage = function (event) 
-            { 
-                if (statusConnection !== 'connected') {
+                // Callback when socket connects
+                ws.onopen = function() {
+                    // Web Socket is connected, send data using send()
+                    console.log("Websocket connected to server...");
                     statusConnection = 'connected';
+
                     connectionEstablised();
-                }
-               //console.log("Message is received...");
-               var receivedMessage = event.data;
-               //console.log(receivedMessage);
-               interpretMessage(receivedMessage);
-            };
 
-            // Close the websocket
-            ws.onclose = function()
-            { 
-                // websocket is closed.
-                console.log("Connection is closed..."); 
-                statusConnection = 'disconnected';
+                    // This is the first message we send to kick things off
+                    module.sendMessage({mtype: 'browserConnect',
+                                            mbody: {
+                                                        rosinstance: 'ros_instance_base', 
+                                                        org: org_slug, 
+                                                        user: email, 
+                                                        secret: auth_token
+                                                    }});
+                    // Ask the server to give us a list of ROS instances that we have access
+                    // to.
+                    module.sendMessage({mtype: 'subscribeRosInstances'});
 
-                if (connectionDroppedCallback) {
-                    connectionDroppedCallback();
+                    console.log("browserConnect message is sent...");
                 }
-            };
+                
+                // Receive a message from the server
+                ws.onmessage = function (event) 
+                { 
+                    if (statusConnection !== 'connected') {
+                        statusConnection = 'connected';
+                        connectionEstablised();
+                    }
+                   //console.log("Message is received...");
+                   var receivedMessage = event.data;
+                   //console.log(receivedMessage);
+                   interpretMessage(receivedMessage);
+                };
+
+                // Close the websocket
+                ws.onclose = function()
+                { 
+                    // websocket is closed.
+                    console.log("Connection is closed..."); 
+                    statusConnection = 'disconnected';
+
+                    if (connectionDroppedCallback) {
+                        connectionDroppedCallback();
+                    }
+                };
+
+            }).fail(function(data) {
+                alert("Authentication failed!");
+            });
+
+
 
         } else {
             alert("WebSocket NOT supported by your Browser!");
