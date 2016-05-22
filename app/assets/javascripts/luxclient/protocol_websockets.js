@@ -32,6 +32,8 @@ var LuxProtocolWebsockets = (function() {
                     org_slug = my_data['org_slug'];
                 // At this point we know authentication details to send
                 // to websocket server
+                console.log("Received my_data ok");
+                console.log(JSON.stringify(my_data));
 
                 // Get the actual websocket URL from the config
                 ws = new WebSocket(LuxConfig.socketsServer);
@@ -49,7 +51,7 @@ var LuxProtocolWebsockets = (function() {
                                             mbody: {
                                                         rosinstance: 'ros_instance_base', 
                                                         org: org_slug, 
-                                                        user: email, 
+                                                        email: email, 
                                                         secret: auth_token
                                                     }});
                     // Ask the server to give us a list of ROS instances that we have access

@@ -78,7 +78,10 @@ var LuxUiToProtocol = (function() {
             rosInstanceId;
         //console.log("mbody:");
         //console.log(mbody);    
-        if (mtype==='rosInstanceGraph') {
+        if (mtype==='browserRefused') {
+          alert(mbody.errorMessage);
+        }
+        else if (mtype==='rosInstanceGraph') {
             //console.log("============= rosInstanceGraph ============");
             serverGraph = mbody.graph;
             rosInstanceId = mbody.rosInstance;
