@@ -42,7 +42,7 @@
           respond_to do |format|
             format.html {
               resource = resource_from_credentials
-              logon_user(resource)
+              logon_user(resource) if resource.present?                
               super
             }
             format.json {
@@ -107,7 +107,6 @@
 
           def logon_user(user)
             if !user.agent?
-              puts "non-agent logon"
               user.logon(params)
             end
           end
