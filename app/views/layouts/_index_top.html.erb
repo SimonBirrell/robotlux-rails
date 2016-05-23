@@ -13,7 +13,7 @@
     <<%= heading_size %>><%= I18n.t items_name %>
       <span class="panel-options">
         <% if defined?(new_item) %>
-        <a href="<%= send('new_' + item_name + '_path') %>"><i class="icon ti-wand"></i></a>
+        <a id="new_<%= item_name %>" href="<%= send('new_' + item_name + '_path') %>"><i class="icon ti-wand"></i></a>
         <% end %>
       </span>
     </<%= heading_size %>>

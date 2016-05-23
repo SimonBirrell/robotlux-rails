@@ -22,4 +22,14 @@ feature 'User index page', :devise do
     expect(page).to have_content user.email
   end
 
+  scenario 'user invites another user' do
+    user = FactoryGirl.create(:user, :admin)
+    login_as(user, scope: :user)
+    visit users_path
+
+    click_link 'new_user'
+
+    fill_in :user_name, with: 'Lux Interior'
+  end
+
 end

@@ -20,8 +20,9 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :users do
-      #get 'my_data', on: :member
+    #resources :users do
+    # http://stackoverflow.com/questions/23140117/allow-a-user-to-add-new-users-in-devise-and-remain-logged-in-as-themselves
+    resources :users_admin, :controller => 'users' do
       get 'my_data', on: :collection
     end
 

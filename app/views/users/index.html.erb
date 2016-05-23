@@ -1,4 +1,4 @@
-<%= render partial: 'layouts/index_top', locals: {items_name: 'users', headings: ['Name', 'Email', 'Organization', 'Role']} %>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'users', item_name: 'user', headings: ['Name', 'Email', 'Organization', 'Role'], new_item: true} %>
 
         <% @users.each do |user| %>
               <%= render user %>

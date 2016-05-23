@@ -2,6 +2,11 @@ class UsersController < Devise::RegistrationsController
   before_action :authenticate_user!
   before_action :admin_only, :except => [:show, :my_data]
 
+  def new
+    foo
+    @user = User.find(params[:id])
+  end
+
   def index
     if current_user.admin?
       @users = User.no_agents
