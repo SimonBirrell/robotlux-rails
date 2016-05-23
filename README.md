@@ -42,11 +42,25 @@ Credits
 
 Developed by Simon Birrell.
 
+LuxManager API
+--------------
+The application now has a JSON API intended for the use of agents logging on and off. Itis located at
+
+    /api/v1/
+
+/api/v1/users/sign_in
+This is called by the agent that wishes to log on, passing the following parameters:
+email - The agent's "e-mail", of the form agent_name@org_name.orgs.robotlux.com
+password - Agent's password, saved in config.txt
+master_key - The ROS master URI transformed into a form that is the same for all participating agents.
+network - The network Id
+launch_command - The command used to launch the ROS instance. This may not be feasible.
+
+
 TODO
 ----
 An awful lot. The bulk of the app is here.
 
-- Proper coordinated authentication with node.js server. 
 - Scaling to multiple node.js servers?
 - Get focus working properly on nodes & topics
 - Many Topics need to be rendered with specific viewers. For example:
