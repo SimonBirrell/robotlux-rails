@@ -38,14 +38,10 @@
         end
 
         def create
-          puts "sessions#create"
           respond_to do |format|
             format.html {
               super
-              puts "format.html"
-              puts "params #{params.inspect}"
               resource = resource_from_credentials_html
-              puts "resource #{resource.inspect}"
               logon_user(resource) if resource.present?                
             }
             format.json {
@@ -54,7 +50,6 @@
               return invalid_login_attempt unless resource
 
               if resource.valid_password?(params[:password])
-                puts "logon"
                 logon_user(resource)
                 resource.reload
                 render :json => { user: { email: resource.email, :auth_token => resource.authentication_token, org_id: resource.org_id } }, success: true, status: :created
@@ -91,7 +86,6 @@
 
         def resource_from_credentials
           data = { email: params[:email] }
-          puts "data #{data}"
           if res = resource_class.find_for_database_authentication(data)
             if res.valid_password?(params[:password])
                   res
@@ -101,7 +95,6 @@
 
         def resource_from_credentials_html
           data = { email: params[:user][:email] }
-          puts "data #{data}"
           if res = resource_class.find_for_database_authentication(data)
             if res.valid_password?(params[:user][:password])
                   res

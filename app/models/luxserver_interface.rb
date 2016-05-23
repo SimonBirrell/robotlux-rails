@@ -24,6 +24,10 @@ class LuxserverInterface
 		$redis.del agent_key(auth_token)
 	end
 
+	def self.delete_browser_details(auth_token)
+		$redis.del browser_key(auth_token)
+	end
+
 	private
 
 		def self.agent_key(auth_token)

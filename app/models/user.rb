@@ -22,9 +22,7 @@ class User < ActiveRecord::Base
   end
 
   def logon(params)
-    puts "===================== user logon"
     if !agent? 
-      puts ">>>>>>>>>>>>>>>>>>>>>> not agent"
       new_auth_token = reset_authentication_token!
       update_attribute :authentication_token, new_auth_token
       auth_data = {
@@ -32,7 +30,6 @@ class User < ActiveRecord::Base
          "name" => name,
          "org_slug" => org.slug
       }
-      puts auth_data
       LuxserverInterface.set_browser_details(authentication_token, auth_data)
     end
   end

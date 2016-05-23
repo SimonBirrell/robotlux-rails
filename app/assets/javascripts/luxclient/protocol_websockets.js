@@ -87,7 +87,15 @@ var LuxProtocolWebsockets = (function() {
                 };
 
             }).fail(function(data) {
-                alert("Authentication failed!");
+                // On a credentials failure we should sign out from the web app
+                // A possible reason for this (apart from hacking)
+                // is if the REDIS server has been rebooted
+                console.log("Luxserver authentication failed!");
+                console.log("Signing out from web app");
+                $.ajax({
+                    url: '/users/sign_out',
+                    type: 'DELETE'
+                });
             });
 
 

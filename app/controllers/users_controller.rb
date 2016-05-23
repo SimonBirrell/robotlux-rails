@@ -38,13 +38,9 @@ class UsersController < Devise::RegistrationsController
   end
 
   def my_data
-    puts "my_data"
     respond_to do |format|
-      puts "doing format"
       format.json do
-        puts "json"
         if user_signed_in?
-          puts "user signed in"
           user_data = { user: 
                           { email: current_user.email, 
                             auth_token: current_user.authentication_token, 
@@ -52,10 +48,8 @@ class UsersController < Devise::RegistrationsController
                             org_slug: current_user.org.slug 
                           } 
                         }
-          puts user_data.inspect              
           render json: user_data
         else
-          puts "user not signed in"
           render json: [], status: :unauthorized
         end
       end
