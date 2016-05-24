@@ -4,7 +4,8 @@ Rails.application.routes.draw do
   resources :robot_instances
   resources :agent_sessions
   resources :agents
-  devise_for :users, :controllers => {sessions: 'sessions'} 
+  #devise_for :users, :controllers => {sessions: 'sessions'} 
+  devise_for :users, :controllers => {sessions: 'sessions'}, path_prefix: 'auth' 
   devise_scope :user do
 
     # API 
@@ -20,9 +21,7 @@ Rails.application.routes.draw do
       end
     end
 
-    #resources :users do
-    # http://stackoverflow.com/questions/23140117/allow-a-user-to-add-new-users-in-devise-and-remain-logged-in-as-themselves
-    resources :users_admin, :controller => 'users' do
+    resources :users do
       get 'my_data', on: :collection
     end
 
@@ -33,9 +32,6 @@ Rails.application.routes.draw do
     authenticated :user do
       root 'home#index', as: :authenticated_root
     end
-
-    #authenticated do
-    #end 
 
     unauthenticated do
       root 'devise/sessions#new', as: :unauthenticated_root

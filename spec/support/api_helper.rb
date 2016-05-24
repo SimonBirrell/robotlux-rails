@@ -38,4 +38,10 @@ module ApiHelpers
         user
     end
 
+    def normal_user_sign_in_path
+        "/auth/users/sign_in"
+        # http://stackoverflow.com/questions/23140117/allow-a-user-to-add-new-users-in-devise-and-remain-logged-in-as-themselves
+        # "/users/sign_in"
+    end
+
 end
