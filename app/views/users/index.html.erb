@@ -1,7 +1,13 @@
-<%= render partial: 'layouts/index_top', locals: {items_name: 'users', item_name: 'user', headings: ['Name', 'Email', 'Organization', 'Role'], new_item: true} %>
+<%= render partial: 'layouts/index_top', locals: {items_name: 'users', item_name: 'user', headings: ['Name', 'Email', 'Organization', 'Role']} %>
 
         <% @users.each do |user| %>
               <%= render user %>
         <% end %>
 
-<%= render partial: 'layouts/index_bottom' %>
+      </tbody>
+    </table>
+	<%= link_to "Invite new user", new_user_invitation_path, id: 'invite_new_user', class: 'btn btn-red btn-radius', style: 'color: white;' %>
+  </div>
+</div>
+
+

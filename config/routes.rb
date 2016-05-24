@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   resources :agent_sessions
   resources :agents
   #devise_for :users, :controllers => {sessions: 'sessions'} 
-  devise_for :users, :controllers => {sessions: 'sessions'}, path_prefix: 'auth' 
+  devise_for :users, :controllers => {sessions: 'sessions', :invitations => 'users/invitations'}, path_prefix: 'auth' 
   devise_scope :user do
 
     # API 

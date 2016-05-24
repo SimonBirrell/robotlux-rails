@@ -26,10 +26,19 @@ feature 'User index page', :devise do
     user = FactoryGirl.create(:user, :admin)
     login_as(user, scope: :user)
     visit users_path
+    expect(User.count).to eq 1
 
-    click_link 'new_user'
+    click_link 'invite_new_user'
 
     fill_in :user_name, with: 'Lux Interior'
+    fill_in :user_email, with: 'test@test.com'
+    click_button 'Send an invitation'
+    expect(User.count).to eq 2
+    invited_user = User.last
+    expect(invited_user.id).to be_present
+    expect(invited_user.email).to eq 'test@test.com'
+    expect(invited_user.org_id).to eq user.org_id
+
   end
 
 end

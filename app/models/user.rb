@@ -9,6 +9,9 @@ class User < ActiveRecord::Base
 
   scope :no_agents, -> { where('role <> ?', User.roles[:agent]) }
 
+  validates :org_id, presence: true
+  validates :name, presence: true
+
   def admin?
     self.role == 'admin'
   end
