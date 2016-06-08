@@ -37,15 +37,22 @@ module Robotlux
     
     # Simon Changes
     config.assets.paths << Rails.root.join("vendor","assets", "fonts")
-    ActionMailer::Base.smtp_settings = {
-      :port           => '25', # or 2525
-      :address        => ENV['POSTMARK_SMTP_SERVER'],
-      :user_name      => ENV['POSTMARK_API_TOKEN'],
-      :password       => ENV['POSTMARK_API_TOKEN'],
-      :domain         => 'robotlux.heroku.com',
-      :authentication => :cram_md5, # or :plain for plain-text authentication
-      :enable_starttls_auto => true, # or false for unencrypted connection
+
+    config.action_mailer.delivery_method = :postmark
+    config.action_mailer.postmark_settings = {
+      api_token: ENV['POSTMARK_API_TOKEN']
     }
-    ActionMailer::Base.delivery_method = :smtp
+
+    # ActionMailer::Base.smtp_settings = {
+    #   :port           => '25', # or 2525
+    #   :address        => ENV['POSTMARK_SMTP_SERVER'],
+    #   :user_name      => ENV['POSTMARK_API_TOKEN'],
+    #   :password       => ENV['POSTMARK_API_TOKEN'],
+    #   :domain         => 'robotlux.heroku.com',
+    #   :authentication => :cram_md5, # or :plain for plain-text authentication
+    #   :enable_starttls_auto => true, # or false for unencrypted connection
+    # }
+    # ActionMailer::Base.delivery_method = :smtp
+
   end
 end

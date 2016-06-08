@@ -175,6 +175,12 @@ GEM
     orm_adapter (0.5.0)
     pg (0.18.2)
     phantomjs (1.9.8.0)
+    postmark (1.7.1)
+      json
+      rake
+    postmark-rails (0.12.0)
+      actionmailer (>= 3.0.0)
+      postmark (~> 1.7.0)
     pry (0.10.1)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
@@ -334,6 +340,7 @@ DEPENDENCIES
   launchy
   less-rails
   pg
+  postmark-rails
   quiet_assets
   rails (= 4.2.1)
   rails_12factor
