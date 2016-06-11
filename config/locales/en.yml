@@ -35,3 +35,8 @@ en:
     attributes:
       user:
         org_name: "Organization name"
+        org:
+          slug: "Organization name"
+      org:
+        slug: "Organization name"  
+        name: "Organization name"  

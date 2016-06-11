@@ -11,7 +11,6 @@ feature 'Sign Up', :devise do
   scenario 'visitor can sign up with valid email address, password, name and org name' do
     number_orgs = Org.count
     number_users = User.count
-    puts "Starting org count #{number_orgs}"
     sign_up_with('test@example.com', 'please123', 'please123', 'simon', 'acme')
     txts = [I18n.t( 'devise.registrations.signed_up'), I18n.t( 'devise.registrations.signed_up_but_unconfirmed')]
     expect(page).to have_content(/.*#{txts[0]}.*|.*#{txts[1]}.*/)
@@ -20,14 +19,12 @@ feature 'Sign Up', :devise do
     expect(User.first.org). to eq Org.first
   end
 
-  scenario 'visitor cannot sign up with existing org slug', focus: true do
+  scenario 'visitor cannot sign up with existing org slug' do
     Org.delete_all
     org1 = Org.create name: 'Acme Ltd'
-    puts "TEST #{org1.inspect}"
-    org1.save!
     expect(org1.id).to be_present
     sign_up_with('test@example.com', 'please123', 'please123', 'simon', 'Acme Ltd')
-    expect(page).to have_content "Organization name already taken."
+    expect(page).to have_content "Organization name has already been taken"
   end
 
   scenario 'visitor cannot sign up with missing name' do

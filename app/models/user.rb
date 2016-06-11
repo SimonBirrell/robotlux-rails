@@ -4,15 +4,17 @@ class User < ActiveRecord::Base
   enum role: [:user, :admin, :org_admin, :agent]
   after_initialize :set_default_role, :if => :new_record?
 
+  accepts_nested_attributes_for :org
+
   # http://soryy.com/blog/2014/apis-with-devise/
   before_save :ensure_authentication_token!
 
   scope :no_agents, -> { where('role <> ?', User.roles[:agent]) }
 
-  validates :org_id, presence: true
+  validates :org, presence: true
   validates :name, presence: true
-  validates :org_name, presence: true 
-  validate :org_slug_unique
+  #validates :org_name, presence: true 
+  #validate :org_slug_unique
 
   def org_name
     self.org.try(:name).to_s

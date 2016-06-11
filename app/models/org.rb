@@ -7,7 +7,7 @@ class Org < ActiveRecord::Base
 	validates :name, presence: true 
 	validates :slug, presence: true 
 	validates_format_of :slug, :with => /\A[_a-z0-9]+\z/
-	validates :slug, uniqueness: true
+	validates :slug, uniqueness: true 
 
 	before_validation :derive_slug_if_necessary
 
@@ -22,9 +22,7 @@ class Org < ActiveRecord::Base
 	private
 
 		def derive_slug_if_necessary
-			puts "org before #{self.inspect}"
 			self.slug = Org.name_to_slug(name) if self.slug.nil?
-			puts "org after #{self.inspect}"
 		end
 
 end
