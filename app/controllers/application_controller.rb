@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
     protect_from_forgery with: :exception
+    before_filter :configure_permitted_parameters, if: :devise_controller?
 
     layout :layout_by_resource
 
@@ -16,6 +17,17 @@ class ApplicationController < ActionController::Base
         "lock_screen"
       else
         "application"
+      end
+    end
+
+    # https://github.com/scambra/devise_invitable
+    def configure_permitted_parameters
+      # Only add some parameters
+      devise_parameter_sanitizer.for(:accept_invitation).concat [:name, :org_id]
+      # Override accepted parameters
+      devise_parameter_sanitizer.for(:accept_invitation) do |u|
+        u.permit(:name, :org_id, :password, :password_confirmation,
+                 :invitation_token)
       end
     end
     

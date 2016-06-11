@@ -7,8 +7,9 @@ RSpec.describe Org, type: :model do
   	org = Org.create
   	expect(org.id).to be_nil
 
-  	org = Org.create name: 'Foo Bar'
-  	expect(org.id).to be_nil
+    # slug auto-created if there's a name
+  	#org = Org.create name: 'Foo Bar'
+  	#expect(org.id).to be_nil
 
   	org = Org.create name: 'Foo Bar', slug: 'foobar'
   	expect(org.id).to be_present

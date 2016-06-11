@@ -11,6 +11,36 @@ class User < ActiveRecord::Base
 
   validates :org_id, presence: true
   validates :name, presence: true
+  validates :org_name, presence: true 
+  validate :org_slug_unique
+
+  def org_name
+    self.org.try(:name).to_s
+  end
+
+  def org_name=(name)
+    org_slug = Org.name_to_slug(name)
+    org_slug_already_used = Org.slug_used?(org_slug)
+
+    puts "***Already used" if org_slug_already_used
+
+    if org_id.nil? && !org_slug_already_used
+      self.org = Org.create name: name, slug: org_slug
+    end
+  end
+
+  def org_slug
+    Org.name_to_slug(self.org_name)
+  end
+
+  def org_slug_used?
+    Org.slug_used?(self.org_slug).present?
+  end
+
+  def org_slug_unique
+    puts "Checking if slug #{self.org_slug} already used = #{org_slug_used?}"
+    !org_slug_used?
+  end
 
   def admin?
     self.role == 'admin'

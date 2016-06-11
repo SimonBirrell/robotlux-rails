@@ -31,3 +31,7 @@ en:
   robot_instances: 'Robot Instances'
   robot_instance_sessions: 'Robot Instance Sessions'
   users: 'Users'
+  activerecord:
+    attributes:
+      user:
+        org_name: "Organization name"
